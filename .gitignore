@@ -2,3 +2,6 @@ build/*
 *.elf
 *.gba
 *.sav
+*.d
+*.o
+*.map
