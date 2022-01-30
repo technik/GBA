@@ -33,9 +33,9 @@ MUSIC		:=
 ARCH	:=	-mthumb -mthumb-interwork
 
 ifeq ($(DEBUG),1)
-	CFLAGS := -gdwarf-2 -Wall -mcpu=arm7tdmi -mtune=arm7tdmi $(ARCH)
+	CFLAGS := -Wall -gdwarf-2 -O2 -fomit-frame-pointer -fno-rtti -ffast-math -mcpu=arm7tdmi -mtune=arm7tdmi $(ARCH)
 else
-	CFLAGS:= -g -Wall -O3 -mcpu=arm7tdmi -mtune=arm7tdmi -fomit-frame-pointer -ffast-math $(ARCH)
+	CFLAGS := -Wall -g        -O3 -fomit-frame-pointer -fno-rtti -ffast-math -mcpu=arm7tdmi -mtune=arm7tdmi $(ARCH)
 endif
 
 CFLAGS	+=	$(INCLUDE)

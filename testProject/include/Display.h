@@ -4,7 +4,7 @@
 
 struct DisplayControl
 {
-	uint16_t reg;
+	volatile uint16_t reg;
 
     static DisplayControl& Get() { return *reinterpret_cast<DisplayControl*>(0x04000000); }
 
