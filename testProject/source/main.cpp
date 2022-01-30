@@ -16,33 +16,28 @@ void vsync()
 {
 	while(REG_VCOUNT > 160)
 	{}
-	while(REG_VCOUNT < 160)
+	while(REG_VCOUNT <= 160)
 	{}
-}
-
-bool tSphere(uint32_t x, uint32_t y, float fov, float rad, float depth)
-{
-	return false;
 }
 
 int main()
 {
-	DisplayControl::Get().set<3, DisplayControl::BG2>();
+#if 0
+	constexpr uint32_t ScreenWidth = 240;
+	constexpr uint32_t ScreenHeight = 160;
+	constexpr uint16_t VideoMode = 3;
+#else
+	constexpr uint32_t ScreenWidth = 160;
+	constexpr uint32_t ScreenHeight = 128;
+	constexpr uint16_t VideoMode = 5;
+#endif
+
+	DisplayControl::Get().set<VideoMode, DisplayControl::BG2>();
 	//set GBA rendering context to MODE 3 Bitmap Rendering
 	//REG_DISPLAY_CTRL = VIDEOMODE_3 | BG_ENABLE2;
 
 	int32_t t = 0;
 
-	constexpr uint8_t screenWidth = 240;
-	constexpr uint8_t screenHeight = 160;
-
-	// Precalc the palette
-	for(uint32_t i = 0; i < 256; ++i)
-	{
-		uint32_t bottom = i&0xf;
-		uint32_t top = i>>4;
-		//REG_PALETTE[i] = (top<<16)|(top<<12)|(bottom<<4)|bottom;
-	}
 
 	// Main loop
 	while(1)
@@ -52,15 +47,17 @@ int main()
 
 		// VSync
 		vsync();
+		DisplayControl::Get().flipFrame();
+		uint16_t* backBuffer = DisplayControl::Get().backBuffer();
 
 		// Draw
-		for(int32_t y = 0; y < screenHeight; ++y)
+		for(int32_t y = 0; y < ScreenHeight; ++y)
 		{
 			uint32_t green = y>>3;
 			color = (color&(0x1f<<10)) | (green<<5);
-			uint32_t* line = &REG_SCREEN_BUFFER_2[y*120];
+			uint32_t* line = &((uint32_t*)backBuffer)[y*(ScreenWidth/2)];
 
-			for(int32_t x = 0; x < 120; x++)
+			for(int32_t x = 0; x < (ScreenWidth/2); x++)
 			{
 				uint32_t red = x>>2;
 				uint32_t pixelColor = red | color;
