@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include "vector.h"
 
 // Config display
 #define USE_VIDEO_MODE_5
@@ -14,23 +15,12 @@
 	constexpr uint16_t VideoMode = 5;
 #endif
 
-// Hardware definition
-#define REG_VCOUNT (*(volatile uint16_t*)(0x04000006))
-#define REG_PALETTE (*(uint16_t*)(0x05000000))
-
-void vsync()
+class DisplayControl
 {
-	while(REG_VCOUNT > 160)
-	{}
-	while(REG_VCOUNT <= 160)
-	{}
-}
-
-struct DisplayControl
-{
-	volatile uint16_t reg;
-
+public:
+	// Singleton access
     static DisplayControl& Get() { return *reinterpret_cast<DisplayControl*>(0x04000000); }
+	DisplayControl() = delete; // Prevent instantiation
 
 	// Display control bits
 	static constexpr uint16_t FrameSelect = 1<<4;
@@ -53,7 +43,37 @@ struct DisplayControl
         reg ^= FrameSelect;
     }
 
-    uint16_t* backBuffer() const{
+    uint16_t* backBuffer() const
+	{
         return reinterpret_cast<uint16_t*>((reg & FrameSelect) ? 0x06000000 : (0x06000000 + 0xA000));
     }
+
+	void vSync()
+	{
+		while(vCount != (ScreenHeight+1))
+		{}
+	}
+
+private:
+	struct BGRotScale
+	{
+		uint16_t dx;
+		uint16_t dmx;
+		uint16_t dy;
+		uint16_t dmy;
+		uint32_t x0;
+		uint32_t y0;
+	};
+
+	// Register definition
+	volatile uint16_t reg;
+	uint16_t padding0;
+	volatile uint16_t status;
+	volatile uint16_t vCount;
+	volatile uint16_t bgControl[4];
+	volatile Vec2<uint16_t> bgOffset[3];
+	volatile BGRotScale bg2RotScale;
+	volatile BGRotScale bg3RotScale;
 };
+
+inline auto& Display() { return DisplayControl::Get(); }

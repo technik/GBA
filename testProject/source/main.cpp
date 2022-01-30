@@ -28,7 +28,7 @@ void plotFrameIndicator(uint16_t* frameBuffer)
 
 int main()
 {
-	DisplayControl::Get().set<VideoMode, DisplayControl::BG2>();
+	Display().set<VideoMode, DisplayControl::BG2>();
 
 	// Main loop
 	int32_t t = 0;
@@ -46,12 +46,12 @@ int main()
 
 		// VSync
 		plotFrameIndicator(backBuffer);
-		vsync();
-		DisplayControl::Get().flipFrame();
+		Display().vSync();
 		Timer0().reset<Timer::e1024>(); // Reset timer to 1/16th of a millisecond
+		Display().flipFrame();
 
 		// Copy display
-		auto* displayBuffer = DisplayControl::Get().backBuffer();
+		auto* displayBuffer = Display().backBuffer();
 		for(int i = 0; i < ScreenHeight*ScreenWidth; ++i)
 		{
 			displayBuffer[i] = backBuffer[i];

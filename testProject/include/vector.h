@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cstdint>
+#include <cstddef>
+
 template<class T, size_t N>
 struct Vector final
 {
