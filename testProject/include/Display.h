@@ -2,6 +2,30 @@
 
 #include <cstdint>
 
+// Config display
+#define USE_VIDEO_MODE_5
+#ifdef USE_VIDEO_MODE_3
+	constexpr uint32_t ScreenWidth = 240;
+	constexpr uint32_t ScreenHeight = 160;
+	constexpr uint16_t VideoMode = 3;
+#else // VIDEO MODE 5
+	constexpr uint32_t ScreenWidth = 160;
+	constexpr uint32_t ScreenHeight = 128;
+	constexpr uint16_t VideoMode = 5;
+#endif
+
+// Hardware definition
+#define REG_VCOUNT (*(volatile uint16_t*)(0x04000006))
+#define REG_PALETTE (*(uint16_t*)(0x05000000))
+
+void vsync()
+{
+	while(REG_VCOUNT > 160)
+	{}
+	while(REG_VCOUNT <= 160)
+	{}
+}
+
 struct DisplayControl
 {
 	volatile uint16_t reg;
