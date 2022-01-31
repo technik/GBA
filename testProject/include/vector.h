@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <cstddef>
 
+namespace math {
+
 template<class T, size_t N>
 struct Vector final
 {
@@ -54,4 +56,6 @@ template<class T>
 inline Vec2<T> operator-(const Vec2<T>& a, const Vec2<T>& b)
 {
 	return {a.x() - b.x(), a.y() - b.y()};
+}
+
 }

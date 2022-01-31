@@ -3,6 +3,8 @@
 #include "Draw.h"
 #include "Timer.h"
 
+using namespace math;
+
 void plotFrameIndicator(uint16_t* frameBuffer)
 {
 	// Draw frame rate indicator
@@ -28,21 +30,21 @@ void plotFrameIndicator(uint16_t* frameBuffer)
 
 int main()
 {
-	Display().set<VideoMode, DisplayControl::BG2>();
+	Display().Init();
 
 	// Main loop
 	int32_t t = 0;
-	Timer0().reset<Timer::e1024>(); // Reset timer to 1/16th of a millisecond
+	Timer0().reset<Timer::e1024>(); // Reset timer to ~1/16th of a millisecond
 	while(1)
 	{
 		// Logic
 		const uint32_t blue = (t%0x1F)<<10;
-		uint16_t height = t%ScreenHeight;
+		uint32_t height = t%ScreenHeight;
 
 		uint16_t backBuffer[ScreenWidth*ScreenHeight];
 		// Draw
 		clear(backBuffer, blue);
-		bmp16_line(0, height, ScreenWidth-1, height, 0xffff, backBuffer, ScreenWidth);
+		//bmp16_line(0, height, ScreenWidth-1, height, 0xffff, backBuffer, ScreenWidth);
 
 		// VSync
 		plotFrameIndicator(backBuffer);
@@ -52,7 +54,7 @@ int main()
 
 		// Copy display
 		auto* displayBuffer = Display().backBuffer();
-		for(int i = 0; i < ScreenHeight*ScreenWidth; ++i)
+		for(uint32_t i = 0; i < ScreenHeight*ScreenWidth; ++i)
 		{
 			displayBuffer[i] = backBuffer[i];
 		}

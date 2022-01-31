@@ -15,12 +15,27 @@
 	constexpr uint16_t VideoMode = 5;
 #endif
 
-class DisplayControl
+class DisplayControl final
 {
 public:
 	// Singleton access
     static DisplayControl& Get() { return *reinterpret_cast<DisplayControl*>(0x04000000); }
 	DisplayControl() = delete; // Prevent instantiation
+
+	void Init()
+	{
+#ifdef USE_VIDEO_MODE_5
+		set<5,BG2>();
+		//bg2RotScale.x0 = 0;
+		//bg2RotScale.y0 = 0;
+		bg2RotScale.a = (160<<8)/240; // (160/240.0)<<8
+		//bg2RotScale.dmx = 0;
+		//bg2RotScale.dy = 0;
+		bg2RotScale.d = (128<<8)/160; // =(128/160.0)<<8
+#else
+		static_assert(false, "Unsupported video mode");
+#endif
+	}
 
 	// Display control bits
 	static constexpr uint16_t FrameSelect = 1<<4;
@@ -35,17 +50,17 @@ public:
 	{
 		static_assert(videoMode < 6, "Only video modes 0-5 are enabled in the GBA");
         static_assert(bgMode <= (BG0+BG1+BG2+BG3) && bgMode >= BG0);
-		reg = videoMode | bgMode;
+		control = videoMode | bgMode;
 	};
 
     void flipFrame()
     {
-        reg ^= FrameSelect;
+        control ^= FrameSelect;
     }
 
     uint16_t* backBuffer() const
 	{
-        return reinterpret_cast<uint16_t*>((reg & FrameSelect) ? 0x06000000 : (0x06000000 + 0xA000));
+        return reinterpret_cast<uint16_t*>((control & FrameSelect) ? 0x06000000 : (0x06000000 + 0xA000));
     }
 
 	void vSync()
@@ -57,21 +72,23 @@ public:
 private:
 	struct BGRotScale
 	{
-		uint16_t dx;
-		uint16_t dmx;
-		uint16_t dy;
-		uint16_t dmy;
-		uint32_t x0;
-		uint32_t y0;
+		// 16 bit signed quoefficients
+		int16_t a;
+		int16_t b;
+		int16_t c;
+		int16_t d;
+		// 28 bit signed offsets
+		int32_t x0;
+		int32_t y0;
 	};
 
 	// Register definition
-	volatile uint16_t reg;
-	uint16_t padding0;
+	volatile uint16_t control;
+	volatile uint16_t greenSwap;
 	volatile uint16_t status;
 	volatile uint16_t vCount;
 	volatile uint16_t bgControl[4];
-	volatile Vec2<uint16_t> bgOffset[3];
+	volatile math::Vec2<uint16_t> bgScroll[4];
 	volatile BGRotScale bg2RotScale;
 	volatile BGRotScale bg3RotScale;
 };
