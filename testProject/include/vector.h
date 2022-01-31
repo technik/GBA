@@ -58,4 +58,16 @@ inline Vec2<T> operator-(const Vec2<T>& a, const Vec2<T>& b)
 	return {a.x() - b.x(), a.y() - b.y()};
 }
 
+template<class T>
+inline T dot(const Vec2<T>& a, const Vec2<T>&b)
+{
+	return a.x()*b.x() + a.y()*b.y();
+}
+
+template<class T>
+inline T cross(const Vec2<T>& a, const Vec2<T>&b)
+{
+	return a.x()*b.y() - a.y()*b.x();
+}
+
 }

@@ -99,13 +99,37 @@ inline void rect(uint16_t* dst, uint16_t color, uint32_t x0, uint32_t x1, uint32
 	}
 }
 
-inline void rasterTriangle(const math::Vec2f v[3])
+inline void rasterTriangle(uint16_t* dst, uint16_t color, const math::Vec2f v[3])
 {
+	// Locate boundaries
 	uint32_t x0 = int(v[0].x());
-	uint32_t x1 = int(v[0].x());
-	uint32_t x2 = int(v[0].x());
+	uint32_t x1 = int(v[1].x());
+	uint32_t x2 = int(v[2].x());
 	uint32_t xStart = math::max(uint32_t(0),math::min(x0,math::min(x1,x2)));
 	uint32_t xEnd = math::min(ScreenWidth,math::max(x0,math::max(x1,x2)));
+	
+	uint32_t y0 = int(v[0].y());
+	uint32_t y1 = int(v[1].y());
+	uint32_t y2 = int(v[2].y());
+	uint32_t yStart = math::max(uint32_t(0),math::min(y0,math::min(y1,y2)));
+	uint32_t yEnd = math::min(ScreenHeight,math::max(y0,math::max(y1,y2)));
+
+	// Parse bounding rectangle looking for intersections
+	auto e0 = v[1]-v[0];
+	auto e1 = v[2]-v[1];
+	auto e2 = v[0]-v[2];
+	for(uint32_t y = yStart; y < yEnd; ++y)
+	{
+		for(uint32_t x = xStart; x < xEnd; ++x)
+		{
+			math::Vec2f p(x+0.5f, y+0.5f);
+			
+			if(cross(p-v[0],e0) > 0)
+				if(cross(p-v[1],e1) > 0)
+					if(cross(p-v[2],e2) > 0)
+						dst[x+y*ScreenWidth] = color;
+		}
+	}
 }
 
 inline void Gradient(uint16_t* dst)

@@ -44,6 +44,13 @@ int main()
 		uint16_t backBuffer[ScreenWidth*ScreenHeight];
 		// Draw
 		clear(backBuffer, blue);
+		math::Vec2f tri[3] = {
+			math::Vec2f(60.f,100.f),
+			math::Vec2f(100.f,100.f),
+			math::Vec2f(80.f,40.f)
+		};
+		rasterTriangle(backBuffer, 0x1f<<5, tri);
+
 		//bmp16_line(0, height, ScreenWidth-1, height, 0xffff, backBuffer, ScreenWidth);
 
 		// VSync
