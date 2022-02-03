@@ -10,9 +10,9 @@
 	constexpr uint32_t ScreenHeight = 160;
 	constexpr uint16_t VideoMode = 3;
 #else // VIDEO MODE 5
-	constexpr uint32_t ScreenWidth = 160;
-	constexpr uint32_t ScreenHeight = 128;
-	constexpr uint16_t VideoMode = 5;
+	constexpr int32_t ScreenWidth = 160;
+	constexpr int32_t ScreenHeight = 128;
+	constexpr int16_t VideoMode = 5;
 #endif
 
 class DisplayControl final
