@@ -65,10 +65,10 @@ namespace math
 
 	template<size_t shift>
 	constexpr FixedPoint<shift> operator+(
-		const FixedPoint<shift>& a,
-		const FixedPoint<shift>& b)
+		FixedPoint<shift> a,
+		FixedPoint<shift> b)
 	{
-		FixedPoint<shift> result;
+		FixedPoint<shift> result{};
 		result.raw = a.raw + b.raw;
 		return result;
 	}
@@ -76,16 +76,16 @@ namespace math
 	template<size_t shift>
 	constexpr FixedPoint<shift> operator+(
 		int32_t a,
-		const FixedPoint<shift>& b)
+		FixedPoint<shift> b)
 	{
-		FixedPoint<shift> result;
+		FixedPoint<shift> result{};
 		result.raw = (a<<shift) + b.raw;
 		return result;
 	}
 
 	template<size_t shift>
 	constexpr FixedPoint<shift> operator+(
-		const FixedPoint<shift>& a,
+		FixedPoint<shift> a,
 		int32_t b)
 	{
 		return b+a;
@@ -93,22 +93,22 @@ namespace math
 
 	template<size_t shift>
 	constexpr FixedPoint<shift> operator-(
-		const FixedPoint<shift>& a,
-		const FixedPoint<shift>& b)
+		FixedPoint<shift> a,
+		FixedPoint<shift> b)
 	{
-		FixedPoint<shift> result;
+		FixedPoint<shift> result{};
 		result.raw = a.raw - b.raw;
 		return result;
 	}
 
 	template<size_t shift>
 	constexpr FixedPoint<shift> operator*(
-		const FixedPoint<shift>& a,
-		const FixedPoint<shift>& b)
+		FixedPoint<shift> a,
+		FixedPoint<shift> b)
 	{
 		static_assert(shift>1);
 
-		FixedPoint<shift> result;
+		FixedPoint<shift> result{};
 
 		int32_t sumRaw = a.raw * b.raw;
 		sumRaw += (1<<(shift-1)); // Unbiased round by adding +0.5
@@ -119,10 +119,10 @@ namespace math
 
 	template<size_t shift>
 	constexpr FixedPoint<shift> operator*(
-		const FixedPoint<shift>& a,
+		FixedPoint<shift> a,
 		int32_t b)
 	{
-		FixedPoint<shift> result;
+		FixedPoint<shift> result{};
 		result.raw = a.raw * b;
 		return result;
 	}
@@ -130,32 +130,32 @@ namespace math
 	template<size_t shift>
 	constexpr FixedPoint<shift> operator*(
 		int32_t a,
-		const FixedPoint<shift>& b)
+		FixedPoint<shift> b)
 	{
 		return b*a;
 	}
 
 	template<size_t shift>
 	constexpr FixedPoint<shift> operator/(
-		const FixedPoint<shift>& a,
-		const FixedPoint<shift>& b)
+		FixedPoint<shift> a,
+		FixedPoint<shift> b)
 	{
 		int32_t extendedNum = a.raw<<shift;
 		int32_t ratio = extendedNum / b.raw;
 
-		FixedPoint<shift> result;
+		FixedPoint<shift> result{};
 		result.raw = ratio;
 		return result;
 	}
 
 	template<size_t shift>
 	constexpr FixedPoint<shift> operator/(
-		const FixedPoint<shift>& num,
-		const int32_t den)
+		FixedPoint<shift> num,
+		int32_t den)
 	{
 		int32_t ratio = num.raw / den;
 
-		FixedPoint<shift> result;
+		FixedPoint<shift> result{};
 		result.raw = ratio;
 		return result;
 	}
