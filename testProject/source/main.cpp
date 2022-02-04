@@ -92,20 +92,14 @@ int main()
 		auto* displayBuffer = Display().backBuffer();
 		// Logic
 		//uint16_t backBuffer[ScreenWidth*ScreenHeight];
-		//drawScene(displayBuffer, t);
-		trace(displayBuffer, t);
+		drawScene(displayBuffer, t);
+		//trace(displayBuffer, t);
 
 		// VSync
 		plotFrameIndicator(displayBuffer);
-		//Display().vSync();
+		Display().vSync();
 		Timer0().reset<Timer::e1024>(); // Reset timer to 1/16th of a millisecond
 		Display().flipFrame();
-
-		// Copy display
-		//for(uint32_t i = 0; i < ScreenHeight*ScreenWidth; ++i)
-		//{
-		//	displayBuffer[i] = backBuffer[i];
-		//}
 
 		++t;
 	}

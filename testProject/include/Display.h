@@ -26,11 +26,7 @@ public:
 	{
 #ifdef USE_VIDEO_MODE_5
 		set<5,BG2>();
-		//bg2RotScale.x0 = 0;
-		//bg2RotScale.y0 = 0;
-		bg2RotScale.a = (160<<8)/240; // (160/240.0)<<8
-		//bg2RotScale.dmx = 0;
-		//bg2RotScale.dy = 0;
+		bg2RotScale.a = (160<<8)/240; // =(160/240.0)<<8
 		bg2RotScale.d = (128<<8)/160; // =(128/160.0)<<8
 #else
 		static_assert(false, "Unsupported video mode");
@@ -65,7 +61,7 @@ public:
 
 	void vSync()
 	{
-		while(vCount != (ScreenHeight+1))
+		while(vCount <= ScreenHeight)
 		{}
 	}
 
