@@ -49,6 +49,11 @@ public:
 		control = videoMode | bgMode;
 	};
 
+	void enableSprites()
+	{
+		control |= (1<<12);
+	}
+
     void flipFrame()
     {
         control ^= FrameSelect;

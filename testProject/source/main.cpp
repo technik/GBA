@@ -4,6 +4,7 @@
 #include "Draw.h"
 #include "Timer.h"
 #include <cmath>
+#include "tiles.h"
 
 using namespace math;
 
@@ -77,12 +78,41 @@ void drawScene(uint16_t* backBuffer, int32_t t)
 		math::Vec2p8(center,40_p8)
 	};
 
-	rasterTriangle(backBuffer, (0x1f*(1+ndl)/2).round()<<5, tri);
+	rasterTriangle(backBuffer, Color(0,(int)(0x1f*(1+ndl)/2).round(),0).raw, tri);
 }
 
 int main()
 {
 	Display().Init();
+
+	Display().vSync();
+	// Set up color palette
+	auto palette = SpritePalette();
+	palette[0] = BasicColor::Black; 
+	palette[1] = BasicColor::Red;
+	palette[2] = BasicColor::Green;
+	palette[3] = BasicColor::Blue;
+
+	// Fill the first tiles in VRAM
+	Sprite::DTileBlock(5)[0].fill(1); // Zero would be transparent
+	Sprite::DTileBlock(5)[1].fill(2);
+	Sprite::DTileBlock(5)[2].fill(3);
+
+	// Create two sprites using with them
+	auto* obj0 = &Sprite::OAM()[0].objects[0];
+	obj0->attribute[0] = 1<<13; // Top of the screen, normal rendering, 16bit palette tiles
+	obj0->attribute[1] = 0; // Left of the screen, small size
+	obj0->attribute[2] = Sprite::DTile::HighSpriteBankIndex(0);
+	auto* obj1 = &Sprite::OAM()[0].objects[1];
+	obj1->attribute[0] = 1<<13; // Top of the screen, normal rendering, 16bit palette tiles
+	obj1->attribute[1] = 8; // Left of the screen, small size
+	obj1->attribute[2] = Sprite::DTile::HighSpriteBankIndex(1);
+	auto* obj2 = &Sprite::OAM()[0].objects[2];
+	obj2->attribute[0] = 1<<13; // Top of the screen, normal rendering, 8bit palette tiles
+	obj2->attribute[1] = 16; // Left of the screen, small size
+	obj2->attribute[2] = Sprite::DTile::HighSpriteBankIndex(2);
+
+	Display().enableSprites();
 
 	// Main loop
 	int32_t t = 0;

@@ -49,6 +49,9 @@ namespace math {
 	using Vec2f = Vector<float,2>;
 	using Vec3f = Vector<float,3>;
 
+	using Vec2i = Vector<int32_t,2>;
+	using Vec3i = Vector<int32_t,3>;
+
 	using Vec2p8 = Vec2<intp8>;
 	using Vec3p8 = Vec3<intp8>;
 
