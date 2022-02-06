@@ -92,39 +92,61 @@ int main(int _argc, const char** _argv)
 
     // Write into a header
     std::ofstream ss(fileName + ".cpp");
-    ss << "static constexpr uint16_t palette[" << palette.size() << "] = {\n";
-    for (int i = 0; i < palette.size() - 1; ++i)
+    ss << "#include <cstdint>\n\n";
+    size_t palette32Size = palette.size() / 2;
+    ss << "extern const uint32_t fontPalette[" << palette32Size << "] = {\n";
+    auto* palette32 = reinterpret_cast<const uint32_t*>(palette.data());
+    for (int i = 0; i < palette32Size - 1; ++i)
     {
-        ss << "\t" << palette[i] << ",\n";
+        ss << "\t" << palette32[i] << ",\n";
     }
 
-    ss << "\t" << palette.back() << "\n};\n\n";
+    ss << "\t" << palette32[palette32Size-1] << "\n};\n\n";
 
+    size_t tile32Size = tileData.size() / 4;
+    ss << "extern const uint32_t fontTileDataSize = " << tile32Size << ";\n";
 
-    ss << "static constexpr uint8_t tileData[" << tileData.size() << "] = {\n";
+    auto tile32 = reinterpret_cast<const uint32_t*>(tileData.data());
+    ss << "extern const uint32_t fontTileData[" << tile32Size << "] = {\n";
     int i = 0;
-    for (int i = 0; i < tileData.size() - 1; i+=8)
+    for (int i = 0; i < tile32Size - 16; i+=16)
     {
         ss << "\t"
-            << (int)tileData[i + 0] << ", "
-            << (int)tileData[i + 1] << ", "
-            << (int)tileData[i + 2] << ", "
-            << (int)tileData[i + 3] << ", "
-            << (int)tileData[i + 4] << ", "
-            << (int)tileData[i + 5] << ", "
-            << (int)tileData[i + 6] << ", "
-            << (int)tileData[i + 7] << ",\n";
+            << (int)tile32[i + 0] << ", "
+            << (int)tile32[i + 1] << ", "
+            << (int)tile32[i + 2] << ", "
+            << (int)tile32[i + 3] << ", "
+            << (int)tile32[i + 4] << ", "
+            << (int)tile32[i + 5] << ", "
+            << (int)tile32[i + 6] << ", "
+            << (int)tile32[i + 7] << ", "
+            << (int)tile32[i + 8] << ", "
+            << (int)tile32[i + 9] << ", "
+            << (int)tile32[i +10] << ", "
+            << (int)tile32[i +11] << ", "
+            << (int)tile32[i +12] << ", "
+            << (int)tile32[i +13] << ", "
+            << (int)tile32[i +14] << ", "
+            << (int)tile32[i +15] << ",\n";
     }
 
     ss << "\t"
-        << (int)tileData[i + 0] << ", "
-        << (int)tileData[i + 1] << ", "
-        << (int)tileData[i + 2] << ", "
-        << (int)tileData[i + 3] << ", "
-        << (int)tileData[i + 4] << ", "
-        << (int)tileData[i + 5] << ", "
-        << (int)tileData[i + 6] << ", "
-        << (int)tileData[i + 7] << "\n};\n\n";
+        << (int)tile32[i + 0] << ", "
+        << (int)tile32[i + 1] << ", "
+        << (int)tile32[i + 2] << ", "
+        << (int)tile32[i + 3] << ", "
+        << (int)tile32[i + 4] << ", "
+        << (int)tile32[i + 5] << ", "
+        << (int)tile32[i + 6] << ", "
+        << (int)tile32[i + 7] << ", "
+        << (int)tile32[i + 8] << ", "
+        << (int)tile32[i + 9] << ", "
+        << (int)tile32[i + 10] << ", "
+        << (int)tile32[i + 11] << ", "
+        << (int)tile32[i + 12] << ", "
+        << (int)tile32[i + 13] << ", "
+        << (int)tile32[i + 14] << ", "
+        << (int)tile32[i + 15] << ",\n};\n\n";
 
     return 0;
 }

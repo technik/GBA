@@ -33,8 +33,19 @@ public:
 #endif
 	}
 
+	void StartBlank()
+	{
+		control |= ForceBlank;
+	}
+
+	void EndBlank()
+	{
+		control &= ~ForceBlank;
+	}
+
 	// Display control bits
 	static constexpr uint16_t FrameSelect = 1<<4;
+	static constexpr uint16_t ForceBlank = 1<<7;
 	static constexpr uint16_t BG0 = 1<<8;
 	static constexpr uint16_t BG1 = 1<<9;
 	static constexpr uint16_t BG2 = 1<<10;

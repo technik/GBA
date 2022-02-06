@@ -8,27 +8,18 @@
 
 using namespace math;
 
+extern const uint32_t fontTileDataSize;
+extern const uint32_t fontTileData[];
+
 void plotFrameIndicator(uint16_t* frameBuffer)
 {
 	// Draw frame rate indicator
-	uint16_t cnt = Timer0().counter;
-	uint16_t frameCounterColor = 0xefff;
-	if(cnt < 16*16) // >= 60fps
-	{
-		frameCounterColor = 0x1f<<5; // Green
-	} else if(cnt < 33 * 16) // >=30 fps
-	{
-		frameCounterColor = 0x1f<<5 | 0x1f; // Yellow
-	} else if(cnt < 50 * 16) // >=20 fps
-	{
-		frameCounterColor = 0x0f<<5 | 0x1f; // Orange
-	}
-	else if(cnt < 100 * 16) // >=10 fps
-	{
-		frameCounterColor = 0x1f; // Red
-	}
-
-	frameBuffer[0] = frameCounterColor;
+	uint32_t ms = Timer0().counter/16; // ~Milliseconds
+	auto* tile0 = &Sprite::OAM()[0].objects[0];
+	auto ms10 = ms/10;
+	tile0->attribute[2] = Sprite::DTile::HighSpriteBankIndex(ms10+16);
+	auto* tile1 = &Sprite::OAM()[0].objects[1];
+	tile1->attribute[2] = Sprite::DTile::HighSpriteBankIndex(ms-10*ms10+16);
 }
 
 void trace(uint16_t* backBuffer, int32_t t)
@@ -83,14 +74,14 @@ void drawScene(uint16_t* backBuffer, int32_t t)
 
 int main()
 {
+	Display().StartBlank();
 	Display().Init();
 
-	Display().vSync();
 	// Set up color palette
 	auto palette = SpritePalette();
-	palette[0] = BasicColor::Black; 
-	palette[1] = BasicColor::Red;
-	palette[2] = BasicColor::Green;
+	palette[0] = BasicColor::White; 
+	palette[1] = BasicColor::Black;
+	palette[2] = BasicColor::White;
 	palette[3] = BasicColor::Blue;
 
 	// Fill the first tiles in VRAM
@@ -98,21 +89,27 @@ int main()
 	Sprite::DTileBlock(5)[1].fill(2);
 	Sprite::DTileBlock(5)[2].fill(3);
 
+	// Copy the font
+	auto* spriteBase = ((volatile uint16_t*)Sprite::DTileBlock(5));
+	auto* src = reinterpret_cast<const uint16_t*>(fontTileData);
+	for(uint32_t i = 0; i < 2*fontTileDataSize; ++i)
+	{
+		spriteBase[i] = src[i];//0x01010201;//fontTileData[i];
+		//spriteBase[i] = 0x01010201;//fontTileData[i];
+	}
+
 	// Create two sprites using with them
 	auto* obj0 = &Sprite::OAM()[0].objects[0];
 	obj0->attribute[0] = 1<<13; // Top of the screen, normal rendering, 16bit palette tiles
 	obj0->attribute[1] = 0; // Left of the screen, small size
-	obj0->attribute[2] = Sprite::DTile::HighSpriteBankIndex(0);
+	obj0->attribute[2] = Sprite::DTile::HighSpriteBankIndex('0'-32);
 	auto* obj1 = &Sprite::OAM()[0].objects[1];
 	obj1->attribute[0] = 1<<13; // Top of the screen, normal rendering, 16bit palette tiles
 	obj1->attribute[1] = 8; // Left of the screen, small size
-	obj1->attribute[2] = Sprite::DTile::HighSpriteBankIndex(1);
-	auto* obj2 = &Sprite::OAM()[0].objects[2];
-	obj2->attribute[0] = 1<<13; // Top of the screen, normal rendering, 8bit palette tiles
-	obj2->attribute[1] = 16; // Left of the screen, small size
-	obj2->attribute[2] = Sprite::DTile::HighSpriteBankIndex(2);
+	obj1->attribute[2] = Sprite::DTile::HighSpriteBankIndex('1'-32);
 
 	Display().enableSprites();
+	Display().EndBlank();
 
 	// Main loop
 	int32_t t = 0;
