@@ -101,6 +101,15 @@ struct Sprite
 	{
 		return reinterpret_cast<Block*>(0x07000000);
 	}
+
+	template<size_t oamBank>
+	static void HideAllObjects()
+	{
+		for(int i = 0; i < 32; ++i)
+		{
+			
+		}
+	}
 };
 
 inline Color* BackgroundPalette()

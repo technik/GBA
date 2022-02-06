@@ -16,16 +16,16 @@ namespace math {
 
 		// Constructors
 		Vector() = default;
-		Vector(T _x)
+		constexpr Vector(T _x)
 		{
 			for(size_t i = 0; i < N; ++i)
 				m[i] = _x;
 		}
-		Vector(T _x, T _y) : m{_x,_y} {}
-		Vector(T _x, T _y, T _z) : m{_x,_y,_z} {}
+		constexpr Vector(T _x, T _y) : m{_x,_y} {}
+		constexpr Vector(T _x, T _y, T _z) : m{_x,_y,_z} {}
 
 		// Assignment and copy construction
-		Vector(const Vector& other)
+		constexpr Vector(const Vector<T,N>& other)
 		{
 			for(size_t i = 0; i < N; ++i)
 				m[i] = other.m[i];
@@ -57,25 +57,25 @@ namespace math {
 
 	// Basic operators
 	template<class T>
-	inline Vec2<T> operator+(const Vec2<T>& a, const Vec2<T>& b)
+	constexpr inline Vec2<T> operator+(const Vec2<T>& a, const Vec2<T>& b)
 	{
 		return {a.x() + b.x(), a.y() + b.y()};
 	}
 
 	template<class T>
-	inline Vec2<T> operator-(const Vec2<T>& a, const Vec2<T>& b)
+	constexpr inline Vec2<T> operator-(const Vec2<T>& a, const Vec2<T>& b)
 	{
 		return {a.x() - b.x(), a.y() - b.y()};
 	}
 
 	template<class T>
-	inline T dot(const Vec2<T>& a, const Vec2<T>&b)
+	constexpr inline T dot(const Vec2<T>& a, const Vec2<T>&b)
 	{
 		return a.x()*b.x() + a.y()*b.y();
 	}
 
 	template<class T>
-	inline T cross(const Vec2<T>& a, const Vec2<T>&b)
+	constexpr inline T cross(const Vec2<T>& a, const Vec2<T>&b)
 	{
 		return a.x()*b.y() - a.y()*b.x();
 	}

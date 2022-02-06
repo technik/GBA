@@ -1,7 +1,11 @@
-build/*
+.vs/*
+Debug/*
 *.elf
 *.gba
 *.sav
 *.d
 *.o
 *.map
+build
+.vs
+Debug
