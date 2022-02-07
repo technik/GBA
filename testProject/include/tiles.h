@@ -113,6 +113,51 @@ struct Sprite
 	}
 };
 
+struct SpritePaletteAllocator
+{
+	static void reset()
+	{
+		sEnd = 1; // Start at 1 because 0 means transparent
+	}
+
+	static uint32_t  alloc(uint32_t size)
+	{
+		if(size + sEnd >= MaxNumColors)
+		{
+			return 0; // Out of memory.
+		}
+		auto pos = sEnd;
+		sEnd += size;
+		return pos;
+	}
+
+	static constexpr uint32_t MaxNumColors = 256;
+	inline static uint32_t sEnd = 1;
+};
+
+// Allocate DTiles from the sprite top bank
+struct SpriteTileAllocator
+{
+	static void reset()
+	{
+		sEnd = 0;
+	}
+
+	static uint32_t  alloc(uint32_t size)
+	{
+		if(size + sEnd >= MaxNumTiles)
+		{
+			return 0; // Out of memory.
+		}
+		auto pos = sEnd;
+		sEnd += size;
+		return pos;
+	}
+
+	static constexpr uint32_t MaxNumTiles = 512;
+	inline static uint32_t sEnd = 0;
+};
+
 union ObjectAttributeMemory
 {
 	volatile Sprite::ObjectAttribute object[1024];
