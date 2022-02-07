@@ -25,7 +25,7 @@ public:
 	void InitMode2()
 	{
 		// Enable mode 2 with backgrounds 2 and 3
-		control = 2;//set<2,0>();
+		set<2,BG2>();
 	}
 
 	void StartBlank()
@@ -84,7 +84,7 @@ private:
 		int16_t b;
 		int16_t c;
 		int16_t d;
-		
+
 		// 28 bit signed offsets
 		int32_t x0;
 		int32_t y0;

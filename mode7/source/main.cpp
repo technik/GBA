@@ -1,6 +1,7 @@
 #include <cstdint>
 #include <linearMath.h>
 #include <Display.h>
+#include <Device.h>
 #include <Draw.h>
 #include <Timer.h>
 #include <cmath>
@@ -39,7 +40,33 @@ int main()
 	obj1->attribute[1] = 8; // Left of the screen, small size
 	obj1->attribute[2] = Sprite::DTile::HighSpriteBankIndex('1'-32);
 
-	// Prepare the background tile
+	// Prepare the background tile map
+	BackgroundPalette()[1].raw = BasicColor::White.raw;
+	BackgroundPalette()[2].raw = BasicColor::Red.raw;
+
+	// Config BG2
+	// Use charblock 0 for the tiles
+	// Use the first screen block after charblock 0 (i.e. screenblock 8)
+	// 256*256 map size
+	IO::BG2CNT::Get().value =
+		(1<<7) | // 16 bit color
+		(8<<8); // screenblock 8
+
+	// Fill in a couple tiles in video memory
+    auto& tile0 = Sprite::DTileBlock(0)[0];
+	tile0.fill(1); // White
+	auto& tile1 = Sprite::DTileBlock(0)[1];
+	tile1.fill(2); // Red
+
+	// Fill in map data
+	auto* mapMem = reinterpret_cast<volatile uint16_t*>(VideoMemAddress+0x4000);
+	for(int32_t y = 0; y < 64; ++y)
+	{
+		for(int32_t x = 0; x < 64; ++x)
+		{
+			mapMem[y*32+x] = (x^y)&1;
+		}
+	}
 
 	Display().enableSprites();
 	Display().EndBlank();

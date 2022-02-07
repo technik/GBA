@@ -10,8 +10,8 @@ void TextSystem::Init()
     mTileStart = SpriteTileAllocator::alloc(64);
 
     // Init palette
-    SpritePalette()[mPaletteStart+0] = BasicColor::Black;
-    SpritePalette()[mPaletteStart+1] = BasicColor::White;
+    SpritePalette()[mPaletteStart+0].raw = BasicColor::Black.raw;
+    SpritePalette()[mPaletteStart+1].raw = BasicColor::White.raw;
 
     // Copy the font tiles
     uint32_t colorOffset = (mPaletteStart<<24) | (mPaletteStart<<16) | (mPaletteStart<<8) | mPaletteStart;

@@ -11,7 +11,13 @@ namespace IO
     struct IORegister
     {
         static constexpr uint32_t address = _address;
-        static auto Get() { return reinterpret_cast<IORegister*>(address); }
+        static auto& Get() { return *reinterpret_cast<IORegister*>(address); }
+
+		template<uint16_t x>
+		static void Set()
+		{
+			Get().value = x;
+		}
 
         template<size_t n>
         void setBit()

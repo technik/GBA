@@ -44,7 +44,7 @@ struct Sprite
 
 	struct STile
 	{
-		uint8_t pixelPair[32];
+		volatile uint8_t pixelPair[32];
 
 		void fill(uint8_t ndx)
 		{
@@ -67,7 +67,7 @@ struct Sprite
 
 	struct DTile
 	{
-		uint8_t pixel[64];
+		volatile uint8_t pixel[64];
 
 		void fill(uint8_t ndx)
 		{
@@ -169,12 +169,12 @@ inline ObjectAttributeMemory& OAM()
 	return *reinterpret_cast<ObjectAttributeMemory*>(OAMAddress);
 }
 
-inline Color* BackgroundPalette()
+inline auto* BackgroundPalette()
 {
-	return reinterpret_cast<Color*>(PaletteMemAddress);
+	return reinterpret_cast<volatile Color*>(PaletteMemAddress);
 }
 
-inline Color* SpritePalette()
+inline auto* SpritePalette()
 {
-	return reinterpret_cast<Color*>(PaletteMemAddress + 0x200);
+	return reinterpret_cast<volatile Color*>(PaletteMemAddress + 0x200);
 }

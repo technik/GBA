@@ -6,6 +6,7 @@
 struct Color
 {
 	Color();
+	
 	template<typename T>
 	constexpr Color(T r, T g, T b)
 		: raw((r&0x1f)|((g&0x1f)<<5)|((b&0x1f)<<10))
