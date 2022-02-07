@@ -1,11 +1,11 @@
 #include <cstdint>
-#include "linearMath.h"
-#include "Display.h"
-#include "Draw.h"
-#include "Timer.h"
+#include <linearMath.h>
+#include <Display.h>
+#include <Draw.h>
+#include <Timer.h>
 #include <cmath>
-#include "tiles.h"
-#include "Text.h"
+#include <tiles.h>
+#include <Text.h>
 
 using namespace math;
 

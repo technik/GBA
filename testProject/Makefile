@@ -22,8 +22,8 @@ include $(DEVKITARM)/gba_rules
 #---------------------------------------------------------------------------------
 TARGET		:= $(notdir $(CURDIR))
 BUILD		:= build
-SOURCES		:= asm source resources assets
-INCLUDES	:= include resources
+SOURCES		:= asm source resources assets ../common/source
+INCLUDES	:= include resources ../common/include
 DATA		:= data
 MUSIC		:=
 
@@ -33,9 +33,9 @@ MUSIC		:=
 ARCH	:=	-mthumb -mthumb-interwork
 
 ifeq ($(DEBUG),1)
-	CFLAGS := -Wall -gdwarf-2 -O2 -fomit-frame-pointer -fno-rtti -ffast-math -mcpu=arm7tdmi -mtune=arm7tdmi $(ARCH)
+	CFLAGS := -Wall -gdwarf-2 -O2 -fomit-frame-pointer -ffast-math -mcpu=arm7tdmi -mtune=arm7tdmi $(ARCH)
 else
-	CFLAGS := -Wall -g        -O3 -fomit-frame-pointer -fno-rtti -ffast-math -mcpu=arm7tdmi -mtune=arm7tdmi $(ARCH)
+	CFLAGS := -Wall -g        -O3 -fomit-frame-pointer -ffast-math -mcpu=arm7tdmi -mtune=arm7tdmi $(ARCH)
 endif
 
 CFLAGS	+=	$(INCLUDE)
@@ -106,7 +106,7 @@ export OFILES := $(OFILES_BIN) $(OFILES_SOURCES)
 
 export HFILES := $(addsuffix .h,$(subst .,_,$(BINFILES)))
 
-export INCLUDE	:=	$(foreach dir,$(INCLUDES),-iquote $(CURDIR)/$(dir)) \
+export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 					$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
 					-I$(CURDIR)/$(BUILD)
  
