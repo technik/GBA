@@ -21,19 +21,19 @@ struct Sprite
 		ObjectAttribute() = default;
 		ObjectAttribute(math::Vec2i pos, uint32_t shape, uint32_t size);
 
-		uint16_t attribute[4];
+		volatile uint16_t attribute[4];
 	};
 
 	struct alignas(4) AffineTransform
 	{
 		uint16_t fill0[3];
-		int16_t pa;
+		volatile int16_t pa;
 		uint16_t fill1[3];
-		int16_t pb;
+		volatile int16_t pb;
 		uint16_t fill2[3];
-		int16_t pc;
+		volatile int16_t pc;
 		uint16_t fill3[3];
-		int16_t pd;
+		volatile int16_t pd;
 	};
 
 	union Block

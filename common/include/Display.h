@@ -5,16 +5,8 @@
 #include "Device.h"
 
 // Config display
-#define USE_VIDEO_MODE_5
-#ifdef USE_VIDEO_MODE_3
-	constexpr uint32_t ScreenWidth = 240;
-	constexpr uint32_t ScreenHeight = 160;
-	constexpr uint16_t VideoMode = 3;
-#else // VIDEO MODE 5
-	constexpr int32_t ScreenWidth = 160;
-	constexpr int32_t ScreenHeight = 128;
-	constexpr int16_t VideoMode = 5;
-#endif
+constexpr uint32_t ScreenWidth = 240;
+constexpr uint32_t ScreenHeight = 160;
 
 class DisplayControl final
 {
@@ -23,15 +15,17 @@ public:
     static DisplayControl& Get() { return *reinterpret_cast<DisplayControl*>(IO::DISPCNT::address); }
 	DisplayControl() = delete; // Prevent instantiation
 
-	void Init()
+	void InitMode5()
 	{
-#ifdef USE_VIDEO_MODE_5
 		set<5,BG2>();
-		bg2RotScale.a = (160<<8)/240; // =(160/240.0)<<8
-		bg2RotScale.d = (128<<8)/160; // =(128/160.0)<<8
-#else
-		static_assert(false, "Unsupported video mode");
-#endif
+		bg2RotScale.a = (160<<8)/ScreenWidth; // =(160/240.0)<<8
+		bg2RotScale.d = (128<<8)/ScreenHeight; // =(128/160.0)<<8
+	}
+
+	void InitMode2()
+	{
+		// Enable mode 2 with backgrounds 2 and 3
+		control = 2;//set<2,0>();
 	}
 
 	void StartBlank()
@@ -90,6 +84,7 @@ private:
 		int16_t b;
 		int16_t c;
 		int16_t d;
+		
 		// 28 bit signed offsets
 		int32_t x0;
 		int32_t y0;

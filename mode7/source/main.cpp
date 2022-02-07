@@ -9,7 +9,7 @@
 
 using namespace math;
 
-void plotFrameIndicator(uint16_t* frameBuffer)
+void plotFrameIndicator()
 {
 	// Draw frame rate indicator
 	uint32_t ms = Timer0().counter/16; // ~Milliseconds
@@ -20,35 +20,16 @@ void plotFrameIndicator(uint16_t* frameBuffer)
 	tile1->attribute[2] = Sprite::DTile::HighSpriteBankIndex(ms-10*ms10+16);
 }
 
-void drawScene(uint16_t* backBuffer, int32_t t)
-{
-	constexpr uint32_t bgBlue = (0x1f<<10)|(0x1f<<5)|(160>>3);
-	// Draw
-	clear(backBuffer, bgBlue);
-	constexpr auto halfSide = 20_p8;
-	constexpr auto center = 100_p8;
-	auto sx = intp8((float)sin(t*0.125f));
-	auto ndl = max(0_p8, intp8((float)sin(t*0.125f+0.2f)));
-
-	math::Vec2p8 tri[3] = {
-		math::Vec2p8(center-halfSide*sx,100_p8),
-		math::Vec2p8(center+halfSide*sx,100_p8),
-		math::Vec2p8(center,40_p8)
-	};
-
-	rasterTriangle(backBuffer, Color(0,(int)(0x1f*(1+ndl)/2).round(),0).raw, tri);
-}
-
 int main()
 {
 	Display().StartBlank();
-	Display().Init();
+	Display().InitMode2();
 
 	// TextInit
 	TextSystem text;
 	text.Init();
 
-	// Create two sprites using with them
+	// Init the frame counter
 	auto* obj0 = &Sprite::OAM()[0].objects[0];
 	obj0->attribute[0] = 1<<13; // Top of the screen, normal rendering, 16bit palette tiles
 	obj0->attribute[1] = 0; // Left of the screen, small size
@@ -58,6 +39,8 @@ int main()
 	obj1->attribute[1] = 8; // Left of the screen, small size
 	obj1->attribute[2] = Sprite::DTile::HighSpriteBankIndex('1'-32);
 
+	// Prepare the background tile
+
 	Display().enableSprites();
 	Display().EndBlank();
 
@@ -66,15 +49,12 @@ int main()
 	Timer0().reset<Timer::e1024>(); // Reset timer to ~1/16th of a millisecond
 	while(1)
 	{
-		auto* displayBuffer = Display().backBuffer();
 		// Logic
-		drawScene(displayBuffer, t);
 
 		// VSync
-		plotFrameIndicator(displayBuffer);
+		plotFrameIndicator();
 		Display().vSync();
 		Timer0().reset<Timer::e1024>(); // Reset timer to 1/16th of a millisecond
-		Display().flipFrame();
 
 		++t;
 	}
