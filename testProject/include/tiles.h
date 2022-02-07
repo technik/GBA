@@ -5,6 +5,7 @@
 
 #include "vector.h"
 #include "Color.h"
+#include "Device.h"
 
 struct Sprite
 {
@@ -89,17 +90,17 @@ struct Sprite
 
 	static STile* STileBlock(uint32_t n)
 	{
-		return reinterpret_cast<STile*>(0x06000000 + n*0x4000);
+		return reinterpret_cast<STile*>(VideoMemAddress + n*0x4000);
 	}
 
 	static DTile* DTileBlock(uint32_t n)
 	{
-		return reinterpret_cast<DTile*>(0x06000000 + n*0x4000);
+		return reinterpret_cast<DTile*>(VideoMemAddress + n*0x4000);
 	}
 
 	static Block* OAM()
 	{
-		return reinterpret_cast<Block*>(0x07000000);
+		return reinterpret_cast<Block*>(OAMAddress);
 	}
 
 	template<size_t oamBank>
@@ -112,12 +113,23 @@ struct Sprite
 	}
 };
 
+union ObjectAttributeMemory
+{
+	volatile Sprite::ObjectAttribute object[1024];
+	volatile Sprite::AffineTransform transform[32];
+};
+
+inline ObjectAttributeMemory& OAM()
+{
+	return *reinterpret_cast<ObjectAttributeMemory*>(OAMAddress);
+}
+
 inline Color* BackgroundPalette()
 {
-	return reinterpret_cast<Color*>(0x05000000);
+	return reinterpret_cast<Color*>(PaletteMemAddress);
 }
 
 inline Color* SpritePalette()
 {
-	return reinterpret_cast<Color*>(0x05000200);
+	return reinterpret_cast<Color*>(PaletteMemAddress + 0x200);
 }

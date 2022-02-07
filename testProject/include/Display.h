@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include "vector.h"
+#include "Device.h"
 
 // Config display
 #define USE_VIDEO_MODE_5
@@ -19,7 +20,7 @@ class DisplayControl final
 {
 public:
 	// Singleton access
-    static DisplayControl& Get() { return *reinterpret_cast<DisplayControl*>(0x04000000); }
+    static DisplayControl& Get() { return *reinterpret_cast<DisplayControl*>(IO::DISPCNT::address); }
 	DisplayControl() = delete; // Prevent instantiation
 
 	void Init()
