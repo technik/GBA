@@ -47,7 +47,7 @@ int main()
 	// Config BG2
 	// Use charblock 0 for the tiles
 	// Use the first screen block after charblock 0 (i.e. screenblock 8)
-	// 256*256 map size
+	// 128*128 map size
 	IO::BG2CNT::Get().value =
 		(1<<7) | // 16 bit color
 		(8<<8); // screenblock 8
@@ -59,12 +59,13 @@ int main()
 	tile1.fill(2); // Red
 
 	// Fill in map data
+	// Affine maps use 8 bit indices
 	auto* mapMem = reinterpret_cast<volatile uint16_t*>(VideoMemAddress+0x4000);
-	for(int32_t y = 0; y < 64; ++y)
+	for(int32_t y = 0; y < 16; ++y)
 	{
-		for(int32_t x = 0; x < 64; ++x)
+		for(int32_t x = 0; x < 8; ++x)
 		{
-			mapMem[y*32+x] = (x^y)&1;
+			mapMem[y*8+x] = (y&1) ? 1 : (1<<8);
 		}
 	}
 
