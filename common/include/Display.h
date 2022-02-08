@@ -72,6 +72,8 @@ public:
 
 	void vSync()
 	{
+		while(vCount > ScreenHeight)
+		{}
 		while(vCount <= ScreenHeight)
 		{}
 	}
