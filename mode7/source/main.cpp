@@ -8,6 +8,7 @@
 #include <tiles.h>
 #include <Text.h>
 #include <Keypad.h>
+#include <tonc_math.h>
 
 using namespace math;
 
@@ -73,6 +74,7 @@ int main()
 	Display().enableSprites();
 	Display().EndBlank();
 
+	int16_t rot = 0;
 	Vec2p8 bgPos = {};
 
 	// Main loop
@@ -97,8 +99,22 @@ int main()
 		{
 			bgPos.y() -= 1_p8;
 		}
+		if(Keypad::Held(Keypad::KEY_L))
+		{
+			rot += 32;
+		}
+		if(Keypad::Held(Keypad::KEY_R))
+		{
+			rot -= 32;
+		}
 
 		IO::BG2P::Get().refPoint = bgPos;
+		int32_t sx = lu_sin(rot)>>4;
+		int32_t cx = lu_cos(rot)>>4;
+		IO::BG2P::Get().tx.A = cx;
+		IO::BG2P::Get().tx.B = sx;
+		IO::BG2P::Get().tx.C = -sx;
+		IO::BG2P::Get().tx.D = cx;
 
 		// VSync
 		plotFrameIndicator();

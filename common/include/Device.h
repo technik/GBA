@@ -47,7 +47,7 @@ namespace IO
         static constexpr uint32_t address = _address;
         static auto& Get() { return *reinterpret_cast<AffineTxRegister*>(address); }
 
-        volatile AffineTransform2D value;
+        volatile AffineTransform2D tx;
         volatile math::Vec2p8 refPoint;
     };
 
