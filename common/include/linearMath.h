@@ -56,6 +56,28 @@ namespace math
 			constexpr int32_t half = 1<<(shift-1);
 			return (raw+half)>>shift;
 		}
+
+		void operator+=(FixedPoint<shift> x)
+		{
+			raw += x.raw;
+		}
+
+		void operator-=(FixedPoint<shift> x)
+		{
+			raw -= x.raw;
+		}
+
+		auto& operator=(const FixedPoint<shift>& x)
+		{
+			raw = x.raw;
+			return *this;
+		}
+
+		auto& operator=(const FixedPoint<shift>& x) volatile
+		{
+			raw = x.raw;
+			return *this;
+		}
 	};
 
 	using intp8 = FixedPoint<8>;

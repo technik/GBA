@@ -7,6 +7,7 @@
 #include <cmath>
 #include <tiles.h>
 #include <Text.h>
+#include <Keypad.h>
 
 using namespace math;
 
@@ -72,12 +73,32 @@ int main()
 	Display().enableSprites();
 	Display().EndBlank();
 
+	Vec2p8 bgPos = {};
+
 	// Main loop
 	int32_t t = 0;
 	Timer0().reset<Timer::e1024>(); // Reset timer to ~1/16th of a millisecond
 	while(1)
 	{
 		// Logic
+		if(Keypad::Held(Keypad::KEY_LEFT))
+		{
+			bgPos.x() += 1_p8;
+		}
+		if(Keypad::Held(Keypad::KEY_RIGHT))
+		{
+			bgPos.x() -= 1_p8;
+		}
+		if(Keypad::Held(Keypad::KEY_UP))
+		{
+			bgPos.y() += 1_p8;
+		}
+		if(Keypad::Held(Keypad::KEY_DOWN))
+		{
+			bgPos.y() -= 1_p8;
+		}
+
+		IO::BG2P::Get().refPoint = bgPos;
 
 		// VSync
 		plotFrameIndicator();

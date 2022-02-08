@@ -31,6 +31,20 @@ namespace math {
 				m[i] = other.m[i];
 		}
 
+		auto& operator=(const Vector<T,N>& other)
+		{
+			for(size_t i = 0; i < N; ++i)
+				m[i] = other.m[i];
+			return *this;
+		}
+		
+		auto& operator=(const Vector<T,N>& other) volatile
+		{
+			for(size_t i = 0; i < N; ++i)
+				m[i] = other.m[i];
+			return *this;
+		}
+
 		// Accessors
 		auto& x() const { return m[0]; }
 		auto& y() const { static_assert(N>1); return m[1]; }
@@ -63,9 +77,21 @@ namespace math {
 	}
 
 	template<class T>
+	inline Vec2<T> operator+=(Vec2<T>& a, const Vec2<T>& b)
+	{
+		return a = {a.x() + b.x(), a.y() + b.y()};
+	}
+
+	template<class T>
 	constexpr inline Vec2<T> operator-(const Vec2<T>& a, const Vec2<T>& b)
 	{
 		return {a.x() - b.x(), a.y() - b.y()};
+	}
+
+	template<class T>
+	inline Vec2<T> operator-=(Vec2<T>& a, const Vec2<T>& b)
+	{
+		return a = {a.x() - b.x(), a.y() - b.y()};
 	}
 
 	template<class T>

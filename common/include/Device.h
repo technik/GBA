@@ -45,10 +45,10 @@ namespace IO
     struct AffineTxRegister
     {
         static constexpr uint32_t address = _address;
-        static auto Get() { return reinterpret_cast<AffineTxRegister*>(address); }
+        static auto& Get() { return *reinterpret_cast<AffineTxRegister*>(address); }
 
         volatile AffineTransform2D value;
-        volatile math::Vec2i refPoint;
+        volatile math::Vec2p8 refPoint;
     };
 
     // IO Memory map
