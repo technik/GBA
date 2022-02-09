@@ -117,8 +117,8 @@ int main()
 		IO::BG2P::Get().tx.D = cx;
 
 		// VSync
-		plotFrameIndicator();
 		Display().vSync();
+		plotFrameIndicator();
 		Timer0().reset<Timer::e1024>(); // Reset timer to 1/16th of a millisecond
 
 		++t;
