@@ -75,7 +75,8 @@ int main()
 	Display().EndBlank();
 
 	int16_t rot = 0;
-	Vec2p8 bgPos = {};
+	intp12 depth = 1_p12;
+	Vec2p12 bgPos = {};//Vec2p12(intp12(ScreenWidth/2), intp12(ScreenHeight/2));
 
 	// Main loop
 	int32_t t = 0;
@@ -85,36 +86,40 @@ int main()
 		// Logic
 		if(Keypad::Held(Keypad::KEY_LEFT))
 		{
-			bgPos.x() += 1_p8;
+			bgPos.x() -= 1_p12;
 		}
 		if(Keypad::Held(Keypad::KEY_RIGHT))
 		{
-			bgPos.x() -= 1_p8;
+			bgPos.x() += 1_p12;
 		}
 		if(Keypad::Held(Keypad::KEY_UP))
 		{
-			bgPos.y() += 1_p8;
+			bgPos.y() -= 1_p12;
 		}
 		if(Keypad::Held(Keypad::KEY_DOWN))
 		{
-			bgPos.y() -= 1_p8;
+			bgPos.y() += 1_p12;
 		}
 		if(Keypad::Held(Keypad::KEY_L))
 		{
-			rot += 32;
+			depth += 0.01_p12;
 		}
 		if(Keypad::Held(Keypad::KEY_R))
 		{
-			rot -= 32;
+			depth -= 0.01_p12;
 		}
 
-		IO::BG2P::Get().refPoint = bgPos;
-		int32_t sx = lu_sin(rot)>>4;
-		int32_t cx = lu_cos(rot)>>4;
-		IO::BG2P::Get().tx.A = cx;
-		IO::BG2P::Get().tx.B = sx;
-		IO::BG2P::Get().tx.C = -sx;
-		IO::BG2P::Get().tx.D = cx;
+		IO::BG2P::Get().refPoint.x() = (bgPos.x()*depth/240).cast_down<8>();
+		IO::BG2P::Get().refPoint.y() = (bgPos.y()*depth/240).cast_down<8>();
+		//IO::BG2P::Get().refPoint.x() = (bgPos.x()*depth).cast_down<8>();
+		//IO::BG2P::Get().refPoint.y() = (bgPos.y()*depth).cast_down<8>();
+
+		//int32_t sx = (lu_sin(rot)>>4)*128/240;
+		//int32_t cx = (lu_cos(rot)>>4)*128/240;
+		IO::BG2P::Get().tx.A = (2*depth.raw/160)/16;//(2*depth/160_p12).cast_down<8>().raw;//cx;
+		IO::BG2P::Get().tx.B = 0;//sx;
+		IO::BG2P::Get().tx.C = 0;//-sx;
+		IO::BG2P::Get().tx.D = (2*depth/160).cast_down<8>().raw;//cx;
 
 		// VSync
 		Display().vSync();

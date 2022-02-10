@@ -22,7 +22,12 @@ namespace math
 	struct FixedPoint
 	{
 		FixedPoint() = default;
-		constexpr explicit FixedPoint(int32_t x)
+
+		constexpr explicit FixedPoint(long x)
+			: raw(x<<shift)
+		{}
+
+		constexpr explicit FixedPoint(long unsigned x)
 			: raw(x<<shift)
 		{}
 
@@ -31,7 +36,7 @@ namespace math
 			int32_t integer = int32_t(x);
 			float diff = x-integer;
 			int32_t fraction = int32_t(diff*(1<<shift));
-			raw = (integer<<shift) | fraction;
+			raw = (integer<<shift) + fraction;
 		}
 		
 		constexpr explicit FixedPoint(int32_t x, int32_t frac)
@@ -81,9 +86,18 @@ namespace math
 	};
 
 	using intp8 = FixedPoint<8>;
+	using intp12 = FixedPoint<12>;
+	using intp16 = FixedPoint<16>;
+	using intp24 = FixedPoint<24>;
 
 	constexpr intp8 operator""_p8(long double x) { return intp8(float(x)); }
 	constexpr intp8 operator""_p8(unsigned long long x) { return intp8(int32_t(x)); }
+	constexpr intp12 operator""_p12(long double x) { return intp12(float(x)); }
+	constexpr intp12 operator""_p12(unsigned long long x) { return intp12(int32_t(x)); }
+	constexpr intp16 operator""_p16(long double x) { return intp16(float(x)); }
+	constexpr intp16 operator""_p16(unsigned long long x) { return intp16(int32_t(x)); }
+	constexpr intp24 operator""_p24(long double x) { return intp24(float(x)); }
+	constexpr intp24 operator""_p24(unsigned long long x) { return intp24(int32_t(x)); }
 
 	template<size_t shift>
 	constexpr FixedPoint<shift> operator+(

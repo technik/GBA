@@ -106,10 +106,47 @@ namespace DMA
 {
 	struct Channel
 	{
-		volatile uint32_t srcAddress;
-		volatile uint32_t dstAddress;
+		volatile uint32_t srcAddress; // 28 bits
+		volatile uint32_t dstAddress; // 27 bits
 		volatile uint16_t wordCount;
 		volatile uint16_t control;
+
+		enum class AddrAdjust : uint16_t
+		{
+			Inc = 0,
+			Dec = 1,
+			Fixed = 2,
+			Reload = 3 // Destination only
+		};
+
+		enum class ChunkSize : uint16_t
+		{
+			Dma16Bit = 0,
+			Dma32Bit = (1<<10)
+		};
+
+		enum class TimingMode : uint16_t
+		{
+			Now = 0,
+			VBlank = 1<<12,
+			HBlank = 2<<12,
+			// Used with channel3 only.
+			// DMA will start at the next screen refresh, delayed by two
+			// scanlines, so it can safely be used to copy full backgrounds to VRAM
+			Refresh = 3<<12
+		};
+
+		static constexpr uint16_t dstAdjustShift = 5;
+		static constexpr uint16_t srcAdjustShift = 7;
+		static constexpr uint16_t DmaRepeat = 1<<9;
+		static constexpr uint16_t DmaIRQ = 1<<14;
+		static constexpr uint16_t DmaEnable = 1<<15;
+
+		// Cancels any pending transfer on this channel
+		void clear()
+		{
+			control = 0; // Clear enable bit
+		}
 	};
 
 	inline Channel& Channel0() {

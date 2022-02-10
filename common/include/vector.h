@@ -46,13 +46,16 @@ namespace math {
 		}
 
 		// Accessors
-		auto& x() const { return m[0]; }
-		auto& y() const { static_assert(N>1); return m[1]; }
-		auto& z() const { static_assert(N>2); return m[2]; }
+		auto x() const { return m[0]; }
+		auto y() const { static_assert(N>1); return m[1]; }
+		auto z() const { static_assert(N>2); return m[2]; }
 		
 		auto& x() { return m[0]; }
 		auto& y() { static_assert(N>1); return m[1]; }
 		auto& z() { static_assert(N>2); return m[2]; }
+		auto& x() volatile { return m[0]; }
+		auto& y() volatile { static_assert(N>1); return m[1]; }
+		auto& z() volatile { static_assert(N>2); return m[2]; }
 	};
 
 	template<class T>
@@ -68,6 +71,15 @@ namespace math {
 
 	using Vec2p8 = Vec2<intp8>;
 	using Vec3p8 = Vec3<intp8>;
+	
+	using Vec2p12 = Vec2<intp12>;
+	using Vec3p12 = Vec3<intp12>;
+	
+	using Vec2p16 = Vec2<intp16>;
+	using Vec3p16 = Vec3<intp16>;
+
+	using Vec2p24 = Vec2<intp24>;
+	using Vec3p24 = Vec3<intp24>;
 
 	// Basic operators
 	template<class T>
