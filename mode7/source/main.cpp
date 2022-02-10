@@ -83,22 +83,23 @@ int main()
 	Timer0().reset<Timer::e1024>(); // Reset timer to ~1/16th of a millisecond
 	while(1)
 	{
+		constexpr intp12 speed = 1_p12/60;
 		// Logic
 		if(Keypad::Held(Keypad::KEY_LEFT))
 		{
-			bgPos.x() -= 1_p12;
+			bgPos.x() -= speed;
 		}
 		if(Keypad::Held(Keypad::KEY_RIGHT))
 		{
-			bgPos.x() += 1_p12;
+			bgPos.x() += speed;
 		}
 		if(Keypad::Held(Keypad::KEY_UP))
 		{
-			bgPos.y() -= 1_p12;
+			bgPos.y() -= speed;
 		}
 		if(Keypad::Held(Keypad::KEY_DOWN))
 		{
-			bgPos.y() += 1_p12;
+			bgPos.y() += speed;
 		}
 		if(Keypad::Held(Keypad::KEY_L))
 		{
@@ -109,17 +110,13 @@ int main()
 			depth -= 0.01_p12;
 		}
 
-		IO::BG2P::Get().refPoint.x() = (bgPos.x()*depth/240).cast_down<8>();
-		IO::BG2P::Get().refPoint.y() = (bgPos.y()*depth/240).cast_down<8>();
-		//IO::BG2P::Get().refPoint.x() = (bgPos.x()*depth).cast_down<8>();
-		//IO::BG2P::Get().refPoint.y() = (bgPos.y()*depth).cast_down<8>();
-
-		//int32_t sx = (lu_sin(rot)>>4)*128/240;
-		//int32_t cx = (lu_cos(rot)>>4)*128/240;
-		IO::BG2P::Get().tx.A = (2*depth.raw/160)/16;//(2*depth/160_p12).cast_down<8>().raw;//cx;
-		IO::BG2P::Get().tx.B = 0;//sx;
-		IO::BG2P::Get().tx.C = 0;//-sx;
-		IO::BG2P::Get().tx.D = (2*depth/160).cast_down<8>().raw;//cx;
+		IO::BG2P::Get().refPoint.x() = (128*(0.5_p12-depth+bgPos.x())).cast_down<8>();
+		IO::BG2P::Get().refPoint.y() = (128*(0.5_p12-depth+bgPos.y())).cast_down<8>();
+		
+		IO::BG2P::Get().tx.A = (256*depth/160).cast_down<8>().raw;//cx;
+		IO::BG2P::Get().tx.B = 0;
+		IO::BG2P::Get().tx.C = 0;
+		IO::BG2P::Get().tx.D = (256*depth/160).cast_down<8>().raw;//cx;
 
 		// VSync
 		Display().vSync();

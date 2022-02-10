@@ -17,5 +17,8 @@ int main()
     intp12 dx = 0.01_p12;
     depth += dx;
 
+    int16_t regA = (2 * depth / 160_p12).cast_down<8>().raw;
+    depth.raw = -984;
+
     return 0;
 }
