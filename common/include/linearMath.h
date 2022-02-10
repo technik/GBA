@@ -52,7 +52,9 @@ namespace math
 			constexpr int diff = shift-shift2;
 			int32_t rounded = raw + (1<<(diff-1));
 
-			return FixedPoint<shift2>(rounded>>diff);
+            FixedPoint<shift2> result;
+            result.raw = rounded>>diff;
+            return result;
 		}
 
 		constexpr int32_t floor() const { return raw>>shift; }
@@ -91,13 +93,13 @@ namespace math
 	using intp24 = FixedPoint<24>;
 
 	constexpr intp8 operator""_p8(long double x) { return intp8(float(x)); }
-	constexpr intp8 operator""_p8(unsigned long long x) { return intp8(int32_t(x)); }
+	constexpr intp8 operator""_p8(unsigned long long x) { return intp8(long(x)); }
 	constexpr intp12 operator""_p12(long double x) { return intp12(float(x)); }
-	constexpr intp12 operator""_p12(unsigned long long x) { return intp12(int32_t(x)); }
+	constexpr intp12 operator""_p12(unsigned long long x) { return intp12(long(x)); }
 	constexpr intp16 operator""_p16(long double x) { return intp16(float(x)); }
-	constexpr intp16 operator""_p16(unsigned long long x) { return intp16(int32_t(x)); }
+	constexpr intp16 operator""_p16(unsigned long long x) { return intp16(long(x)); }
 	constexpr intp24 operator""_p24(long double x) { return intp24(float(x)); }
-	constexpr intp24 operator""_p24(unsigned long long x) { return intp24(int32_t(x)); }
+	constexpr intp24 operator""_p24(unsigned long long x) { return intp24(long(x)); }
 
 	template<size_t shift>
 	constexpr FixedPoint<shift> operator+(
