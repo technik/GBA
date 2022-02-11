@@ -3,116 +3,95 @@
 #include <cstdint>
 #include <cstddef>
 #include "linearMath.h"
+#include <vector.h>
 
 namespace math {
 
-	template<class T, size_t N>
-	struct Vector final
+	template<class T, uint32_t M, uint32_t N>
+	struct Matrix final
 	{
-		T m[N];
+		static constexpr uint32_t numRows = M;
+		static constexpr uint32_t numCols = N;
+		static constexpr uint32_t numElements = M*N;
+
+		T m[M][N];
 
 		// Constructors
-		Vector() = default;
-		constexpr Vector(T _x)
+		Matrix() = default;
+
+		static constexpr Matrix Zero()
 		{
-			for(size_t i = 0; i < N; ++i)
-				m[i] = _x;
+			Matrix result {};
+			return result;
 		}
-		constexpr Vector(T _x, T _y) : m{_x,_y} {}
-		constexpr Vector(T _x, T _y, T _z) : m{_x,_y,_z} {}
+		
+		static constexpr Matrix Identity()
+		{
+			Matrix result {};
+			for(int32_t i = 0; i < min(numRows,numCols); ++i)
+				result.m[i][i] = 1;
+			return result;
+		}
 
 		// Assignment and copy construction
-		constexpr Vector(const Vector<T,N>& other)
+		constexpr Matrix(const Matrix<T,M,N>& other)
 		{
-			for(size_t i = 0; i < N; ++i)
-				m[i] = other.m[i];
+			for(uint32_t i = 0; i < M; ++i)
+			{
+				for(uint32_t j = 0; j < N; ++j)
+				{
+					m[i][j] = other.m[i][j];
+				}
+			}
 		}
 
-		auto& operator=(const Vector<T,N>& other)
+		auto& operator=(const Matrix<T,M,N>& other)
 		{
-			for(size_t i = 0; i < N; ++i)
-				m[i] = other.m[i];
+			for(uint32_t i = 0; i < M; ++i)
+			{
+				for(uint32_t j = 0; j < N; ++j)
+				{
+					m[i][j] = other.m[i][j];
+				}
+			}
 			return *this;
 		}
 		
-		auto& operator=(const Vector<T,N>& other) volatile
+		auto& operator=(const Matrix<T,M,N>& other) volatile
 		{
-			for(size_t i = 0; i < N; ++i)
-				m[i] = other.m[i];
+			for(uint32_t i = 0; i < M; ++i)
+			{
+				for(uint32_t j = 0; j < N; ++j)
+				{
+					m[i][j] = other.m[i][j];
+				}
+			}
 			return *this;
 		}
+	};
 
-		// Accessors
-		auto x() const { return m[0]; }
-		auto y() const { static_assert(N>1); return m[1]; }
-		auto z() const { static_assert(N>2); return m[2]; }
-		
-		auto& x() { return m[0]; }
-		auto& y() { static_assert(N>1); return m[1]; }
-		auto& z() { static_assert(N>2); return m[2]; }
-		auto& x() volatile { return m[0]; }
-		auto& y() volatile { static_assert(N>1); return m[1]; }
-		auto& z() volatile { static_assert(N>2); return m[2]; }
+	// Affine transforms as expected by the hardware registers
+	struct AffineTransform2D
+	{
+		int16_t a,b,c,d;
+		Vec2p8 x, y;
 	};
 
 	template<class T>
-	using Vec2 = Vector<T,2>;
+	using Mat22 = Matrix<T,2,2>;
 	template<class T>
-	using Vec3 = Vector<T,3>;
+	using Mat33 = Matrix<T,3,3>;
 
-	using Vec2f = Vector<float,2>;
-	using Vec3f = Vector<float,3>;
-
-	using Vec2i = Vector<int32_t,2>;
-	using Vec3i = Vector<int32_t,3>;
-
-	using Vec2p8 = Vec2<intp8>;
-	using Vec3p8 = Vec3<intp8>;
+	using Mat22f = Mat22<float>;
+	using Mat33f = Mat33<float>;
 	
-	using Vec2p12 = Vec2<intp12>;
-	using Vec3p12 = Vec3<intp12>;
+	using Mat22p8 = Mat22<intp8>;
+	using Mat33p8 = Mat33<intp8>;
 	
-	using Vec2p16 = Vec2<intp16>;
-	using Vec3p16 = Vec3<intp16>;
-
-	using Vec2p24 = Vec2<intp24>;
-	using Vec3p24 = Vec3<intp24>;
-
-	// Basic operators
-	template<class T>
-	constexpr inline Vec2<T> operator+(const Vec2<T>& a, const Vec2<T>& b)
-	{
-		return {a.x() + b.x(), a.y() + b.y()};
-	}
-
-	template<class T>
-	inline Vec2<T> operator+=(Vec2<T>& a, const Vec2<T>& b)
-	{
-		return a = {a.x() + b.x(), a.y() + b.y()};
-	}
-
-	template<class T>
-	constexpr inline Vec2<T> operator-(const Vec2<T>& a, const Vec2<T>& b)
-	{
-		return {a.x() - b.x(), a.y() - b.y()};
-	}
-
-	template<class T>
-	inline Vec2<T> operator-=(Vec2<T>& a, const Vec2<T>& b)
-	{
-		return a = {a.x() - b.x(), a.y() - b.y()};
-	}
-
-	template<class T>
-	constexpr inline T dot(const Vec2<T>& a, const Vec2<T>&b)
-	{
-		return a.x()*b.x() + a.y()*b.y();
-	}
-
-	template<class T>
-	constexpr inline T cross(const Vec2<T>& a, const Vec2<T>&b)
-	{
-		return a.x()*b.y() - a.y()*b.x();
-	}
+	using Mat22p12 = Mat22<intp12>;
+	using Mat33p12 = Mat33<intp12>;
+	
+	using Mat22p16 = Mat22<intp16>;
+	using Mat33p16 = Mat33<intp16>;
 
 } // namespace math

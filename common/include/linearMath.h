@@ -31,7 +31,7 @@ namespace math
 			: raw(x<<shift)
 		{}
 
-		constexpr explicit FixedPoint(float x)
+		constexpr explicit FixedPoint(float x) : raw(0)
 		{
 			int32_t integer = int32_t(x);
 			float diff = x-integer;
@@ -136,6 +136,15 @@ namespace math
 	{
 		FixedPoint<shift> result{};
 		result.raw = a.raw - b.raw;
+		return result;
+	}
+
+	template<size_t shift>
+	constexpr FixedPoint<shift> operator-(
+		FixedPoint<shift> x)
+	{
+		FixedPoint<shift> result{};
+		result.raw = -x.raw;
 		return result;
 	}
 

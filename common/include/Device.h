@@ -36,18 +36,13 @@ namespace IO
         volatile T value;
     };
 
-    struct AffineTransform2D
-    {
-        int16_t A, B, C, D;
-    };
-
     template<uint32_t _address>
     struct AffineTxRegister
     {
         static constexpr uint32_t address = _address;
         static auto& Get() { return *reinterpret_cast<AffineTxRegister*>(address); }
 
-        volatile AffineTransform2D tx;
+        volatile int16_t A, B, C, D;
         volatile math::Vec2p8 refPoint;
     };
 

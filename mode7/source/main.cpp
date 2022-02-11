@@ -9,8 +9,55 @@
 #include <Text.h>
 #include <Keypad.h>
 #include <tonc_math.h>
+#include <matrix.h>
 
 using namespace math;
+
+//#define EWRAM_DATA __attribute__((section(".ewram")))
+//#define IWRAM_DATA __attribute__((section(".iwram")))
+//#define  EWRAM_BSS __attribute__((section(".sbss")))
+//
+//#define EWRAM_CODE __attribute__((section(".ewram"), long_call))
+//#define IWRAM_CODE __attribute__((section(".iwram"), long_call))
+
+typedef void (*fnptr)(void);
+#define REG_ISR_MAIN *(fnptr*)(0x03007FFC)
+
+__attribute__((section(".iwram"))) Mat22p12 gScanlineTransforms[ScreenHeight];
+
+
+intp12 PlaneScanlineIntersection(intp12 h, int32_t scanline);
+void FillInvProjMatrix(intp12 cx, intp12 cy, intp12 cz, intp12 depth, Mat22p12& dst);
+
+void RefreshAffineTransforms(Vec3p12 camPos)
+{
+	// Out of screen, start computing all the affine matrices
+	for(int32_t i = 0; i < ScreenHeight; ++i)
+	{
+		auto d = PlaneScanlineIntersection(camPos.z(), i);
+		FillInvProjMatrix(0_p12, 0_p12, camPos.z(), d, gScanlineTransforms[i]);
+	}
+}
+
+void hblank_cb()
+{
+	uint16_t vcount = IO::VCOUNT::Get().value + 1;
+	if(vcount < 160) // Need to update the next projection matrix
+	{
+		auto& tx = gScanlineTransforms[vcount];
+
+		// u,v offsets
+		IO::BG2P::Get().refPoint.x() = tx.m[0][1].cast_down<8>();
+		IO::BG2P::Get().refPoint.y() = tx.m[1][1].cast_down<8>();
+		
+		// Scale/rotation
+		IO::BG2P::Get().A = int16_t(tx.m[0][0].cast_down<8>().raw);
+		// These two are zero anyway
+		//IO::BG2P::Get().B = 0;
+		//IO::BG2P::Get().C = 0;
+		IO::BG2P::Get().D = int16_t(tx.m[1][0].cast_down<8>().raw);
+	}
+}
 
 void plotFrameIndicator()
 {
@@ -21,6 +68,49 @@ void plotFrameIndicator()
 	tile0->attribute[2] = Sprite::DTile::HighSpriteBankIndex(ms10+16);
 	auto* tile1 = &Sprite::OAM()[0].objects[1];
 	tile1->attribute[2] = Sprite::DTile::HighSpriteBankIndex(ms-10*ms10+16);
+}
+
+// Constants to transform from world to texture space
+constexpr uint32_t TexelsPerMeter = 8;
+constexpr uint32_t TexelOffset = 128/2; // Center the texture at the world origin.
+
+// Inverse projection data to transform from screen space (pixel coordinates, scanlines)
+// To view space (camera aligned, 3d coordinates)
+#define FOV_Y_90
+#ifdef FOV_Y_90
+constexpr intp12 tgY = 1_p12;
+constexpr intp12 tgX = 1.5_p12;
+#elif defined(FOV_X_90)
+constexpr intp12 tgY = 0.6666666666666667_p12;
+constexpr intp12 tgX = 1_p12;
+#elif defined(FOV_Y_45)
+constexpr intp12 tgY = 0.41421356237309503_p12;
+constexpr intp12 tgX = 0.6213203435596426_p12;
+#endif
+
+// Returns the intersection depth of the plane defined by a scanline and the view origin,
+// with a horizontal plane at height h below the camera.
+// Assumes the view frustum is horizontally aligned
+intp12 PlaneScanlineIntersection(intp12 cz, int32_t scanline)
+{
+	return cz*ScreenHeight/(tgY*(2*scanline-ScreenHeight));
+}
+
+// The output matrix is sparse, and only the following is stored
+//
+// invP = | a00 a02 |
+//        | a11 a12 |
+// a01 and a10 are implicity 0.
+//
+// x_world = invP * x_screen
+void FillInvProjMatrix(intp12 cx, intp12 cy, intp12 cz, intp12 depth, Mat22p12& dst)
+{
+	dst.m[0][0] = TexelsPerMeter*2*depth*tgX/ScreenWidth;
+	dst.m[0][1] = (cx-depth*tgX)*TexelsPerMeter + TexelOffset;
+	// tgy/VRes = tgx/HRes, so we can reuse this from the first row.
+	// Also nice because tgX has exact .8 representations more often
+	dst.m[1][0] = depth*TexelsPerMeter;
+	dst.m[1][1] = cy*TexelsPerMeter + TexelOffset;
 }
 
 int main()
@@ -71,6 +161,9 @@ int main()
 		}
 	}
 
+	// Set up HBlank interrupt
+
+
 	Display().enableSprites();
 	Display().EndBlank();
 
@@ -109,16 +202,23 @@ int main()
 			camPos.z() -= 0.125_p12;
 		}
 
-		IO::BG2P::Get().refPoint.x() = (128*(0.5_p12-depth+bgPos.x())).cast_down<8>();
-		IO::BG2P::Get().refPoint.y() = (128*(0.5_p12-depth+bgPos.y())).cast_down<8>();
-		
-		IO::BG2P::Get().tx.A = (256*depth/160).cast_down<8>().raw;//cx;
-		IO::BG2P::Get().tx.B = 0;
-		IO::BG2P::Get().tx.C = 0;
-		IO::BG2P::Get().tx.D = (256*depth/160).cast_down<8>().raw;//cx;
-
 		// VSync
 		Display().vSync();
+
+		RefreshAffineTransforms(camPos);
+		
+		// Set the first transform for next frame
+		auto& tx = gScanlineTransforms[0];
+
+		// u,v offsets
+		IO::BG2P::Get().refPoint.x() = tx.m[0][1].cast_down<8>();
+		IO::BG2P::Get().refPoint.y() = tx.m[1][1].cast_down<8>();
+		// Scale/rotation
+		IO::BG2P::Get().A = int16_t(tx.m[0][0].cast_down<8>().raw);
+		IO::BG2P::Get().B = 0;
+		IO::BG2P::Get().C = 0;
+		IO::BG2P::Get().D = int16_t(tx.m[1][0].cast_down<8>().raw);
+
 		plotFrameIndicator();
 		Timer0().reset<Timer::e1024>(); // Reset timer to 1/16th of a millisecond
 
