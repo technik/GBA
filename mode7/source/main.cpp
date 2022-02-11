@@ -41,6 +41,8 @@ void RefreshAffineTransforms(Vec3p12 camPos)
 
 void hblank_cb()
 {
+	IO::IF::Get().value = (1<<1); // Clear the interrupt flag
+	
 	uint16_t vcount = IO::VCOUNT::Get().value + 1;
 	if(vcount < 160) // Need to update the next projection matrix
 	{
@@ -162,7 +164,10 @@ int main()
 	}
 
 	// Set up HBlank interrupt
-
+	REG_ISR_MAIN = hblank_cb;
+	IO::DISPSTAT::Get().setBit<1>(); // Display needs to set the HBlank flag
+	IO::IE::Get().value = (1<<1); // Enable HBlank interrupts
+	IO::IME::Get().value = 1;
 
 	Display().enableSprites();
 	Display().EndBlank();
