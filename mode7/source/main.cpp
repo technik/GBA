@@ -74,9 +74,8 @@ int main()
 	Display().enableSprites();
 	Display().EndBlank();
 
-	int16_t rot = 0;
-	intp12 depth = 1_p12;
-	Vec2p12 bgPos = {};//Vec2p12(intp12(ScreenWidth/2), intp12(ScreenHeight/2));
+	Vec3p12 camPos = {};
+	camPos.z() = 1_p12;
 
 	// Main loop
 	int32_t t = 0;
@@ -87,27 +86,27 @@ int main()
 		// Logic
 		if(Keypad::Held(Keypad::KEY_LEFT))
 		{
-			bgPos.x() -= speed;
+			camPos.x() -= speed;
 		}
 		if(Keypad::Held(Keypad::KEY_RIGHT))
 		{
-			bgPos.x() += speed;
+			camPos.x() += speed;
 		}
 		if(Keypad::Held(Keypad::KEY_UP))
 		{
-			bgPos.y() -= speed;
+			camPos.y() -= speed;
 		}
 		if(Keypad::Held(Keypad::KEY_DOWN))
 		{
-			bgPos.y() += speed;
+			camPos.y() += speed;
 		}
 		if(Keypad::Held(Keypad::KEY_L))
 		{
-			depth += 0.01_p12;
+			camPos.z() += 0.125_p12;
 		}
 		if(Keypad::Held(Keypad::KEY_R))
 		{
-			depth -= 0.01_p12;
+			camPos.z() -= 0.125_p12;
 		}
 
 		IO::BG2P::Get().refPoint.x() = (128*(0.5_p12-depth+bgPos.x())).cast_down<8>();
