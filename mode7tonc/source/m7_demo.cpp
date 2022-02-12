@@ -93,11 +93,7 @@ void input_main()
 	{
 		cam_pos= cam_pos_default;
 		cam_phi= PHI0;
-		set_mode7_type(M7_BLOCK);
 	}
-
-	if(key_hit(KEY_SELECT))
-		set_mode7_type(g_state+1);
 
 	g_cosf= lu_cos(cam_phi)>>4;
 	g_sinf= lu_sin(cam_phi)>>4;
@@ -113,10 +109,9 @@ int main()
 
 	// enable hblank register and set the mode7 type
 	irq_init(NULL);
-	irq_add(II_HBLANK, NULL);
+	irq_add(II_HBLANK, (fnptr)m7_hbl_c);
 	// and vblank int for vsync
 	irq_add(II_VBLANK, NULL);
-	set_mode7_type(M7_BLOCK);
 
 	REG_DISPCNT= DCNT_MODE1 | DCNT_BG0 | DCNT_BG2;
 
@@ -127,17 +122,4 @@ int main()
 		input_main();
 	}
 	return 0;
-}
-
-// === MODE7 TYPES ====================================================
-
-void set_mode7_type(int type)
-{
-	type= wrap(type, M7_BLOCK, M7_SMOOTH+1); 
-
-	irq_add(II_HBLANK, m7_isrs[type]);
-
-	g_state= type;
-
-	tte_printf("#{es;P}%s", strings[g_state]);
 }

@@ -22,11 +22,8 @@ enum eMode7Type
 extern VECTOR cam_pos;
 extern u16 cam_phi;
 extern FIXED g_cosf, g_sinf;
-extern int g_state;
 
 // === PROTOTYPES =====================================================
-
-void set_mode7_type(int type);
 
 IWRAM_CODE void m7_hbl_a();
 IWRAM_CODE void m7_hbl_b();
