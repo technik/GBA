@@ -20,36 +20,19 @@
 
 #include "m7_demo.h"
 #include "nums.h"
+#include <Keypad.h>
 
 // === CONSTANTS & MACROS =============================================
-
-#define MAP_AFF_SIZE 0x0100
-#define PHI0  0
+constexpr uint32_t MAP_AFF_SIZE = 0x0100;
 
 static const VECTOR cam_pos_default= { 256<<8, 32<<8, 256<<8 };
-
-CSTR strings[]= 
-{
-	"A: blocky", 
-	"B: sawtooth", 
-	"C: smooth"
-};
 
 // === GLOBALS ========================================================
 
 VECTOR cam_pos;
-u16 cam_phi= PHI0;
+u16 cam_phi= 0;
 
 FIXED g_cosf= 1<<8, g_sinf= 0;	// temporaries for cos and sin cam_phi
-int g_state= M7_BLOCK;
-
-
-fnptr m7_isrs[3]= 
-{
-	(fnptr)m7_hbl_a,
-	(fnptr)m7_hbl_b,
-	(fnptr)m7_hbl_c,
-};
 
 // === FUNCTIONS ======================================================
 
@@ -69,16 +52,17 @@ void init_main()
 	REG_BG2CNT= BG_CBB(0) | BG_SBB(8) | BG_AFF_64x64;
 }
 
-void input_main()
+void updateCamera()
 {
 	const FIXED speed= 2, DY= 64;
 	VECTOR dir;
 
-	key_poll();
-
-	dir.x= speed*key_tri_horz();	// left/right : strafe
-	dir.y= DY* key_tri_fire();		// B/A : rise/sink
-	dir.z= speed*key_tri_vert();	// up/down : forward/back
+	// left/right : strafe
+	dir.x= speed*(Keypad::Held(Keypad::R) - Keypad::Held(Keypad::L));
+	// B/A : rise/sink
+	dir.y= DY*(Keypad::Held(Keypad::B) - Keypad::Held(Keypad::A));
+	// up/down : forward/back
+	dir.z= speed*(Keypad::Held(Keypad::DOWN) - Keypad::Held(Keypad::UP));
 
 	cam_pos.x += dir.x*g_cosf - dir.z*g_sinf;
 	cam_pos.y += dir.y;
@@ -87,13 +71,7 @@ void input_main()
 	if(cam_pos.y<0)
 		cam_pos.y= 0;
 
-	cam_phi += 128*key_tri_shoulder();
-
-	if(key_hit(KEY_START))
-	{
-		cam_pos= cam_pos_default;
-		cam_phi= PHI0;
-	}
+	cam_phi += 128*(Keypad::Held(Keypad::RIGHT) - Keypad::Held(Keypad::LEFT));
 
 	g_cosf= lu_cos(cam_phi)>>4;
 	g_sinf= lu_sin(cam_phi)>>4;
@@ -119,7 +97,7 @@ int main()
 	while(1)
 	{
 		VBlankIntrWait();
-		input_main();
+		updateCamera();
 	}
 	return 0;
 }
