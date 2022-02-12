@@ -1,12 +1,13 @@
+#pragma once
 //
 // m7_isrs.c
 // Separate file for HBL interrupts because apparently it screws up 
 //   on hardware now.
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <tonc.h>
-
-#ifndef __M7_DEMO__
-#define __M7_DEMO__
 
 // === CONSTANTS & MACROS =============================================
 
@@ -31,4 +32,7 @@ IWRAM_CODE void m7_hbl_a();
 IWRAM_CODE void m7_hbl_b();
 IWRAM_CODE void m7_hbl_c();
 
-#endif	// __M7_DEMO__
+
+#ifdef __cplusplus
+} // extern C
+#endif
