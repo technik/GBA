@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+		".rtshader": "HLSL",
+		"type_traits": "cpp",
+		"xstddef": "cpp",
+		"xutility": "cpp"
+	}
+}
