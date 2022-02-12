@@ -26,6 +26,8 @@
 #include <Display.h>
 #include <Keypad.h>
 #include <linearMath.h>
+#include <Text.h>
+#include <Timer.h>
 #include <tiles.h>
 
 // === CONSTANTS & MACROS =============================================
@@ -41,6 +43,18 @@ u16 cam_phi= 0;
 FIXED g_cosf= 1<<8, g_sinf= 0;	// temporaries for cos and sin cam_phi
 
 // === FUNCTIONS ======================================================
+void plotFrameIndicator()
+{
+	// Draw frame rate indicator
+	uint32_t ms = Timer0().counter/16; // ~Milliseconds
+	auto* tile0 = &Sprite::OAM()[0].objects[0];
+	auto ms10 = ms/10;
+	tile0->attribute[2] = Sprite::DTile::HighSpriteBankIndex(ms10+16);
+	auto* tile1 = &Sprite::OAM()[0].objects[1];
+	tile1->attribute[2] = Sprite::DTile::HighSpriteBankIndex(ms-10*ms10+16);
+	
+	Timer0().reset<Timer::e1024>(); // Reset timer to 1/16th of a millisecond
+}
 
 void init_main()
 {
@@ -116,12 +130,25 @@ void updateCamera()
 
 int main()
 {
+	Display().StartBlank();
+	Display().InitMode2();
+	
+	// TextInit
+	TextSystem text;
+	text.Init();
+
 	cam_pos= cam_pos_default;
 	initBackground();
-
-	tte_init_chr4c_b4_default(0, BG_CBB(2)|BG_SBB(28));
-	tte_init_con();
-	tte_set_margins(8, 8, 232, 40);
+	
+	// Init the frame counter
+	auto* obj0 = &Sprite::OAM()[0].objects[0];
+	obj0->attribute[0] = 1<<13; // Top of the screen, normal rendering, 16bit palette tiles
+	obj0->attribute[1] = 0; // Left of the screen, small size
+	obj0->attribute[2] = Sprite::DTile::HighSpriteBankIndex('0'-32);
+	auto* obj1 = &Sprite::OAM()[0].objects[1];
+	obj1->attribute[0] = 1<<13; // Top of the screen, normal rendering, 16bit palette tiles
+	obj1->attribute[1] = 8; // Left of the screen, small size
+	obj1->attribute[2] = Sprite::DTile::HighSpriteBankIndex('1'-32);
 
 	// enable hblank register and set the mode7 type
 	irq_init(NULL);
@@ -129,15 +156,17 @@ int main()
 	// and vblank int for vsync
 	irq_add(II_VBLANK, NULL);
 
-	REG_DISPCNT= DCNT_MODE1 | DCNT_BG0 | DCNT_BG2;
+	Display().enableSprites();
+	Display().EndBlank();
 
 	// main loop
 	while(1)
 	{
 		VBlankIntrWait();
 		updateCamera();
-		
 		setBg2AffineTx(0); // Prepare first scanline for next frame
+		
+		plotFrameIndicator();
 	}
 	return 0;
 }
