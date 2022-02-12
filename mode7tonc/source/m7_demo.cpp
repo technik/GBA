@@ -58,8 +58,6 @@ void init_main()
 
 void initBackground()
 {
-	cam_pos= cam_pos_default;
-
 	// Prepare the background tile map
 	BackgroundPalette()[1].raw = BasicColor::White.raw;
 	BackgroundPalette()[2].raw = BasicColor::Red.raw;
@@ -118,7 +116,7 @@ void updateCamera()
 
 int main()
 {
-	//init_main();
+	cam_pos= cam_pos_default;
 	initBackground();
 
 	tte_init_chr4c_b4_default(0, BG_CBB(2)|BG_SBB(28));
@@ -138,6 +136,8 @@ int main()
 	{
 		VBlankIntrWait();
 		updateCamera();
+		
+		setBg2AffineTx(0); // Prepare first scanline for next frame
 	}
 	return 0;
 }

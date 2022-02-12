@@ -22,7 +22,14 @@
 // * .12 lambda,lcf,lsf would work too.
 void m7_hbl_c()
 {
-	FIXED lambda = cam_pos.y*lu_div(REG_VCOUNT)>>12;	// .8*.16 /.12 = 20.12
+	if(REG_VCOUNT >= 160)
+		return;
+	setBg2AffineTx(REG_VCOUNT);
+}
+
+void setBg2AffineTx(uint16_t vCount)
+{
+	FIXED lambda = cam_pos.y*lu_div(vCount)>>12;	// .8*.16 /.12 = 20.12
 	FIXED lcf= lambda*g_cosf>>8;						// .12*.8 /.8 = .12
 	FIXED lsf= lambda*g_sinf>>8;						// .12*.8 /.8 = .12
 	

@@ -21,6 +21,7 @@ extern FIXED g_cosf, g_sinf;
 
 // === PROTOTYPES =====================================================
 IWRAM_CODE void m7_hbl_c();
+IWRAM_CODE void setBg2AffineTx(uint16_t vCount);
 
 #ifdef __cplusplus
 } // extern C
