@@ -141,35 +141,6 @@ int main()
 	obj1->attribute[1] = 8; // Left of the screen, small size
 	obj1->attribute[2] = Sprite::DTile::HighSpriteBankIndex('1'-32);
 
-	// Prepare the background tile map
-	BackgroundPalette()[1].raw = BasicColor::White.raw;
-	BackgroundPalette()[2].raw = BasicColor::Red.raw;
-
-	// Config BG2
-	// Use charblock 0 for the tiles
-	// Use the first screen block after charblock 0 (i.e. screenblock 8)
-	// 128*128 map size
-	IO::BG2CNT::Get().value =
-		(1<<7) | // 16 bit color
-		(8<<8); // screenblock 8
-
-	// Fill in a couple tiles in video memory
-    auto& tile0 = Sprite::DTileBlock(0)[0];
-	tile0.fill(1); // White
-	auto& tile1 = Sprite::DTileBlock(0)[1];
-	tile1.fill(2); // Red
-
-	// Fill in map data
-	// Affine maps use 8 bit indices
-	auto* mapMem = reinterpret_cast<volatile uint16_t*>(VideoMemAddress+0x4000);
-	for(int32_t y = 0; y < 16; ++y)
-	{
-		for(int32_t x = 0; x < 8; ++x)
-		{
-			mapMem[y*8+x] = (y&1) ? 1 : (1<<8);
-		}
-	}
-
 	// Set up HBlank interrupt
 	REG_ISR_MAIN = hblank_cb;
 	IO::DISPSTAT::Get().setBit<4>(); // Request Display to fire H-Blank interrupt

@@ -20,10 +20,16 @@
 
 #include "m7_demo.h"
 #include "nums.h"
+
+#include <Color.h>
+#include <Device.h>
+#include <Display.h>
 #include <Keypad.h>
+#include <linearMath.h>
+#include <tiles.h>
 
 // === CONSTANTS & MACROS =============================================
-constexpr uint32_t MAP_AFF_SIZE = 0x0100;
+//constexpr uint32_t MAP_AFF_SIZE = 0x0100;
 
 static const VECTOR cam_pos_default= { 256<<8, 32<<8, 256<<8 };
 
@@ -38,18 +44,51 @@ FIXED g_cosf= 1<<8, g_sinf= 0;	// temporaries for cos and sin cam_phi
 
 void init_main()
 {
-	int ii;
-
 	cam_pos= cam_pos_default;
 
 	GRIT_CPY(&tile8_mem[0][1], numsTiles);
 	GRIT_CPY(pal_bg_mem, numsPal);
 		
 	// Fill the map with a band pattern
-	for(ii=0; ii<16; ii++)
-		memset32(&se_mem[8][ii*16*16/2], quad8(ii+1), 16*16/4);
+	for(int i=0; i<16; i++)
+		memset32(&se_mem[8][i*16*16/2], quad8(i+1), 16*16/4);
 
 	REG_BG2CNT= BG_CBB(0) | BG_SBB(8) | BG_AFF_64x64;
+}
+
+void initBackground()
+{
+	cam_pos= cam_pos_default;
+
+	// Prepare the background tile map
+	BackgroundPalette()[1].raw = BasicColor::White.raw;
+	BackgroundPalette()[2].raw = BasicColor::Red.raw;
+
+	// Config BG2
+	// Use charblock 0 for the tiles
+	// Use the first screen block after charblock 0 (i.e. screenblock 8)
+	// 128*128 map size
+	IO::BG2CNT::Get().value =
+		(1<<7) | // 16 bit color
+		(8<<8) | // screenblock 8
+		(2<<0xe); // size 256x256
+
+	// Fill in a couple tiles in video memory
+    auto& tile0 = Sprite::DTileBlock(0)[0];
+	tile0.fill(1); // White
+	auto& tile1 = Sprite::DTileBlock(0)[1];
+	tile1.fill(2); // Red
+
+	// Fill in map data
+	// Affine maps use 8 bit indices
+	auto* mapMem = reinterpret_cast<volatile uint16_t*>(VideoMemAddress+0x4000);
+	for(int32_t y = 0; y < 64; ++y)
+	{
+		for(int32_t x = 0; x < 32; ++x)
+		{
+			mapMem[y*32+x] = (y&1) ? 1 : (1<<8);
+		}
+	}
 }
 
 void updateCamera()
@@ -79,7 +118,8 @@ void updateCamera()
 
 int main()
 {
-	init_main();
+	//init_main();
+	initBackground();
 
 	tte_init_chr4c_b4_default(0, BG_CBB(2)|BG_SBB(28));
 	tte_init_con();
