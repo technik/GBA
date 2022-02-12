@@ -56,20 +56,6 @@ void plotFrameIndicator()
 	Timer0().reset<Timer::e1024>(); // Reset timer to 1/16th of a millisecond
 }
 
-void init_main()
-{
-	cam_pos= cam_pos_default;
-
-	GRIT_CPY(&tile8_mem[0][1], numsTiles);
-	GRIT_CPY(pal_bg_mem, numsPal);
-		
-	// Fill the map with a band pattern
-	for(int i=0; i<16; i++)
-		memset32(&se_mem[8][i*16*16/2], quad8(i+1), 16*16/4);
-
-	REG_BG2CNT= BG_CBB(0) | BG_SBB(8) | BG_AFF_64x64;
-}
-
 void initBackground()
 {
 	// Prepare the background tile map
