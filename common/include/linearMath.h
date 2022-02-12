@@ -53,7 +53,7 @@ namespace math
 			int32_t rounded = raw + (1<<(diff-1));
 
             FixedPoint<shift2> result;
-            result.raw = rounded>>diff;
+            result.raw = rounded/(1<<diff); // Division rather than shift, to preserve the negative sign.
             return result;
 		}
 
@@ -61,7 +61,7 @@ namespace math
 		constexpr int32_t round() const {
 			static_assert(shift>0);
 			constexpr int32_t half = 1<<(shift-1);
-			return (raw+half)>>shift;
+			return (raw+half)/(1<<diff); // Division rather than shift, to preserve the negative sign.
 		}
 
 		void operator+=(FixedPoint<shift> x)
@@ -160,7 +160,7 @@ namespace math
 		int32_t sumRaw = a.raw * b.raw;
 		sumRaw += (1<<(shift-1)); // Unbiased round by adding +0.5
 		
-		result.raw = sumRaw >> shift;
+		result.raw = sumRaw / (1<<diff); // Division rather than shift, to preserve the negative sign.
 		return result;
 	}
 

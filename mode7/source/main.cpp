@@ -21,9 +21,11 @@ using namespace math;
 //#define IWRAM_CODE __attribute__((section(".iwram"), long_call))
 
 typedef void (*fnptr)(void);
-#define REG_ISR_MAIN *(fnptr*)(0x03007FFC)
+//#define REG_ISR_MAIN *(volatile int32_t*)(0x03007FFC)
+#define REG_ISR_MAIN *(volatile fnptr*)(0x03007FFC)
 
-__attribute__((section(".iwram"))) Mat22p12 gScanlineTransforms[ScreenHeight];
+//__attribute__((section(".iwram"))) Mat22p12 gScanlineTransforms[ScreenHeight];
+Mat22p12 gScanlineTransforms[ScreenHeight];
 
 
 intp12 PlaneScanlineIntersection(intp12 h, int32_t scanline);
@@ -39,11 +41,14 @@ void RefreshAffineTransforms(Vec3p12 camPos)
 	}
 }
 
+extern "C" {
+	void hblank_cb() __attribute__ ((interrupt ("IRQ"), section(".iwram"), long_call));
+}
+
 void hblank_cb()
 {
-	IO::IF::Get().value = (1<<1); // Clear the interrupt flag
-	
 	uint16_t vcount = IO::VCOUNT::Get().value + 1;
+	BackgroundPalette()[1].raw = (vcount&1) ? BasicColor::Blue.raw : BasicColor::Green.raw;
 	if(vcount < 160) // Need to update the next projection matrix
 	{
 		auto& tx = gScanlineTransforms[vcount];
@@ -59,6 +64,8 @@ void hblank_cb()
 		//IO::BG2P::Get().C = 0;
 		IO::BG2P::Get().D = int16_t(tx.m[1][0].cast_down<8>().raw);
 	}
+
+	IO::IF::Get().value = (1<<1); // Clear the interrupt flag
 }
 
 void plotFrameIndicator()
@@ -165,7 +172,7 @@ int main()
 
 	// Set up HBlank interrupt
 	REG_ISR_MAIN = hblank_cb;
-	IO::DISPSTAT::Get().setBit<1>(); // Display needs to set the HBlank flag
+	IO::DISPSTAT::Get().setBit<4>(); // Request Display to fire H-Blank interrupt
 	IO::IE::Get().value = (1<<1); // Enable HBlank interrupts
 	IO::IME::Get().value = 1;
 
