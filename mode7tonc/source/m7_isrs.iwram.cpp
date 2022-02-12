@@ -24,7 +24,7 @@ void m7_hbl_c()
 {
 	if(REG_VCOUNT >= 160)
 		return;
-	setBg2AffineTx(REG_VCOUNT);
+	setBg2AffineTx(REG_VCOUNT+1);
 }
 
 void setBg2AffineTx(uint16_t vCount)
