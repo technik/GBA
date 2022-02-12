@@ -6,6 +6,7 @@ Debug/*
 *.d
 *.o
 *.map
+*.a
 build
 .vs
 Debug
