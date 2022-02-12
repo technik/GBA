@@ -58,6 +58,8 @@ void plotFrameIndicator()
 
 void initBackground()
 {
+	// Background clear color (used for blending too)
+	BackgroundPalette()[0].raw = BasicColor::SkyBlue.raw;
 	// Prepare the background tile map
 	BackgroundPalette()[1].raw = BasicColor::White.raw;
 	BackgroundPalette()[2].raw = BasicColor::Red.raw;
