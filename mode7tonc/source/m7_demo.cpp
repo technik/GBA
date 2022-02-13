@@ -42,6 +42,17 @@ u16 cam_phi= 0;
 
 FIXED g_cosf= 1<<8, g_sinf= 0;	// temporaries for cos and sin cam_phi
 
+void SetBG2Tx(uint32_t vCount)
+{
+	// Compute intersection depth with the horizon (look up table)
+	// d = cam.z * VRes / (2*vCount-VRes)
+	uint32_t d = (cam_pos.z * 80 * lu_div(uint16_t(vCount-80))) >> 12; // .8*.16/.12 = .12
+	// d = lut_depthFromScanline[vCount]
+
+	// Texel density is 8 pixels (i.e. 1 tile) per meter
+	// TexDen = <<3; // 8 Tex/Meter
+}
+
 // === FUNCTIONS ======================================================
 void plotFrameIndicator()
 {
