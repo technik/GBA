@@ -72,9 +72,9 @@ IARCH   := -mthumb-interwork -marm -mlong-calls
 CFLAGS	:= -mcpu=arm7tdmi -mtune=arm7tdmi $(ARCH) -O2
 CFLAGS	+= -Wall
 CFLAGS	+= $(INCLUDE)
-CFLAGS	+= -ffast-math -fno-strict-aliasing
+CFLAGS	+= -ffast-math -fno-strict-aliasing -g
 
-CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
+CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=c++20
 
 ASFLAGS	:= $(ARCH)
 LDFLAGS := $(ARCH) -Wl,-Map,$(PROJ).map

@@ -34,11 +34,13 @@
 //constexpr uint32_t MAP_AFF_SIZE = 0x0100;
 
 static const VECTOR cam_pos_default= { 256<<8, 32<<8, 256<<8 };
+//static const VECTOR cam_pos_default= { 256<<8, 640, 256<<8 };
 
 // === GLOBALS ========================================================
 
 VECTOR cam_pos;
 u16 cam_phi= 0;
+//u16 cam_phi= 5760;
 
 FIXED g_cosf= 1<<8, g_sinf= 0;	// temporaries for cos and sin cam_phi
 
