@@ -1,15 +1,12 @@
 //
-// m7_demo.c
-// block, sawtooth and smooth mode7 in one demo :)
-// Using pre-calculated LUTs, courtesy of my excellut program
-// 
+// Perspective projection demo (a.k.a. Mode 7)
 //
 // Coordinate system:
 //
-//    y
+//    z
 //     |
-//     |___x
-//  z /
+//     |___ y
+//  x /
 //
 // The viewing direction is in the NEGATIVE z direction!!
 //
@@ -30,18 +27,10 @@
 #include <Timer.h>
 #include <tiles.h>
 
-// === CONSTANTS & MACROS =============================================
-//constexpr uint32_t MAP_AFF_SIZE = 0x0100;
-
-static const VECTOR cam_pos_default= { 256<<8, 32<<8, 256<<8 };
-//static const VECTOR cam_pos_default= { 256<<8, 640, 256<<8 };
-
-// === GLOBALS ========================================================
-
+// Camera state
 VECTOR cam_pos;
 u16 cam_phi= 0;
 //u16 cam_phi= 5760;
-
 FIXED g_cosf= 1<<8, g_sinf= 0;	// temporaries for cos and sin cam_phi
 
 void SetBG2Tx(uint32_t vCount)
@@ -110,18 +99,17 @@ void updateCamera()
 	VECTOR dir;
 
 	// left/right : strafe
-	dir.x= speed*(Keypad::Held(Keypad::R) - Keypad::Held(Keypad::L));
-	// B/A : rise/sink
-	dir.y= DY*(Keypad::Held(Keypad::B) - Keypad::Held(Keypad::A));
+	dir.x = speed * (Keypad::Held(Keypad::R) - Keypad::Held(Keypad::L));
 	// up/down : forward/back
-	dir.z= speed*(Keypad::Held(Keypad::DOWN) - Keypad::Held(Keypad::UP));
+	dir.y = speed * (Keypad::Held(Keypad::DOWN) - Keypad::Held(Keypad::UP));
+	// B/A : rise/sink
+	dir.z = DY*(Keypad::Held(Keypad::B) - Keypad::Held(Keypad::A));
 
-	cam_pos.x += dir.x*g_cosf - dir.z*g_sinf;
-	cam_pos.y += dir.y;
-	cam_pos.z += dir.x*g_sinf + dir.z*g_cosf;
+	cam_pos.x += dir.x * g_cosf - dir.y * g_sinf;
+	cam_pos.y += dir.x * g_sinf + dir.y * g_cosf;
+	cam_pos.z += dir.z;
 
-	if(cam_pos.y<0)
-		cam_pos.y= 0;
+	cam_pos.z = max(0, cam_pos.z);
 
 	cam_phi += 128*(Keypad::Held(Keypad::RIGHT) - Keypad::Held(Keypad::LEFT));
 
@@ -138,7 +126,10 @@ int main()
 	TextSystem text;
 	text.Init();
 
-	cam_pos= cam_pos_default;
+	// Init camera
+	cam_pos= { 256<<8, 256<<8, 32<<8 };
+	// cam_pos= { 256<<8, 256<<8, 640 };
+	
 	initBackground();
 	
 	// Init the frame counter

@@ -29,7 +29,7 @@ void m7_hbl_c()
 
 void setBg2AffineTx(uint16_t vCount)
 {
-	FIXED lambda = cam_pos.y*lu_div(vCount)>>12;	// .8*.16 /.12 = 20.12
+	FIXED lambda = cam_pos.z*lu_div(vCount)>>12;	// .8*.16 /.12 = 20.12
 	FIXED lcf= lambda*g_cosf>>8;						// .12*.8 /.8 = .12
 	FIXED lsf= lambda*g_sinf>>8;						// .12*.8 /.8 = .12
 	
@@ -47,5 +47,5 @@ void setBg2AffineTx(uint16_t vCount)
 	// vertical offset
 	lxr= 120*(lsf>>4);
 	lyr= (M7_D*lcf)>>4;	
-	REG_BG2Y= cam_pos.z - lxr - lyr;
+	REG_BG2Y= cam_pos.y - lxr - lyr;
 }
