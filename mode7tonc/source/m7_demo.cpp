@@ -127,8 +127,8 @@ int main()
 	text.Init();
 
 	// Init camera
-	cam_pos= { 256<<8, 256<<8, 32<<8 };
-	// cam_pos= { 256<<8, 256<<8, 640 };
+	//cam_pos= { 256<<8, 256<<8, 32<<8 };
+	cam_pos= { 256<<8, 256<<8, 384 };
 	
 	initBackground();
 	
