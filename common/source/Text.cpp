@@ -7,7 +7,7 @@ extern const uint32_t fontTileData[];
 void TextSystem::Init()
 {
     mPaletteStart = SpritePaletteAllocator::alloc(2); // Bg and text colors
-    mTileStart = SpriteTileAllocator::alloc(64);
+    mTileStart = SpriteTileAllocator::alloc(SpriteTileAllocator::Bank::High, 64);
 
     // Init palette
     SpritePalette()[mPaletteStart+0].raw = BasicColor::Black.raw;

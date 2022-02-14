@@ -193,25 +193,53 @@ void initBackground()
 
 struct RasteredObj
 {
-	RasteredObj(VECTOR startPos)
-		:pos(startPos)
+	auto& obj()
 	{
-		//auto& obj = 
+		auto ndx = m_spriteNdx;
+		return Sprite::OAM()[ndx/4].objects[ndx%4];
+	}
+
+	RasteredObj(VECTOR startPos)
+		:m_pos(startPos)
+	{
+		m_paletteStart = SpritePaletteAllocator::alloc(1); // Alloc 1 color
+
+		// Init palette
+		SpritePalette()[m_paletteStart].raw = BasicColor::Green.raw;
+
+		// Init sprite
+		m_spriteNdx = allocSprites(1);
+		m_tileNdx = SpriteTileAllocator::alloc(SpriteTileAllocator::Bank::Low, 1);
+		auto& sprite = obj();
+		sprite.attribute[2] = m_tileNdx;
+		sprite.setPos(116, 76);
+
+		// Draw into the tile
+		constexpr uint32_t lowBank = 4;
+		auto* spriteBase = &((volatile uint16_t*)Sprite::STileBlock(lowBank))[m_tileNdx];
+		uint32_t twoTiles = (m_paletteStart<<8) | m_paletteStart;
+		for(uint16_t i = 0; i < 8*4; ++i) // Fill the tile
+		{
+			spriteBase[i] = (i&2) ? twoTiles : (twoTiles<<4);
+		}
 	}
 
 	void update(const Camera& cam)
 	{
 		VECTOR relPos;
-		relPos.x = pos.x-cam.pos.x;
-		relPos.y = pos.y-cam.pos.y;
-		relPos.z = pos.z-cam.pos.z;
+		relPos.x = m_pos.x-cam.pos.x;
+		relPos.y = m_pos.y-cam.pos.y;
+		relPos.z = m_pos.z-cam.pos.z;
 		//VECTOR vsPos = relPos.x*
 	}
 
 	void render()
 	{}
 
-	VECTOR pos;
+	VECTOR m_pos;
+    uint32_t m_paletteStart;
+	uint32_t m_spriteNdx = 0;
+	uint32_t m_tileNdx = 0;
 };
 
 void resetBg2Projection()

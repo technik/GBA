@@ -22,6 +22,12 @@ struct Sprite
 		ObjectAttribute(math::Vec2i pos, uint32_t shape, uint32_t size);
 
 		volatile uint16_t attribute[4];
+
+		void setPos(uint32_t x, uint32_t y)
+		{
+			attribute[0] = (attribute[0] & (0xff00)) | (y&0xff);
+			attribute[1] = (attribute[1] & (0xff00)) | (x&0xff);
+		}
 	};
 
 	struct alignas(4) AffineTransform
@@ -140,22 +146,30 @@ struct SpriteTileAllocator
 {
 	static void reset()
 	{
-		sEnd = 0;
+		sEnd[0] = 0;
+		sEnd[1] = 0;
 	}
 
-	static uint32_t  alloc(uint32_t size)
+	enum class Bank : uint32_t
 	{
-		if(size + sEnd >= MaxNumTiles)
+		Low = 0,
+		High = 1,
+	};
+
+	static uint32_t alloc(Bank bank, uint32_t size)
+	{
+		auto bankNdx = (uint32_t)bank;
+		if(size + sEnd[bankNdx] >= MaxNumTiles)
 		{
 			return 0; // Out of memory.
 		}
-		auto pos = sEnd;
-		sEnd += size;
+		auto pos = sEnd[bankNdx];
+		sEnd[bankNdx] += size;
 		return pos;
 	}
 
 	static constexpr uint32_t MaxNumTiles = 512;
-	inline static uint32_t sEnd = 0;
+	inline static uint32_t sEnd[2] = {};
 };
 
 union ObjectAttributeMemory

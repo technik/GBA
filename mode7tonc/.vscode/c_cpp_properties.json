@@ -20,7 +20,9 @@
                 "path": [
                     "${workspaceFolder}",
                     "${workspaceFolder}/include",
+                    "${workspaceFolder}/source",
                     "${workspaceFolder}/../common/include",
+                    "${workspaceFolder}/../common/source",
                     "${env:DEVKITPRO}/libtonc/include",
                     "${env:DEVKITARM}/arm-none-eabi/include",
                     "${env:DEVKITARM}/lib/gcc/arm-none-eabi/8.1.0/include"
