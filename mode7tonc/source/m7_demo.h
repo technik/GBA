@@ -14,10 +14,9 @@ extern "C" {
 #define M7_D 160
 
 // === GLOBALS ========================================================
-
-extern VECTOR cam_pos;
-extern u16 cam_phi;
-extern FIXED g_cosf, g_sinf;
+extern VECTOR gCamPos;
+extern FIXED gCosf;
+extern FIXED gSinf;
 
 // === PROTOTYPES =====================================================
 IWRAM_CODE void m7_hbl_c();

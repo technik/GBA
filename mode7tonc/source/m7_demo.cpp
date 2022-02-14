@@ -27,22 +27,60 @@
 #include <Timer.h>
 #include <tiles.h>
 
-// Camera state
-VECTOR cam_pos;
-u16 cam_phi= 0;
-//u16 cam_phi= 5760;
-FIXED g_cosf= 1<<8, g_sinf= 0;	// temporaries for cos and sin cam_phi
+// Global Camera State
+VECTOR gCamPos;
+FIXED gCosf = 1<<8;
+FIXED gSinf = 0;
 
-void SetBG2Tx(uint32_t vCount)
+struct Camera
 {
-	// Compute intersection depth with the horizon (look up table)
-	// d = cam.z * VRes / (2*vCount-VRes)
-	uint32_t d = (cam_pos.z * 80 * lu_div(uint16_t(vCount-80))) >> 12; // .8*.16/.12 = .12
-	// d = lut_depthFromScanline[vCount]
+	Camera(VECTOR startPos)
+		: pos(startPos)
+		, phi(0)
+		, sinf(0)
+		, cosf(1<<8)
+	{}
 
-	// Texel density is 8 pixels (i.e. 1 tile) per meter
-	// TexDen = <<3; // 8 Tex/Meter
-}
+	void update()
+	{
+		VECTOR dir;
+		// left/right : strafe
+		dir.x = horSpeed * (Keypad::Held(Keypad::R) - Keypad::Held(Keypad::L));
+		// up/down : forward/back
+		dir.y = horSpeed * (Keypad::Held(Keypad::DOWN) - Keypad::Held(Keypad::UP));
+		// B/A : rise/sink
+		dir.z = verSpeed*(Keypad::Held(Keypad::B) - Keypad::Held(Keypad::A));
+
+		pos.x += dir.x * cosf - dir.y * sinf;
+		pos.y += dir.x * sinf + dir.y * cosf;
+		pos.z += dir.z;
+
+		// Limit z to reasonable values to not break the math
+		pos.z = max(0, min(250*256, pos.z));
+
+		phi += angSpeed*(Keypad::Held(Keypad::RIGHT) - Keypad::Held(Keypad::LEFT));
+
+		cosf = (lu_cos(phi)+(1<<3))/(1<<4);
+		sinf = (lu_sin(phi)+(1<<3))/(1<<4);
+	}
+
+	void postGlobalState()
+	{
+		// Copy local state into global variables that can be accessed by the renderer
+		gCosf = cosf;
+		gSinf = sinf;
+		gCamPos = pos;
+	}
+
+	VECTOR pos;
+	FIXED phi = 0;
+	FIXED cosf;
+	FIXED sinf;
+
+	FIXED horSpeed = 1;
+	FIXED verSpeed = 64;
+	FIXED angSpeed = 128;
+};
 
 // === FUNCTIONS ======================================================
 void plotFrameIndicator()
@@ -93,30 +131,6 @@ void initBackground()
 	}
 }
 
-void updateCamera()
-{
-	const FIXED speed= 2, DY= 64;
-	VECTOR dir;
-
-	// left/right : strafe
-	dir.x = speed * (Keypad::Held(Keypad::R) - Keypad::Held(Keypad::L));
-	// up/down : forward/back
-	dir.y = speed * (Keypad::Held(Keypad::DOWN) - Keypad::Held(Keypad::UP));
-	// B/A : rise/sink
-	dir.z = DY*(Keypad::Held(Keypad::B) - Keypad::Held(Keypad::A));
-
-	cam_pos.x += dir.x * g_cosf - dir.y * g_sinf;
-	cam_pos.y += dir.x * g_sinf + dir.y * g_cosf;
-	cam_pos.z += dir.z;
-
-	cam_pos.z = max(0, cam_pos.z);
-
-	cam_phi += 128*(Keypad::Held(Keypad::RIGHT) - Keypad::Held(Keypad::LEFT));
-
-	g_cosf= lu_cos(cam_phi)>>4;
-	g_sinf= lu_sin(cam_phi)>>4;
-}
-
 void resetBg2Projection()
 {
 	REG_BG2PA = 0;
@@ -125,22 +139,8 @@ void resetBg2Projection()
 	REG_BG2Y = -1*(1<<8);
 }
 
-int main()
+void initFrameCounter()
 {
-	Display().StartBlank();
-	Display().InitMode2();
-	
-	// TextInit
-	TextSystem text;
-	text.Init();
-
-	// Init camera
-	//cam_pos= { 256<<8, 256<<8, 32<<8 };
-	cam_pos= { 256<<8, 256<<8, 384 };
-	
-	initBackground();
-	
-	// Init the frame counter
 	auto* obj0 = &Sprite::OAM()[0].objects[0];
 	obj0->attribute[0] = 1<<13; // Top of the screen, normal rendering, 16bit palette tiles
 	obj0->attribute[1] = 0; // Left of the screen, small size
@@ -149,6 +149,25 @@ int main()
 	obj1->attribute[0] = 1<<13; // Top of the screen, normal rendering, 16bit palette tiles
 	obj1->attribute[1] = 8; // Left of the screen, small size
 	obj1->attribute[2] = Sprite::DTile::HighSpriteBankIndex('1'-32);
+}
+
+int main()
+{
+	Display().StartBlank();
+	Display().InitMode2();
+	
+	// Init camera
+	auto camera = Camera({ 256<<8, 256<<8, 32<<8 });
+
+	// Init mode7 background
+	initBackground();
+	
+	// TextInit
+	TextSystem text;
+	text.Init();
+
+	// Init the frame counter
+	initFrameCounter();
 
 	// enable hblank register and set the mode7 type
 	irq_init(NULL);
@@ -162,8 +181,14 @@ int main()
 	// main loop
 	while(1)
 	{
+		// Next frame logic
+		camera.update();
+
+		// VSync
 		VBlankIntrWait();
-		updateCamera();
+
+		// Render
+		camera.postGlobalState();
 		// Prepare first scanline for next frame
 		resetBg2Projection();
 		
