@@ -86,12 +86,34 @@ struct Camera
 void plotFrameIndicator()
 {
 	// Draw frame rate indicator
-	uint32_t ms = Timer0().counter/16; // ~Milliseconds
+	//uint32_t ms = Timer0().counter/16; // ~Milliseconds
+	uint32_t tc = Timer0().counter;
+	uint32_t fps = 60;
+	if(tc > 16*256+3*64) // ~16.75, crude approx for 16.6667
+	{
+		fps = 30;
+		if(tc > (33*256+128)) // 33.5 ms
+		{
+			fps = 20;
+			if(tc > 50*256) // 66.75 ~= 66.6667
+			{
+				fps=15;
+				if(tc > 66*256+3*64)
+				{
+					fps = 10;
+					if(fps > 100*256)
+					{
+						fps = 0; // Slower than 10fps, don't bother
+					}
+				}
+			}
+		}
+	}
 	auto* tile0 = &Sprite::OAM()[0].objects[0];
-	auto ms10 = ms/10;
-	tile0->attribute[2] = Sprite::DTile::HighSpriteBankIndex(ms10+16);
+	auto fps10 = fps/10;
+	tile0->attribute[2] = Sprite::DTile::HighSpriteBankIndex(fps10+16);
 	auto* tile1 = &Sprite::OAM()[0].objects[1];
-	tile1->attribute[2] = Sprite::DTile::HighSpriteBankIndex(ms-10*ms10+16);
+	tile1->attribute[2] = Sprite::DTile::HighSpriteBankIndex(fps-10*fps10+16);
 	
 	Timer0().reset<Timer::e1024>(); // Reset timer to 1/16th of a millisecond
 }

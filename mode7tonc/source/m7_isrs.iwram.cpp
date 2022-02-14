@@ -44,6 +44,6 @@ void setBg2AffineTx(uint16_t vCount)
 	REG_BG2PA = (lcf+(1<<3))/(1<<4); // .12/.4=.8
 	REG_BG2PC = (lsf+(1<<3))/(1<<4); // .12/.4=.8
 
-	REG_BG2X = gCamPos.x - (lcf*120 - lsf*160)/(1<<4);
-	REG_BG2Y = gCamPos.y - (lsf*120 + lcf*160)/(1<<4);
+	REG_BG2X = gCamPos.x - (lcf*120 - lsf*160 + (1<<3))/(1<<4);
+	REG_BG2Y = gCamPos.y - (lsf*120 + lcf*160 + (1<<3))/(1<<4);
 }
