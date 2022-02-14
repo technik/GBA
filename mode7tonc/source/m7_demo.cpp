@@ -32,6 +32,14 @@ VECTOR gCamPos;
 FIXED gCosf = 1<<8;
 FIXED gSinf = 0;
 
+auto allocSprites(uint32_t n=1)
+{
+	static uint32_t count = 0;
+	auto pos = count;
+	count += n;
+	return pos;
+}
+
 struct Camera
 {
 	Camera(VECTOR startPos)
@@ -83,40 +91,70 @@ struct Camera
 };
 
 // === FUNCTIONS ======================================================
-void plotFrameIndicator()
+struct FrameCounter
 {
-	// Draw frame rate indicator
-	//uint32_t ms = Timer0().counter/16; // ~Milliseconds
-	uint32_t tc = Timer0().counter;
-	uint32_t fps = 60;
-	if(tc > 16*256+3*64) // ~16.75, crude approx for 16.6667
+	auto& tile(uint32_t n)
 	{
-		fps = 30;
-		if(tc > (33*256+128)) // 33.5 ms
+		auto ndx = m_spriteNdx + n;
+		auto* obj = &Sprite::OAM()[ndx/4].objects[ndx%4];
+		return *obj;
+	}
+
+	FrameCounter()
+		: m_spriteNdx(allocSprites(2))
+	{
+		// Init the tiles
+		for(uint32_t i = 0; i < 2; ++i)
 		{
-			fps = 20;
-			if(tc > 50*256) // 66.75 ~= 66.6667
+			auto& obj = tile(i);
+			obj.attribute[0] = 1<<13; // Top of the screen, normal rendering, 16bit palette tiles
+			obj.attribute[1] = 8*i; // Left of the screen, small size
+			obj.attribute[2] = Sprite::DTile::HighSpriteBankIndex('0'-32);
+		}
+	}
+
+	void render()
+	{
+		// Separate digits
+		auto fps = count();
+		auto fps10 = fps/10;
+
+		// Draw frame rate indicator
+		tile(0).attribute[2] = Sprite::DTile::HighSpriteBankIndex(fps10+16);
+		tile(1).attribute[2] = Sprite::DTile::HighSpriteBankIndex(fps-10*fps10+16);
+	}
+
+	uint32_t count()
+	{
+		//uint32_t ms = Timer0().counter/16; // ~Milliseconds
+		uint32_t tc = Timer0().counter;
+		Timer0().reset<Timer::e1024>(); // Reset timer to 1/16th of a millisecond
+		uint32_t fps = 60;
+		if(tc > 16*256+3*64) // ~16.75, crude approx for 16.6667
+		{
+			fps = 30;
+			if(tc > (33*256+128)) // 33.5 ms
 			{
-				fps=15;
-				if(tc > 66*256+3*64)
+				fps = 20;
+				if(tc > 50*256) // 66.75 ~= 66.6667
 				{
-					fps = 10;
-					if(fps > 100*256)
+					fps=15;
+					if(tc > 66*256+3*64)
 					{
-						fps = 0; // Slower than 10fps, don't bother
+						fps = 10;
+						if(fps > 100*256)
+						{
+							fps = 0; // Slower than 10fps, don't bother
+						}
 					}
 				}
 			}
 		}
+		return fps;
 	}
-	auto* tile0 = &Sprite::OAM()[0].objects[0];
-	auto fps10 = fps/10;
-	tile0->attribute[2] = Sprite::DTile::HighSpriteBankIndex(fps10+16);
-	auto* tile1 = &Sprite::OAM()[0].objects[1];
-	tile1->attribute[2] = Sprite::DTile::HighSpriteBankIndex(fps-10*fps10+16);
-	
-	Timer0().reset<Timer::e1024>(); // Reset timer to 1/16th of a millisecond
-}
+
+	const uint32_t m_spriteNdx;
+};
 
 void initBackground()
 {
@@ -153,6 +191,29 @@ void initBackground()
 	}
 }
 
+struct RasteredObj
+{
+	RasteredObj(VECTOR startPos)
+		:pos(startPos)
+	{
+		//auto& obj = 
+	}
+
+	void update(const Camera& cam)
+	{
+		VECTOR relPos;
+		relPos.x = pos.x-cam.pos.x;
+		relPos.y = pos.y-cam.pos.y;
+		relPos.z = pos.z-cam.pos.z;
+		//VECTOR vsPos = relPos.x*
+	}
+
+	void render()
+	{}
+
+	VECTOR pos;
+};
+
 void resetBg2Projection()
 {
 	REG_BG2PA = 0;
@@ -161,16 +222,21 @@ void resetBg2Projection()
 	REG_BG2Y = -1*(1<<8);
 }
 
-void initFrameCounter()
+void InitSystems()
 {
-	auto* obj0 = &Sprite::OAM()[0].objects[0];
-	obj0->attribute[0] = 1<<13; // Top of the screen, normal rendering, 16bit palette tiles
-	obj0->attribute[1] = 0; // Left of the screen, small size
-	obj0->attribute[2] = Sprite::DTile::HighSpriteBankIndex('0'-32);
-	auto* obj1 = &Sprite::OAM()[0].objects[1];
-	obj1->attribute[0] = 1<<13; // Top of the screen, normal rendering, 16bit palette tiles
-	obj1->attribute[1] = 8; // Left of the screen, small size
-	obj1->attribute[2] = Sprite::DTile::HighSpriteBankIndex('1'-32);
+	// Init mode7 background
+	initBackground();
+	Display().enableSprites();
+
+	// TextInit
+	TextSystem text;
+	text.Init();
+	
+	// enable hblank register and set the mode7 type
+	irq_init(NULL);
+	irq_add(II_HBLANK, (fnptr)m7_hbl_c);
+	// and vblank int for vsync
+	irq_add(II_VBLANK, NULL);
 }
 
 int main()
@@ -178,26 +244,19 @@ int main()
 	Display().StartBlank();
 	Display().InitMode2();
 	
-	// Init camera
-	auto camera = Camera({ 256<<8, 256<<8, 32<<8 });
+	// --- Init systems ---
+	InitSystems();
+	FrameCounter frameCounter;
 
-	// Init mode7 background
-	initBackground();
+	// -- Init game state ---
+	auto camera = Camera({ 256<<8, 256<<8, 2<<8 });
+
+	// Create a 3d object in front of the camera
+	VECTOR objPos = camera.pos;
+	objPos.y += 5;
+	auto obj0 = RasteredObj(objPos);
 	
-	// TextInit
-	TextSystem text;
-	text.Init();
-
-	// Init the frame counter
-	initFrameCounter();
-
-	// enable hblank register and set the mode7 type
-	irq_init(NULL);
-	irq_add(II_HBLANK, (fnptr)m7_hbl_c);
-	// and vblank int for vsync
-	irq_add(II_VBLANK, NULL);
-
-	Display().enableSprites();
+	// Unlock the display and start rendering
 	Display().EndBlank();
 
 	// main loop
@@ -205,16 +264,18 @@ int main()
 	{
 		// Next frame logic
 		camera.update();
+		obj0.update(camera);
 
 		// VSync
 		VBlankIntrWait();
 
-		// Render
+		// -- Render --
+		// Operations should be ordered from most to least time critical, in case they exceed VBlank time
+		resetBg2Projection();
 		camera.postGlobalState();
 		// Prepare first scanline for next frame
-		resetBg2Projection();
-		
-		plotFrameIndicator();
+
+		frameCounter.render();
 	}
 	return 0;
 }
