@@ -38,8 +38,8 @@ void setBg2AffineTx(uint16_t vCount)
 	// Lambda = d*2*tgy/VRes
 	// Lambda = z/(vCount-VRes/2)
 	FIXED lambda = (gCamPos.z * lu_div(vCount-scanlineOffset))/(1<<12); // .8*.16 /.12 = .12
-	FIXED lcf= (lambda*gCosf)/(1<<8); // .12*.8 /.8 = .12
-	FIXED lsf= (lambda*gSinf)/(1<<8); // .12*.8 /.8 = .12
+	FIXED lcf= (lambda*gCosf)/(1<<5); // .12*.8 /.8 = .12
+	FIXED lsf= (lambda*gSinf)/(1<<5); // .12*.8 /.8 = .12
 
 	REG_BG2PA = (lcf+(1<<3))/(1<<4); // .12/.4=.8
 	REG_BG2PC = (lsf+(1<<3))/(1<<4); // .12/.4=.8

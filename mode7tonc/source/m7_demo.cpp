@@ -133,7 +133,7 @@ void initBackground()
 	IO::BG2CNT::Get().value =
 		(1<<7) | // 16 bit color
 		(8<<8) | // screenblock 8
-		(2<<0xe); // size 256x256
+		(3<<0xe); // size 1024*1024
 
 	// Fill in a couple tiles in video memory
     auto& tile0 = Sprite::DTileBlock(0)[0];
@@ -144,11 +144,11 @@ void initBackground()
 	// Fill in map data
 	// Affine maps use 8 bit indices
 	auto* mapMem = reinterpret_cast<volatile uint16_t*>(VideoMemAddress+0x4000);
-	for(int32_t y = 0; y < 64; ++y)
+	for(int32_t y = 0; y < 128; ++y)
 	{
-		for(int32_t x = 0; x < 32; ++x)
+		for(int32_t x = 0; x < 64; ++x)
 		{
-			mapMem[y*32+x] = (y&1) ? 1 : (1<<8);
+			mapMem[y*64+x] = (y&1) ? 1 : (1<<8);
 		}
 	}
 }
