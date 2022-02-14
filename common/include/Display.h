@@ -5,8 +5,8 @@
 #include "Device.h"
 
 // Config display
-constexpr uint32_t ScreenWidth = 240;
-constexpr uint32_t ScreenHeight = 160;
+constexpr int32_t ScreenWidth = 240;
+constexpr int32_t ScreenHeight = 160;
 
 class DisplayControl final
 {

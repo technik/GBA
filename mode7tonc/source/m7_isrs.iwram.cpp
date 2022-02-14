@@ -40,14 +40,15 @@ void setBg2AffineTx(uint16_t vCount)
 	// d = (z * VRes) / (vCount-VRes/2)
 	// Lambda = d*2*tgy/VRes
 	// Lambda = z/(vCount-VRes/2)
-	// d = Lambda*ScreenHeight
-	FIXED lambda = (cam_pos.z * lu_div(vCount-scanlineOffset) + (1<<11))/(1<<12); // .8*.16 /.12 = .12
-	FIXED d = lambda * ScreenHeight; // .12
+	FIXED lambda = (cam_pos.z * lu_div(vCount-scanlineOffset))/(1<<12); // .8*.16 /.12 = .12
+	FIXED lcf= (lambda*g_cosf)/(1<<8); // .12*.8 /.8 = .12
+	FIXED lsf= (lambda*g_sinf)/(1<<8); // .12*.8 /.8 = .12
 
-	REG_BG2PA = (lambda+8)/16;
-	REG_BG2PC = 0;
-	REG_BG2X = cam_pos.x - (lambda*ScreenWidth+16)/32;
-	REG_BG2Y = cam_pos.y + (d+8)/16;
+	REG_BG2PA = (lcf+(1<<3))/(1<<4); // .12/.4=.8
+	REG_BG2PC = (lsf+(1<<3))/(1<<4); // .12/.4=.8
+
+	REG_BG2X = cam_pos.x - (lcf*120 - lsf*160)/(1<<4);
+	REG_BG2Y = cam_pos.y - (lsf*120 + lcf*160)/(1<<4);
 #else // NEW_PROJ_MATH
 	FIXED lambda = cam_pos.z*lu_div(vCount)>>12;	// .8*.16 /.12 = 20.12
 	FIXED lcf= lambda*g_cosf>>8;						// .12*.8 /.8 = .12

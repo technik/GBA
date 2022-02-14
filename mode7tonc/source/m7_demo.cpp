@@ -117,6 +117,14 @@ void updateCamera()
 	g_sinf= lu_sin(cam_phi)>>4;
 }
 
+void resetBg2Projection()
+{
+	REG_BG2PA = 0;
+	REG_BG2PC = 0;
+	REG_BG2X = -1*(1<<8);
+	REG_BG2Y = -1*(1<<8);
+}
+
 int main()
 {
 	Display().StartBlank();
@@ -156,7 +164,8 @@ int main()
 	{
 		VBlankIntrWait();
 		updateCamera();
-		setBg2AffineTx(0); // Prepare first scanline for next frame
+		// Prepare first scanline for next frame
+		resetBg2Projection();
 		
 		plotFrameIndicator();
 	}
