@@ -1,12 +1,14 @@
 #pragma once
 
-#include "Device.h"
-#include "tiles.h"
+#include <gfx/sprite.h>
 
-struct TextSystem
+class TextSystem
 {
+public:
     void Init();
+	void writeNumbers(const char* str, Sprite::Object* dst);
 
+private:
     uint32_t mTileStart;
-    uint32_t mPaletteStart;
+    uint32_t mPaletteStartNdx;
 };

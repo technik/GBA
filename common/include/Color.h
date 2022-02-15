@@ -14,7 +14,6 @@ struct Color
 	}
 
 	uint16_t raw;
-
 };
 
 namespace BasicColor

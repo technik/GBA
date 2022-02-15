@@ -1,12 +1,15 @@
 #include "Text.h"
+#include <gfx/palette.h>
 
 // Import font data
 extern const uint32_t fontTileDataSize;
 extern const uint32_t fontTileData[];
 
+using namespace gfx;
+
 void TextSystem::Init()
 {
-    mPaletteStart = SpritePaletteAllocator::alloc(2); // Bg and text colors
+    mPaletteStart = SpritePalette::Allocator::alloc(2); // Bg and text colors
     mTileStart = SpriteTileAllocator::alloc(SpriteTileAllocator::Bank::High, 64);
 
     // Init palette
