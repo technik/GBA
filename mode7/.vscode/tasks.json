@@ -47,13 +47,6 @@
             "windows": {
                 "command": "C:/mGBA/mGBA.exe -g ${workspaceFolder}/${workspaceFolderBasename}.gba"
             },
-            "osx": {
-                "command": "/Users/jamies/mGBA/mGBA.app/Contents/MacOS/mGBA",
-                "args": [
-                    "-g",
-                    "${workspaceFolder}/${workspaceFolderBasename}.gba"
-                ]
-            },
             "presentation": {
                 "clear": true,
                 "reveal": "always",

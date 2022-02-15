@@ -1,25 +1,13 @@
 //
-// m7_isrs.iwram.c
-// Separate file for HBL interrupts because apparently it screws up 
-//   on hardware now.
+// mode7.iwram.c
+// Interrupts
+//
+extern "C" {
+	#include <tonc.h>
+}
 
-#include <tonc.h>
+#include <demo.h>
 
-#include "m7_demo.h"
-
-// Perspective zoom for this scanline
-// Note that this is actually wrong, because 
-// the hblank occurs AFTER REG_VCOUNT is drawn, screwing up 
-// at scanline 0. Oh well.
-
-///////////////////////////////////////////////////////////////////////
-
-// --- Type C ---
-//'proper' mode 7, with mixed fixed-point. Smooth
-// - offset * (zoom * rotate)
-// - lambda is .12f for xs and ys
-// - 120 multiplied before shift in xs
-// * .12 lambda,lcf,lsf would work too.
 void m7_hbl_c()
 {
 	if(REG_VCOUNT >= 160 | REG_VCOUNT < 79)

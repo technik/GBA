@@ -1,167 +1,185 @@
-#---------------------------------------------------------------------------------
-.SUFFIXES:
-#---------------------------------------------------------------------------------
+#
+# Template for projects using grit.
+# 
+# Making gfx into a library in a separate makefile and using that here.
+#
 
-ifeq ($(strip $(DEVKITARM)),)
-$(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>devkitARM")
-endif
+# ---------------------------------------------------------------------
+# SETUP
+# ---------------------------------------------------------------------
+
+# --- No implicit rules ---
+.SUFFIXES:
+
+# --- Tonc paths ---
+# If not defined as environment var, assumed to be 2 dirs up
+export TONCCODE	?= $(CURDIR)/../..
 
 include $(DEVKITARM)/gba_rules
 
-#---------------------------------------------------------------------------------
-# TARGET is the name of the output
-# BUILD is the directory where object files & intermediate files will be placed
-# SOURCES is a list of directories containing source code
-# INCLUDES is a list of directories containing extra header files
-# DATA is a list of directories containing binary data
-# GRAPHICS is a list of directories containing files to be processed by grit
-#
-# All directories are specified relative to the project directory where
-# the makefile is found
-#
-#---------------------------------------------------------------------------------
-TARGET		:= $(notdir $(CURDIR))
+# --- Main path ---
+export PATH	:=	$(DEVKITARM)/bin:$(PATH)
+
+
+# ---------------------------------------------------------------------
+# PROJECT DETAILS
+# ---------------------------------------------------------------------
+
+# PROJ		: Base project name
+# TITLE		: Title for ROM header (12 characters)
+# LIBS		: Libraries to use, formatted as list for linker flags
+# BUILD		: Directory for build process temporaries. Should NOT be empty!
+# SRCDIRS	: List of source file directories
+# DATADIRS	: List of data file directories
+# INCDIRS	: List of header file directories
+# LIBDIRS	: List of library directories
+# General note: use . for the current dir, don't leave them empty.
+
+export PROJ	?= $(notdir $(CURDIR))
+TITLE		:= $(PROJ)
+GFXLIBS		:= libgfx.a
+
+LIBS		:= -ltonc -lgfx
+
 BUILD		:= build
-SOURCES		:= asm source resources assets ../common/source
-INCLUDES	:= include resources ../common/include
-DATA		:= data
-MUSIC		:=
+SRCDIRS		:= source ../common/source assets
+DATADIRS	:= data
+INCDIRS		:= source include ../common/include assets
+LIBDIRS		:= $(DEVKITPRO)/libtonc
 
-#---------------------------------------------------------------------------------
-# options for code generation
-#---------------------------------------------------------------------------------
-#ARCH	:=	-mthumb -mthumb-interwork
 
-ifeq ($(DEBUG),1)
-	CFLAGS := -Wall -gdwarf-2 -O2 -fomit-frame-pointer -ffast-math -mcpu=arm7tdmi -mtune=arm7tdmi $(ARCH)
+# --- switches ---
+
+bMB		:= 0	# Multiboot build
+bTEMPS	:= 0	# Save gcc temporaries (.i and .s files)
+bDEBUG2	:= 0	# Generate debug info (bDEBUG2? Not a full DEBUG flag. Yet)
+
+
+# ---------------------------------------------------------------------
+# BUILD FLAGS
+# ---------------------------------------------------------------------
+
+# This is probably where you can stop editing
+
+# --- Architecture ---
+
+ARCH    := -mthumb-interwork -mthumb
+RARCH   := -mthumb-interwork -mthumb
+IARCH   := -mthumb-interwork -marm -mlong-calls
+
+# --- Main flags ---
+
+CFLAGS	:= -mcpu=arm7tdmi -mtune=arm7tdmi $(ARCH) -O2
+CFLAGS	+= -Wall
+CFLAGS	+= $(INCLUDE)
+CFLAGS	+= -ffast-math -fno-strict-aliasing -g
+
+CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=c++20
+
+ASFLAGS	:= $(ARCH)
+LDFLAGS := $(ARCH) -Wl,-Map,$(PROJ).map
+
+# --- switched additions ----------------------------------------------
+
+# --- Multiboot ? ---
+ifeq ($(strip $(bMB)), 1)
+	TARGET	:= $(PROJ).mb
 else
-	CFLAGS := -Wall -g        -O3 -fomit-frame-pointer -ffast-math -mcpu=arm7tdmi -mtune=arm7tdmi $(ARCH)
+	TARGET	:= $(PROJ)
+endif
+	
+# --- Save temporary files ? ---
+ifeq ($(strip $(bTEMPS)), 1)
+	CFLAGS	+= -save-temps
 endif
 
-CFLAGS	+=	$(INCLUDE)
+# --- Debug info ? ---
 
-CXXFLAGS	:=	$(CFLAGS) -fno-rtti -fno-exceptions
-
-ASFLAGS	:=	-g $(ARCH)
-LDFLAGS	=	-g $(ARCH) -Wl,-Map,$(notdir $*.map)
-
-#---------------------------------------------------------------------------------
-# any extra libraries we wish to link with the project
-#---------------------------------------------------------------------------------
-LIBS	:= -lmm -lgba -ltonc
- 
- 
-#---------------------------------------------------------------------------------
-# list of directories containing libraries, this must be the top level containing
-# include and lib
-#---------------------------------------------------------------------------------
-LIBDIRS	:=	$(LIBGBA) $(DEVKITARM)/../libtonc
-
-#---------------------------------------------------------------------------------
-# no real need to edit anything past this point unless you need to add additional
-# rules for different file extensions
-#---------------------------------------------------------------------------------
+ifeq ($(strip $(bDEBUG2)), 1)
+	CFLAGS	+= -g
+	LDFLAGS	+= -g
+endif
 
 
-ifneq ($(BUILDDIR), $(CURDIR))
-#---------------------------------------------------------------------------------
- 
+# ---------------------------------------------------------------------
+# BUILD PROCEDURE
+# ---------------------------------------------------------------------
+
+ifneq ($(BUILD),$(notdir $(CURDIR)))
+
+# Still in main dir: 
+# * Define/export some extra variables
+# * Invoke this file again from the build dir
+# PONDER: what happens if BUILD == "" ?
+
 export OUTPUT	:=	$(CURDIR)/$(TARGET)
- 
-export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
-					$(foreach dir,$(DATA),$(CURDIR)/$(dir)) \
-					$(foreach dir,$(GRAPHICS),$(CURDIR)/$(dir))
+export VPATH	:=									\
+	$(foreach dir, $(SRCDIRS) , $(CURDIR)/$(dir))	\
+	$(foreach dir, $(DATADIRS), $(CURDIR)/$(dir))
 
 export DEPSDIR	:=	$(CURDIR)/$(BUILD)
 
-CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
-CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
-SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
-BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
+# --- List source and data files ---
 
-ifneq ($(strip $(MUSIC)),)
-	export AUDIOFILES	:=	$(foreach dir,$(notdir $(wildcard $(MUSIC)/*.*)),$(CURDIR)/$(MUSIC)/$(dir))
-	BINFILES += soundbank.bin
-endif
+CFILES		:=	$(foreach dir, $(SRCDIRS) , $(notdir $(wildcard $(dir)/*.c)))
+CPPFILES	:=	$(foreach dir, $(SRCDIRS) , $(notdir $(wildcard $(dir)/*.cpp)))
+SFILES		:=	$(foreach dir, $(SRCDIRS) , $(notdir $(wildcard $(dir)/*.s)))
+BINFILES	:=	$(foreach dir, $(DATADIRS), $(notdir $(wildcard $(dir)/*.*)))
 
-#---------------------------------------------------------------------------------
-# use CXX for linking C++ projects, CC for standard C
-#---------------------------------------------------------------------------------
+# --- Set linker depending on C++ file existence ---
 ifeq ($(strip $(CPPFILES)),)
-#---------------------------------------------------------------------------------
-	export LD	:=	$(CC)
-#---------------------------------------------------------------------------------
+	export LD	:= $(CC)
 else
-#---------------------------------------------------------------------------------
-	export LD	:=	$(CXX)
-#---------------------------------------------------------------------------------
+	export LD	:= $(CXX)
 endif
-#---------------------------------------------------------------------------------
 
-export OFILES_BIN := $(addsuffix .o,$(BINFILES))
+# --- Define object file list ---
+export OFILES	:=									\
+	$(addsuffix .o, $(BINFILES))					\
+	$(CFILES:.c=.o) $(CPPFILES:.cpp=.o)				\
+	$(SFILES:.s=.o)
 
-export OFILES_SOURCES := $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
- 
-export OFILES := $(OFILES_BIN) $(OFILES_SOURCES)
+# --- Create include and library search paths ---
+export INCLUDE	:=									\
+	$(foreach dir,$(INCDIRS),-I$(CURDIR)/$(dir))	\
+	$(foreach dir,$(LIBDIRS),-I$(dir)/include)		\
+	-I$(CURDIR)/$(BUILD)
 
-export HFILES := $(addsuffix .h,$(subst .,_,$(BINFILES)))
+export LIBPATHS	:=	-L$(CURDIR) $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
-export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
-					$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
-					-I$(CURDIR)/$(BUILD)
- 
-export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
+
+# --- More targets ----------------------------------------------------
 
 .PHONY: $(BUILD) clean
- 
-#---------------------------------------------------------------------------------
+
+# --- Create $(BUILD) if necessary, and run this makefile from there ---
+
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
-	@$(MAKE) BUILDDIR=`cd $(BUILD) && pwd` --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+	@make --no-print-directory -f $(CURDIR)/gfxmake
+	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
-#---------------------------------------------------------------------------------
+all	: $(BUILD)
+
 clean:
 	@echo clean ...
-	@rm -fr $(BUILD) $(TARGET).elf $(TARGET).gba 
- 
- 
-#---------------------------------------------------------------------------------
-else
- 
-#---------------------------------------------------------------------------------
-# main targets
-#---------------------------------------------------------------------------------
+	@rm -fr $(BUILD) $(TARGET).elf $(TARGET).gba $(GFXLIBS)
+
+
+else		# If we're here, we should be in the BUILD dir
+
+DEPENDS	:=	$(OFILES:.o=.d)
+
+# --- Main targets ----
 
 $(OUTPUT).gba	:	$(OUTPUT).elf
 
-$(OUTPUT).elf	:	$(OFILES)
-
-$(OFILES_SOURCES) : $(HFILES)
-
-#---------------------------------------------------------------------------------
-# The bin2o rule should be copied and modified
-# for each extension used in the data directories
-#---------------------------------------------------------------------------------
-
-#---------------------------------------------------------------------------------
-# rule to build soundbank from music files
-#---------------------------------------------------------------------------------
-soundbank.bin soundbank.h : $(AUDIOFILES)
-#---------------------------------------------------------------------------------
-	@mmutil $^ -osoundbank.bin -hsoundbank.h
-
-#---------------------------------------------------------------------------------
-# This rule links in binary data with the .bin extension
-#---------------------------------------------------------------------------------
-%.bin.o	%_bin.h :	%.bin
-#---------------------------------------------------------------------------------
-	@echo $(notdir $<)
-	@$(bin2o)
+$(OUTPUT).elf	:	$(OFILES) libgfx.a
 
 
- 
--include $(DEPSDIR)/*.d
- 
-#---------------------------------------------------------------------------------------
-endif
-#---------------------------------------------------------------------------------------
+-include $(DEPENDS)
+
+
+endif		# End BUILD switch
+
+# EOF
