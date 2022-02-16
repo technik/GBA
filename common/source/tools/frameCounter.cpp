@@ -16,7 +16,7 @@ FrameCounter::FrameCounter(TextSystem& text)
 		obj.attribute[1] = 8*i; // Left of the screen, small size
 	}
 	const uint8_t data[2] = {};
-	text.writeNumbers(data, m_ShadowSprites);
+	text.writeNumbers(data, m_ShadowSprites, 2);
 }
 
 void FrameCounter::render(TextSystem& text)
@@ -28,7 +28,7 @@ void FrameCounter::render(TextSystem& text)
 	uint8_t counter[2] = {fps10, fps};
 
 	// Draw frame rate indicator
-	text.writeNumbers(counter, m_ShadowSprites);
+	text.writeNumbers(counter, m_ShadowSprites, 2);
 
 	// Copy over to VRAM
 	memcpy(&m_sprites[0], &m_ShadowSprites[0], 3*sizeof(uint16_t));

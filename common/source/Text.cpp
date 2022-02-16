@@ -31,13 +31,8 @@ void TextSystem::Init()
     }
 }
 
-void TextSystem::writeNumbers(const uint8_t* str, Sprite::Object* dst)
+void TextSystem::writeNumbers(const uint8_t* str, Sprite::Object* dst, uint32_t n)
 {
-    if(!str) return;
-    while(*str != 0)
-    {
-        dst->attribute[2] = *str+16+mTileStart;
-        ++str;
-        ++dst;
-    }
+    for(uint32_t i = 0; i < n; ++i)
+        dst[i].attribute[2] = str[i]+16+mTileStart;
 }

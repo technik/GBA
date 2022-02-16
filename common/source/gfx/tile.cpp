@@ -60,6 +60,8 @@ namespace gfx
 	}
 
 	TileBank& TileBank::GetBank(uint32_t bankIndex)
-	{}
+	{
+		return gTileBanks[bankIndex];
+	}
 	
 }	// namespace gfx
