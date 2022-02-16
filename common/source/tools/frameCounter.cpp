@@ -1,21 +1,22 @@
 #include <tools/frameCounter.h>
 #include <gfx/tile.h>
 #include <Text.h>
+#include <cstring>
 
 using namespace gfx;
 
 FrameCounter::FrameCounter(TextSystem& text)
-	: m_spriteNdx(Sprite::ObjectAllocator::alloc(2))
+	: m_sprites(Sprite::ObjectAllocator::alloc(2))
 {
-	// Init the tiles
+	// Init the local sprites
 	for(uint32_t i = 0; i < 2; ++i)
 	{
-		auto& obj = tile(i);
+		auto& obj = m_ShadowSprites[i];
 		obj.attribute[0] = 1<<13; // Top of the screen, normal rendering, 16bit palette tiles
 		obj.attribute[1] = 8*i; // Left of the screen, small size
 	}
-	char* data[2] = {};
-	text.writeNumbers(data, &Sprite::OAM_Objects()[m_spriteNdx]);
+	const uint8_t data[2] = {};
+	text.writeNumbers(data, m_ShadowSprites);
 }
 
 void FrameCounter::render(TextSystem& text)
@@ -24,9 +25,14 @@ void FrameCounter::render(TextSystem& text)
 	auto fps = count();
 	auto fps10 = fps/10;
 
+	uint8_t counter[2] = {fps10, fps};
+
 	// Draw frame rate indicator
-	tile(0).attribute[2] = Sprite::DTile::HighSpriteBankIndex(fps10+16);
-	tile(1).attribute[2] = Sprite::DTile::HighSpriteBankIndex(fps-10*fps10+16);
+	text.writeNumbers(counter, m_ShadowSprites);
+
+	// Copy over to VRAM
+	memcpy(&m_sprites[0], &m_ShadowSprites[0], 3*sizeof(uint16_t));
+	memcpy(&m_sprites[1], &m_ShadowSprites[1], 3*sizeof(uint16_t));
 }
 
 uint32_t FrameCounter::count()
@@ -56,11 +62,4 @@ uint32_t FrameCounter::count()
 		}
 	}
 	return fps;
-}
-
-Sprite::Object& FrameCounter::tile(uint32_t n)
-{
-	auto ndx = m_spriteNdx + n;
-	auto* obj = &Sprite::OAM()[ndx/4].objects[ndx%4];
-	return *obj;
 }

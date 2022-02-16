@@ -14,7 +14,7 @@ public:
 
 private:
 	uint32_t count();
-	Sprite::Object& tile(uint32_t n);
 
-	const uint32_t m_spriteNdx;
+	Sprite::Object m_ShadowSprites[2];
+	Sprite::Object* m_sprites = nullptr;
 };

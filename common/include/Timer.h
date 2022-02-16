@@ -43,22 +43,22 @@ public:
     }
 };
 
-Timer& Timer0()
+inline Timer& Timer0()
 {
     return *reinterpret_cast<Timer*>(0x04000100);
 }
 
-Timer& Timer1()
+inline Timer& Timer1()
 {
     return *reinterpret_cast<Timer*>(0x04000104);
 }
 
-Timer& Timer2()
+inline Timer& Timer2()
 {
     return *reinterpret_cast<Timer*>(0x04000108);
 }
 
-Timer& Timer3()
+inline Timer& Timer3()
 {
     return *reinterpret_cast<Timer*>(0x0400010C);
 }

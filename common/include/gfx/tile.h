@@ -91,6 +91,10 @@ namespace gfx
 
 		static constexpr uint32_t LowSpriteBank = 4;
 		static constexpr uint32_t HighSpriteBank = 5;
+
+	private:
+		uint32_t mBaseAddress;
+		uint32_t mNextTile;
 	};
 
 }	// namespace gfx

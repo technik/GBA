@@ -18,7 +18,8 @@ void TextSystem::Init()
 
     // Init tiles
     auto& tileBank = gfx::TileBank::GetBank(gfx::TileBank::HighSpriteBank);
-    mTileStart = tileBank.allocSTiles(64);
+    constexpr uint32_t kHighBankSTileOffset = 512;
+    mTileStart = tileBank.allocSTiles(64)+kHighBankSTileOffset;
 
     // Copy the font tiles
     uint32_t colorOffset = (mPaletteStart<<24) | (mPaletteStart<<16) | (mPaletteStart<<8) | mPaletteStart;
@@ -27,5 +28,14 @@ void TextSystem::Init()
     for(uint32_t i = 0; i < fontTileDataSize; ++i)
     {
         spriteBase[i] = fontTileData[i]; // + colorOffset;
+    }
+}
+
+void TextSystem::writeNumbers(const uint8_t* str, Sprite::Object* dst)
+{
+    if(!str) return;
+    while(*str != 0)
+    {
+        dst->attribute[2] = *str+16+mTileStart;
     }
 }
