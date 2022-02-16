@@ -44,16 +44,16 @@ void initBackground()
 	// Use the first screen block after charblock 0 (i.e. screenblock 8)
 	// 128*128 map size
 	IO::BG2CNT::Get().value =
-		(1<<7) | // 16 bit color
+		(1<<7) | // 16 bit color, technically not necessary as Affine backgrounds are always 16bit colors
 		(8<<8) | // screenblock 8
 		(3<<0xe); // size 1024*1024
 
 	// Fill in a couple tiles in video memory
 	auto& tileBank = gfx::TileBank::GetBank(0);
-	auto tileStart = tileBank.allocSTiles(2);
-    auto& tile0 = tileBank.GetSTile(tileStart + 0);
+	auto tileStart = tileBank.allocDTiles(2);
+    auto& tile0 = tileBank.GetDTile(tileStart + 0);
 	tile0.fill(1); // White
-	auto& tile1 = tileBank.GetSTile(tileStart + 1);
+	auto& tile1 = tileBank.GetDTile(tileStart + 1);
 	tile1.fill(2); // Red
 
 	// Fill in map data
