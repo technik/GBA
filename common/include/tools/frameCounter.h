@@ -16,5 +16,5 @@ private:
 	uint32_t count();
 
 	Sprite::Object m_ShadowSprites[2] = {};
-	Sprite::Object* m_sprites = nullptr;
+	volatile Sprite::Object* m_sprites = nullptr;
 };

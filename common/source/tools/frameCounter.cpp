@@ -25,14 +25,18 @@ void FrameCounter::render(TextSystem& text)
 	auto fps = count();
 	auto fps10 = fps/10;
 
-	uint8_t counter[2] = {fps10, fps};
+	uint8_t counter[2] = {fps10, fps-10*fps10};
 
 	// Draw frame rate indicator
 	text.writeNumbers(counter, m_ShadowSprites, 2);
 
 	// Copy over to VRAM
-	memcpy(&m_sprites[0], &m_ShadowSprites[0], 3*sizeof(uint16_t));
-	memcpy(&m_sprites[1], &m_ShadowSprites[1], 3*sizeof(uint16_t));
+	for(int i = 0; i < 2; ++i)
+	{
+		m_sprites[i].attribute[0] = m_ShadowSprites[i].attribute[0];
+		m_sprites[i].attribute[1] = m_ShadowSprites[i].attribute[1];
+		m_sprites[i].attribute[2] = m_ShadowSprites[i].attribute[2];
+	}
 }
 
 uint32_t FrameCounter::count()

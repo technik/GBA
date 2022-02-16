@@ -132,7 +132,7 @@ struct Sprite
 
 		// Allocate small tiles where each dot is only 4 bits.
 		// Should return an object pointer
-		static Object* alloc(uint32_t n)
+		static volatile Object* alloc(uint32_t n)
 		{
 			if(sNext+n > kCapacity)
 			{
@@ -140,7 +140,7 @@ struct Sprite
 			}
 			auto pos = sNext;
 			sNext += n;
-			return &reinterpret_cast<Object*>(OAMAddress)[pos];
+			return &reinterpret_cast<volatile Object*>(OAMAddress)[pos];
 		}
 
 		static inline uint32_t sNext = 0;

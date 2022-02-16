@@ -18,21 +18,21 @@ void TextSystem::Init()
 
     // Init tiles
     auto& tileBank = gfx::TileBank::GetBank(gfx::TileBank::HighSpriteBank);
-    constexpr uint32_t kHighBankSTileOffset = 512;
-    mTileStart = tileBank.allocSTiles(64)+kHighBankSTileOffset;
+    mTileStart = tileBank.allocDTiles(64);
 
     // Copy the font tiles
     uint32_t colorOffset = (mPaletteStart<<24) | (mPaletteStart<<16) | (mPaletteStart<<8) | mPaletteStart;
 
-    auto* spriteBase = &reinterpret_cast<volatile uint32_t*>(&tileBank.GetSTile(mTileStart))[mTileStart];
+    auto* textTileData = reinterpret_cast<volatile uint32_t*>(&tileBank.GetDTile(mTileStart));
     for(uint32_t i = 0; i < fontTileDataSize; ++i)
     {
-        spriteBase[i] = fontTileData[i]; // + colorOffset;
+        textTileData[i] = fontTileData[i]; // + colorOffset;
     }
 }
 
 void TextSystem::writeNumbers(const uint8_t* str, Sprite::Object* dst, uint32_t n)
 {
+    constexpr uint32_t kHighBankDTileOffset = 512;
     for(uint32_t i = 0; i < n; ++i)
-        dst[i].attribute[2] = str[i]+16+mTileStart;
+        dst[i].attribute[2] = (2*str[i]+mTileStart) + 32 + kHighBankDTileOffset;
 }
