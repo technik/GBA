@@ -33,11 +33,11 @@ TextSystem text;
 void initBackground()
 {
 	// Background clear color (used for blending too)
-	auto paletteStart = gfx::BackgroundPalette::Allocator::alloc(3);
-	gfx::BackgroundPalette::color(paletteStart + 0).raw = BasicColor::SkyBlue.raw;
+	gfx::BackgroundPalette::color(0).raw = BasicColor::SkyBlue.raw;
 	// Prepare the background tile map
-	gfx::BackgroundPalette::color(paletteStart + 1).raw = BasicColor::White.raw;
-	gfx::BackgroundPalette::color(paletteStart + 2).raw = BasicColor::Red.raw;
+	auto paletteStart = gfx::BackgroundPalette::Allocator::alloc(2);
+	gfx::BackgroundPalette::color(paletteStart + 0).raw = BasicColor::White.raw;
+	gfx::BackgroundPalette::color(paletteStart + 1).raw = BasicColor::Red.raw;
 
 	// Config BG2
 	// Use charblock 0 for the tiles
@@ -124,7 +124,6 @@ void resetBg2Projection()
 void InitSystems()
 {
 	// Init mode7 background
-	initBackground();
 	Display().enableSprites();
 
 	// TextInit
@@ -145,6 +144,9 @@ int main()
 	// --- Init systems ---
 	InitSystems();
 	FrameCounter frameCounter(text);
+
+	// Configure graphics
+	initBackground();
 
 	// -- Init game state ---
 	auto camera = Camera({ 256<<8, 256<<8, 2<<8 });
