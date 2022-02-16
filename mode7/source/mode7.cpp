@@ -14,7 +14,10 @@
 #include <linearMath.h>
 #include <Text.h>
 #include <Timer.h>
-#include <tiles.h>
+#include <gfx/palette.h>
+#include <gfx/sprite.h>
+#include <gfx/tile.h>
+#include <tools/frameCounter.h>
 
 // Demo code
 #include <demo.h>
@@ -25,21 +28,16 @@ VECTOR gCamPos;
 FIXED gCosf = 1<<8;
 FIXED gSinf = 0;
 
-auto allocSprites(uint32_t n=1)
-{
-	static uint32_t count = 0;
-	auto pos = count;
-	count += n;
-	return pos;
-}
+TextSystem text;
 
 void initBackground()
 {
 	// Background clear color (used for blending too)
-	BackgroundPalette()[0].raw = BasicColor::SkyBlue.raw;
+	auto paletteStart = gfx::BackgroundPalette::Allocator::alloc(3);
+	gfx::BackgroundPalette::color(paletteStart + 0).raw = BasicColor::SkyBlue.raw;
 	// Prepare the background tile map
-	BackgroundPalette()[1].raw = BasicColor::White.raw;
-	BackgroundPalette()[2].raw = BasicColor::Red.raw;
+	gfx::BackgroundPalette::color(paletteStart + 1).raw = BasicColor::White.raw;
+	gfx::BackgroundPalette::color(paletteStart + 2).raw = BasicColor::Red.raw;
 
 	// Config BG2
 	// Use charblock 0 for the tiles
@@ -51,9 +49,11 @@ void initBackground()
 		(3<<0xe); // size 1024*1024
 
 	// Fill in a couple tiles in video memory
-    auto& tile0 = Sprite::DTileBlock(0)[0];
+	auto& tileBank = gfx::TileBank::GetBank(0);
+	auto tileStart = tileBank.allocSTiles(2);
+    auto& tile0 = tileBank.GetSTile(tileStart + 0);
 	tile0.fill(1); // White
-	auto& tile1 = Sprite::DTileBlock(0)[1];
+	auto& tile1 = tileBank.GetSTile(tileStart + 1);
 	tile1.fill(2); // Red
 
 	// Fill in map data
@@ -70,34 +70,28 @@ void initBackground()
 
 struct RasteredObj
 {
-	auto& obj()
-	{
-		auto ndx = m_spriteNdx;
-		return Sprite::OAM()[ndx/4].objects[ndx%4];
-	}
-
 	RasteredObj(VECTOR startPos)
 		:m_pos(startPos)
 	{
-		m_paletteStart = SpritePaletteAllocator::alloc(1); // Alloc 1 color
+		m_paletteStart = gfx::SpritePalette::Allocator::alloc(1); // Alloc 1 color
 
 		// Init palette
-		SpritePalette()[m_paletteStart].raw = BasicColor::Green.raw;
+		gfx::SpritePalette::color(m_paletteStart).raw = BasicColor::Green.raw;
 
 		// Init sprite
-		m_spriteNdx = allocSprites(1);
-		m_tileNdx = SpriteTileAllocator::alloc(SpriteTileAllocator::Bank::Low, 1);
-		auto& sprite = obj();
-		sprite.attribute[2] = m_tileNdx;
-		sprite.setPos(116, 76);
+		auto& tileBank = gfx::TileBank::GetBank(gfx::TileBank::LowSpriteBank);
+		m_sprite = Sprite::ObjectAllocator::alloc(1);
+		m_tileNdx = tileBank.allocSTiles(1);
+		m_sprite->attribute[2] = m_tileNdx;
+		m_sprite->setPos(116, 76);
 
 		// Draw into the tile
 		constexpr uint32_t lowBank = 4;
-		auto* spriteBase = &((volatile uint16_t*)Sprite::STileBlock(lowBank))[m_tileNdx];
-		uint32_t twoTiles = (m_paletteStart<<8) | m_paletteStart;
+		auto* spriteBase = (volatile uint16_t*)tileBank.GetSTile(m_tileNdx).pixelPair;
+		uint32_t fourTiles = (m_paletteStart<<8) | m_paletteStart;
 		for(uint16_t i = 0; i < 8*4; ++i) // Fill the tile
 		{
-			spriteBase[i] = (i&2) ? twoTiles : (twoTiles<<4);
+			spriteBase[i] = (i&2) ? fourTiles : (fourTiles<<4);
 		}
 	}
 
@@ -115,7 +109,7 @@ struct RasteredObj
 
 	VECTOR m_pos;
     uint32_t m_paletteStart;
-	uint32_t m_spriteNdx = 0;
+	volatile Sprite::Object* m_sprite {};
 	uint32_t m_tileNdx = 0;
 };
 
@@ -134,7 +128,6 @@ void InitSystems()
 	Display().enableSprites();
 
 	// TextInit
-	TextSystem text;
 	text.Init();
 	
 	// enable hblank register and set the mode7 type
@@ -151,7 +144,7 @@ int main()
 	
 	// --- Init systems ---
 	InitSystems();
-	FrameCounter frameCounter;
+	FrameCounter frameCounter(text);
 
 	// -- Init game state ---
 	auto camera = Camera({ 256<<8, 256<<8, 2<<8 });
@@ -180,7 +173,7 @@ int main()
 		camera.postGlobalState();
 		// Prepare first scanline for next frame
 
-		frameCounter.render();
+		frameCounter.render(text);
 	}
 	return 0;
 }

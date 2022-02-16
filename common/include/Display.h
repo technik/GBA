@@ -30,12 +30,12 @@ public:
 
 	void StartBlank()
 	{
-		control |= ForceBlank;
+		control = control | ForceBlank;
 	}
 
 	void EndBlank()
 	{
-		control &= ~ForceBlank;
+		control = control & (~ForceBlank);
 	}
 
 	// Display control bits
@@ -57,12 +57,12 @@ public:
 
 	void enableSprites()
 	{
-		control |= (1<<12);
+		control = control | (1<<12);
 	}
 
     void flipFrame()
     {
-        control ^= FrameSelect;
+        control = control ^ FrameSelect;
     }
 
     uint16_t* backBuffer() const

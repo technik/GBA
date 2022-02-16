@@ -9,8 +9,8 @@
 
 union ObjectAttributeMemory
 {
-	volatile Sprite::ObjectAttribute object[1024];
-	volatile Sprite::AffineTransform transform[32];
+	volatile Sprite::Object object[1024];
+	volatile Sprite::Transform transform[32];
 };
 
 inline ObjectAttributeMemory& OAM()

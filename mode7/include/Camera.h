@@ -12,9 +12,6 @@ struct Camera
 {
 	Camera(VECTOR startPos)
 		: pos(startPos)
-		, phi(0)
-		, sinf(0)
-		, cosf(1<<8)
 	{}
 
 	void update()
@@ -50,8 +47,8 @@ struct Camera
 
 	VECTOR pos;
 	FIXED phi = 0;
-	FIXED cosf;
-	FIXED sinf;
+	FIXED sinf = 0;
+	FIXED cosf = 1<<8;
 
 	FIXED horSpeed = 1;
 	FIXED verSpeed = 64;

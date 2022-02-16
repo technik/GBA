@@ -34,12 +34,12 @@ public:
 
     void pause()
     {
-        control &= ~START;
+        control = control & (~START);
     }
     
     void resume()
     {
-        control |= START;
+        control = control | START;
     }
 };
 

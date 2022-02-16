@@ -10,5 +10,5 @@ public:
 
 private:
     uint32_t mTileStart;
-    uint32_t mPaletteStartNdx;
+    uint32_t mPaletteStart;
 };

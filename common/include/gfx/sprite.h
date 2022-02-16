@@ -15,9 +15,15 @@ struct Sprite
 		Object() = default;
 		Object(math::Vec2i pos, uint32_t shape, uint32_t size);
 
-		volatile uint16_t attribute[4];
+		uint16_t attribute[4];
 
 		void setPos(uint32_t x, uint32_t y)
+		{
+			attribute[0] = (attribute[0] & (0xff00)) | (y&0xff);
+			attribute[1] = (attribute[1] & (0xff00)) | (x&0xff);
+		}
+		
+		void setPos(uint32_t x, uint32_t y) volatile
 		{
 			attribute[0] = (attribute[0] & (0xff00)) | (y&0xff);
 			attribute[1] = (attribute[1] & (0xff00)) | (x&0xff);
@@ -71,14 +77,14 @@ struct Sprite
 		{
 			if(sNext+n > kCapacity)
 			{
-				return uint32_t(-1); // Out of memory.
+				return nullptr; // Out of memory.
 			}
 			auto pos = sNext;
 			sNext += n;
-			return pos;
+			return &reinterpret_cast<volatile Object*>(OAMAddress)[pos];
 		}
 
-		static inline uint32_t sNext = {};
+		static inline uint32_t sNext = 0;
 		static constexpr uint32_t kCapacity = 128;
 	};
 };

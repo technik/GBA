@@ -1,5 +1,7 @@
 #include "Text.h"
 #include <gfx/palette.h>
+#include <gfx/tile.h>
+#include <gfx/sprite.h>
 
 // Import font data
 extern const uint32_t fontTileDataSize;
@@ -9,19 +11,21 @@ using namespace gfx;
 
 void TextSystem::Init()
 {
-    mPaletteStart = SpritePalette::Allocator::alloc(2); // Bg and text colors
-    mTileStart = SpriteTileAllocator::alloc(SpriteTileAllocator::Bank::High, 64);
-
     // Init palette
-    SpritePalette()[mPaletteStart+0].raw = BasicColor::Black.raw;
-    SpritePalette()[mPaletteStart+1].raw = BasicColor::White.raw;
+    mPaletteStart = SpritePalette::Allocator::alloc(2); // Bg and text colors
+    SpritePalette::color(mPaletteStart+0).raw = BasicColor::Black.raw;
+    SpritePalette::color(mPaletteStart+1).raw = BasicColor::White.raw;
+
+    // Init tiles
+    auto& tileBank = gfx::TileBank::GetBank(gfx::TileBank::HighSpriteBank);
+    mTileStart = tileBank.allocSTiles(64);
 
     // Copy the font tiles
     uint32_t colorOffset = (mPaletteStart<<24) | (mPaletteStart<<16) | (mPaletteStart<<8) | mPaletteStart;
 
-    auto* spriteBase = &((volatile uint32_t*)Sprite::DTileBlock(5))[mTileStart];
+    auto* spriteBase = &reinterpret_cast<volatile uint32_t*>(&tileBank.GetSTile(mTileStart))[mTileStart];
     for(uint32_t i = 0; i < fontTileDataSize; ++i)
     {
-        spriteBase[i] = fontTileData[i];// + colorOffset;
+        spriteBase[i] = fontTileData[i]; // + colorOffset;
     }
 }

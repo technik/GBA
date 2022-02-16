@@ -26,6 +26,14 @@ namespace gfx
 				pixelPair[i] = (ndx|(ndx<<4));
 			}
 		}
+		
+		void fill(uint8_t ndx) volatile
+		{
+			for(int i = 0; i < 32; ++i)
+			{
+				pixelPair[i] = (ndx|(ndx<<4));
+			}
+		}
 	};
 
 	struct DTile
@@ -33,6 +41,14 @@ namespace gfx
 		volatile uint8_t pixel[64];
 
 		void fill(uint8_t ndx)
+		{
+			for(int i = 0; i < 64; ++i)
+			{
+				pixel[i] = ndx;
+			}
+		}
+
+		void fill(uint8_t ndx) volatile
 		{
 			for(int i = 0; i < 64; ++i)
 			{
@@ -67,6 +83,9 @@ namespace gfx
 		// Allocate small tiles where each dot is only 4 bits.
 		// Returns the DTile index
 		uint32_t allocDTiles(uint32_t size);
+
+		volatile STile& GetSTile(uint32_t index);
+		volatile DTile& GetDTile(uint32_t index);
 
 		static TileBank& GetBank(uint32_t bankIndex);
 
