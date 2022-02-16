@@ -37,5 +37,7 @@ void TextSystem::writeNumbers(const uint8_t* str, Sprite::Object* dst)
     while(*str != 0)
     {
         dst->attribute[2] = *str+16+mTileStart;
+        ++str;
+        ++dst;
     }
 }
