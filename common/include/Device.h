@@ -162,7 +162,7 @@ namespace DMA
 }
 
 static constexpr uint32_t PaletteMemAddress = 0x05000000;
-static constexpr uint32_t PaletteMemSize = 0x400;
+static constexpr uint32_t PaletteMemSize = 0x200;
 static constexpr uint32_t VideoMemAddress = 0x06000000;
 static constexpr uint32_t VideoMemSize = 0x18000;
 static constexpr uint32_t OAMAddress = 0x07000000;

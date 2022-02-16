@@ -6,8 +6,8 @@
 namespace gfx
 {
 	// The GBA has two separate palettes: one for sprites and one for backgrounds.
-	static constexpr uint32_t SpritePaletteAddress = PaletteMemAddress + PaletteMemSize;
 	static constexpr uint32_t BackgroundPaletteAddress = PaletteMemAddress;
+	static constexpr uint32_t SpritePaletteAddress = PaletteMemAddress + PaletteMemSize;
 	
 	template<uint32_t StartAddressAddress>
 	struct Palette
@@ -45,6 +45,6 @@ namespace gfx
 	};
 
 	using SpritePalette = Palette<SpritePaletteAddress>;
-	using BackgroundPalette = Palette<SpritePaletteAddress>;
+	using BackgroundPalette = Palette<BackgroundPaletteAddress>;
 
 }	// namespace gfx
