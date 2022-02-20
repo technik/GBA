@@ -56,6 +56,20 @@ namespace gfx
 			}
 		}
 
+		void borderTile(uint8_t centerColor, uint8_t borderColor) volatile
+		{
+			for(uint32_t i = 0; i < 8; ++i)
+			{
+				pixel[i] = borderColor;
+				pixel[56+i] = borderColor;
+			}
+			for(int i = 8; i < 56; ++i)
+			{
+				auto x = i&0x7;
+				pixel[i] = (x==1)||(x==7) ? borderColor : centerColor;
+			}
+		}
+
 		static uint32_t LowSpriteBankIndex(uint32_t n)
 		{
 			return 2*n;

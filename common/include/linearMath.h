@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <concepts>
 
 namespace math
 {
@@ -15,6 +16,146 @@ namespace math
 	constexpr auto min(T a, T b)
 	{
 		return a < b ? a : b;
+	}
+
+	template<std::integral Store, size_t Shift>
+	class Fixed
+	{
+	public:
+		using store_type = Store;
+		static constexpr size_t shift = Shift;
+
+		store_type raw;
+		
+		constexpr Fixed() : raw(0) {}
+		template<std::integral T>
+		constexpr explicit Fixed(T x) : raw(x<<shift) {}
+
+		// Cast without rounding
+		template<size_t otherShift, std::integral otherStore>
+		static constexpr Fixed castFromShiftedInteger(otherStore x)
+		{
+			Fixed result;
+			if constexpr(otherShift > shift) // the other type shift is bigger than this, need to shift it right
+			{
+				constexpr size_t diff = otherShift - shift;
+				result.raw = x / (1<<diff);
+			}
+			else
+			{
+				constexpr size_t diff = shift - otherShift;
+				result.raw = x * (1<<diff);
+			}
+			return result;
+		}
+
+		// Cast with rounding
+		template<size_t otherShift, std::unsigned_integral otherStore>
+		static constexpr Fixed roundFromShiftedInteger(otherStore x)
+		{
+			Fixed result;
+			if constexpr(otherShift > shift) // the other type shift is bigger than this, need to shift it right and round
+			{
+				constexpr size_t diff = otherShift - shift;
+				constexpr size_t half = 1<<(diff-1);
+				result.raw = (x+half) / (1<<diff);
+			}
+			else
+			{
+				// No need to round anything when upcasting
+				constexpr size_t diff = shift - otherShift;
+				result.raw = x * (1<<diff);
+			}
+			return result;
+		}
+
+		// Performs a destructive cast without rounding
+		template<size_t resultShift, class resultStore = store_type>
+		constexpr auto cast() const
+		{
+			Fixed<resultStore, resultShift> result;
+			if constexpr(resultShift > shift) // the other type shift is bigger than this, shift left
+			{
+				constexpr size_t diff = resultShift - shift;
+				result.raw = raw * (1<<diff);
+			}
+			else
+			{
+				constexpr size_t diff = shift - resultShift;
+				result.raw = raw / (1<<diff);
+			}
+			return result;
+		}
+
+		// Performs a destructive cast with rounding
+		template<size_t resultShift>
+		constexpr auto round() const
+		{
+			static_assert(!std::is_signed_v<store_type>, "Can't round signed types with this method");
+
+			Fixed<store_type, resultShift> result;
+			if constexpr(resultShift >= shift) // the other type shift is bigger than this, shift left
+			{
+				constexpr size_t diff = resultShift - shift;
+				result.raw = raw * (1<<diff);
+			}
+			else
+			{
+				// Dividing, need to round
+				constexpr size_t diff = shift - resultShift;
+				constexpr size_t half = 1<<(diff-1);
+				result.raw = (raw+half) / (1<<diff);
+			}
+			return result;
+		}
+	};
+
+	template<class StoreA, class StoreB, size_t shift>
+	constexpr auto operator+(
+		Fixed<StoreA, shift> a,
+		Fixed<StoreB, shift> b)
+	{
+		using sum_type = decltype(a.raw + b.raw);
+		Fixed<sum_type, shift> result;
+		result.raw = a.raw + b.raw;
+		return result;
+	}
+
+	template<class StoreA, class StoreB, size_t shift>
+	constexpr auto operator-(
+		Fixed<StoreA, shift> a,
+		Fixed<StoreB, shift> b)
+	{
+		using sub_type = decltype(a.raw - b.raw);
+		Fixed<sub_type, shift> result;
+		result.raw = a.raw - b.raw;
+		return result;
+	}
+
+	template<
+		class StoreA, size_t shiftA,
+		class StoreB, size_t shiftB>
+	constexpr auto operator*(
+		Fixed<StoreA, shiftA> a,
+		Fixed<StoreB, shiftB> b)
+	{
+		using product_type = decltype(a.raw*b.raw);
+		Fixed<product_type, shiftA+shiftB> result;
+		result.raw = a.raw*b.raw;
+		return result;
+	}
+
+	template<
+		class StoreA, size_t shiftA,
+		std::integral T>
+	constexpr auto operator*(
+		Fixed<StoreA, shiftA> a,
+		T b)
+	{
+		using product_type = decltype(a.raw*b);
+		Fixed<product_type, shiftA> result;
+		result.raw = a.raw*b;
+		return result;
 	}
 
 	// Fixed point math

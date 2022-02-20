@@ -24,4 +24,5 @@ namespace BasicColor
 	static inline constexpr Color Green = Color(0, 0x1f,0);
 	static inline constexpr Color Blue = Color(0,0,0x1f);
 	static inline constexpr Color SkyBlue = Color(0x11,0x16,0x1f);
+	static inline constexpr Color Pink = Color(0x1f,0x0f,0x0f);
 }

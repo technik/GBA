@@ -9,17 +9,16 @@ extern "C" {
 
 #include <tonc.h>
 
+}
 // === CONSTANTS & MACROS =============================================
 
 #define M7_D 160
 
 // === GLOBALS ========================================================
 extern VECTOR gCamPos;
-extern FIXED gCosf;
-extern FIXED gSinf;
+extern math::Fixed<int32_t, 8> gCosf;
+extern math::Fixed<int32_t, 8> gSinf;
 
 // === PROTOTYPES =====================================================
 IWRAM_CODE void m7_hbl_c();
 IWRAM_CODE void setBg2AffineTx(uint16_t vCount);
-
-} // extern C

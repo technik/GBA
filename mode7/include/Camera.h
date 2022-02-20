@@ -24,8 +24,8 @@ struct Camera
 		// B/A : rise/sink
 		dir.z = verSpeed*(Keypad::Held(Keypad::B) - Keypad::Held(Keypad::A));
 
-		pos.x += dir.x * cosf - dir.y * sinf;
-		pos.y += dir.x * sinf + dir.y * cosf;
+		pos.x += dir.x * cosf.raw - dir.y * sinf.raw;
+		pos.y += dir.x * sinf.raw + dir.y * cosf.raw;
 		pos.z += dir.z;
 
 		// Limit z to reasonable values to not break the math
@@ -33,8 +33,8 @@ struct Camera
 
 		phi += angSpeed*(Keypad::Held(Keypad::RIGHT) - Keypad::Held(Keypad::LEFT));
 
-		cosf = (lu_cos(phi)+(1<<3))/(1<<4);
-		sinf = (lu_sin(phi)+(1<<3))/(1<<4);
+		cosf = math::Fixed<int32_t, 8>::castFromShiftedInteger<12>(lu_cos(phi));
+		sinf = math::Fixed<int32_t, 8>::castFromShiftedInteger<12>(lu_sin(phi));
 	}
 
 	void postGlobalState()
@@ -47,8 +47,8 @@ struct Camera
 
 	VECTOR pos;
 	FIXED phi = 0;
-	FIXED sinf = 0;
-	FIXED cosf = 1<<8;
+	math::Fixed<int32_t, 8> sinf = math::Fixed<int32_t, 8>(0);
+	math::Fixed<int32_t, 8> cosf = math::Fixed<int32_t, 8>(1);
 
 	FIXED horSpeed = 1;
 	FIXED verSpeed = 64;

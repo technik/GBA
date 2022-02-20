@@ -4,6 +4,30 @@
 		"type_traits": "cpp",
 		"xstddef": "cpp",
 		"xutility": "cpp",
-		"cstdint": "cpp"
-	}
+		"cstdint": "cpp",
+		"bit": "cpp",
+		"cmath": "cpp",
+		"compare": "cpp",
+		"concepts": "cpp",
+		"cstdarg": "cpp",
+		"cstddef": "cpp",
+		"cstdio": "cpp",
+		"cstdlib": "cpp",
+		"cstring": "cpp",
+		"cwchar": "cpp",
+		"cwctype": "cpp",
+		"exception": "cpp",
+		"initializer_list": "cpp",
+		"limits": "cpp",
+		"new": "cpp",
+		"typeinfo": "cpp",
+		"utility": "cpp",
+		"xtr1common": "cpp",
+		"*.tcc": "cpp"
+	},
+	"compiler-explorer.url": "http://localhost:10240/", // url of the compiler explorer you want to use.
+	"compiler-explorer.compiler": "devkitARM-g++", // Compiler code - See help below.
+	"compiler-explorer.options": "-mthumb-interwork -mthumb -O3 -mcpu=arm7tdmi -mtune=arm7tdmi -ffast-math -fno-strict-aliasing -fno-rtti -fno-exceptions -std=c++20", // Compiler options
+	"compiler-explorer.debug": true, // true indicates that the extension will print debug to its output channel.
+	//"compiler-explorer.include": [<filepaths>]
 }

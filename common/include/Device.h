@@ -8,30 +8,16 @@ namespace IO
 {
     // IO Memory registers
     template<class T, uint32_t _address>
-    struct IORegister
+    class IORegister
     {
+	public:
+		IORegister() = delete;
+		~IORegister() = delete;
+
         static constexpr uint32_t address = _address;
         static auto& Get() { return *reinterpret_cast<IORegister*>(address); }
-
-		template<uint16_t x>
-		static void Set()
-		{
-			Get().value = x;
-		}
-
-        template<size_t n>
-        void setBit()
-        {
-            static_assert(n < 8*sizeof(T));
-            value |= (1<<n);
-        }
-        
-        template<size_t n>
-        void clearBit()
-        {
-            static_assert(n < 8*sizeof(T));
-            value &= ~(1<<n);
-        }
+		
+        static auto& Value() { return Get().value; }
 
         volatile T value;
     };
@@ -48,7 +34,10 @@ namespace IO
 
     // IO Memory map
     // Reference: https://problemkaputt.de/gbatek.htm#gbaiomap
-    using DISPCNT   = IORegister<uint16_t, 0x4000000>;
+
+	class DISPCNT : public IORegister<uint16_t, 0x4000000>
+	{};
+
     using GREENSWAP = IORegister<uint16_t, 0x4000002>;
     using DISPSTAT  = IORegister<uint16_t, 0x4000004>;
     using VCOUNT    = IORegister<uint16_t, 0x4000006>;

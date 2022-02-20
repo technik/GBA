@@ -25,8 +25,8 @@
 
 // Global Camera State
 VECTOR gCamPos;
-FIXED gCosf = 1<<8;
-FIXED gSinf = 0;
+math::Fixed<int32_t, 8> gCosf = math::Fixed<int32_t, 8>(1);
+math::Fixed<int32_t, 8> gSinf = math::Fixed<int32_t, 8>(0);
 
 TextSystem text;
 
@@ -35,6 +35,7 @@ void initBackground()
 	// Background clear color (used for blending too)
 	gfx::BackgroundPalette::color(0).raw = BasicColor::SkyBlue.raw;
 	// Prepare the background tile map
+	uint32_t numColors = 4; // 2 in tile colors + 2 border colors
 	auto paletteStart = gfx::BackgroundPalette::Allocator::alloc(2);
 	gfx::BackgroundPalette::color(paletteStart + 0).raw = BasicColor::White.raw;
 	gfx::BackgroundPalette::color(paletteStart + 1).raw = BasicColor::Red.raw;

@@ -20,5 +20,10 @@ int main()
     int16_t regA = (2 * depth / 160_p12).cast_down<8>().raw;
     depth.raw = -984;
 
+    int32_t sin_phi = (-1) << 12;
+    auto s1 = math::Fixed<int32_t, 8>::castFromShiftedInteger<12>(sin_phi);
+
+    assert(s1.raw == sin_phi/16);
+
     return 0;
 }

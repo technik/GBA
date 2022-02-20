@@ -72,7 +72,7 @@ IARCH   := -mthumb-interwork -marm -mlong-calls
 CFLAGS	:= -mcpu=arm7tdmi -mtune=arm7tdmi $(ARCH) -O2
 CFLAGS	+= -Wall
 CFLAGS	+= $(INCLUDE)
-CFLAGS	+= -ffast-math -fno-strict-aliasing -g
+CFLAGS	+= -fno-strict-aliasing -g
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=c++20
 
@@ -181,5 +181,3 @@ $(OUTPUT).elf	:	$(OFILES) libgfx.a
 
 
 endif		# End BUILD switch
-
-# EOF
