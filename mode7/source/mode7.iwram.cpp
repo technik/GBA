@@ -29,6 +29,11 @@ void setBg2AffineTx(uint16_t vCount)
 	// d = (z * VRes) / (vCount-VRes/2)
 	// Lambda = d*2*tgy/VRes
 	// Lambda = z/(vCount-VRes/2)
+
+	// No point rounding this up because the table only takes integers, and div by zero already gives the largest possible integer
+	// when multiplied by z (safe for maybe the last 11 bits).
+	// By adding (1<<11) while rounding, it seems we overflow the integer before down casting and bounce back to 0 again,
+	// meaning we see a line in the horizon.
 	auto lambda = math::Fixed<int32_t,12>::castFromShiftedInteger<24>(gCamPos.z * lu_div(vCount-scanlineOffset));
 	auto lcf = (lambda*gCosf).cast<12>() * 8;
 	auto lsf = (lambda*gSinf).cast<12>() * 8;
