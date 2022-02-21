@@ -43,14 +43,31 @@ struct Sprite
 		tall32x64 = 14
 	};
 
-	struct alignas(4) Object
+	inline static constexpr size_t GetNumTiles(Shape shape)
 	{
+		constexpr size_t sizeTable[15] = {
+			1, 2, 2, 0,
+			4, 4, 4, 0,
+			16, 8, 8, 0,
+			64, 32, 32
+		};
+
+		return sizeTable[(size_t)shape];
+	}
+
+	class alignas(4) Object
+	{
+	public:
 		Object() = default;
 		Object(math::Vec2i pos, uint32_t shape, uint32_t size);
+		void operator=(const Object& other) volatile
+		{
+			attribute[0] = other.attribute[0];
+			attribute[1] = other.attribute[1];
+			attribute[2] = other.attribute[2];
+		}
 
-		uint16_t attribute[3];
-
-		inline void Configure(ObjectMode objectMode, GfxMode gfxMode, ColorMode colorMode, Shape shape)
+		inline void Configure(ObjectMode objectMode, GfxMode gfxMode, ColorMode colorMode, Shape shape) volatile
 		{
 			attribute[0] =
 				(attribute[0] & 0x00ff) | // preserve y pos
@@ -60,14 +77,14 @@ struct Sprite
 				((uint8_t)shape << 14); // Lowest two bits store the shape
 		}
 
-		inline void SetAffineConfig(uint32_t affineIndex)
+		inline void SetAffineConfig(uint32_t affineIndex) volatile
 		{
 			attribute[1] =
 				(attribute[1] & 0x01ff) | // preserve x pos
 				((affineIndex&0x1f)<<9);
 		}
 
-		inline void SetNonAffineTransform(bool horizontalFlip, bool verticalFlip, Shape size)
+		inline void SetNonAffineTransform(bool horizontalFlip, bool verticalFlip, Shape size) volatile
 		{
 			attribute[1] =
 				(attribute[1] & 0x01ff) | // preserve x pos
@@ -76,10 +93,12 @@ struct Sprite
 				((uint8_t(size)>>2)<<14);
 		}
 
-		inline void setPos(uint32_t x, uint32_t y)
+		inline void setTiles(uint32_t firstTile, uint32_t subPalette, uint32_t priority = 0) volatile
 		{
-			attribute[0] = (attribute[0] & (0xff00)) | (y&0xff);
-			attribute[1] = (attribute[1] & (0xff00)) | (x&0xff);
+			attribute[2] = 
+				(firstTile&0x3ff) | // Bits 0-9, tile number (0-1023)
+				(priority&3)<<10 | // Priority relative to BG
+				(subPalette&0x0f)<<12; // Palette index
 		}
 		
 		inline void setPos(uint32_t x, uint32_t y) volatile
@@ -87,6 +106,9 @@ struct Sprite
 			attribute[0] = (attribute[0] & (0xff00)) | (y&0xff);
 			attribute[1] = (attribute[1] & (0xff00)) | (x&0xff);
 		}
+
+	private:
+		uint16_t attribute[3];
 	};
 
 	struct alignas(4) Transform

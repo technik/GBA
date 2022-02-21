@@ -26,7 +26,7 @@ void TextSystem::Init()
     auto* textTileData = reinterpret_cast<volatile uint32_t*>(&tileBank.GetDTile(mTileStart));
     for(uint32_t i = 0; i < fontTileDataSize; ++i)
     {
-        textTileData[i] = fontTileData[i]; // + colorOffset;
+        textTileData[i] = fontTileData[i];
     }
 }
 
@@ -34,5 +34,7 @@ void TextSystem::writeNumbers(const uint8_t* str, Sprite::Object* dst, uint32_t 
 {
     constexpr uint32_t kHighBankDTileOffset = 512;
     for(uint32_t i = 0; i < n; ++i)
-        dst[i].attribute[2] = (2*str[i]+mTileStart) + 32 + kHighBankDTileOffset;
+    {
+        dst[i].setTiles((2*str[i]+mTileStart) + 32 + kHighBankDTileOffset, 0);
+    }
 }

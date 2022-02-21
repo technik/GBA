@@ -107,15 +107,15 @@ namespace math {
 	}
 
 	template<class T>
-	constexpr inline T dot(const Vec2<T>& a, const Vec2<T>&b)
+	constexpr inline auto dot(const Vec2<T>& a, const Vec2<T>&b)
 	{
 		return a.x()*b.x() + a.y()*b.y();
 	}
 
 	template<class T>
-	constexpr inline T cross(const Vec2<T>& a, const Vec2<T>&b)
+	constexpr inline auto cross(const Vec2<T>& a, const Vec2<T>&b)
 	{
-		return a.x()*b.y() - a.y()*b.x();
+		return (a.x()*b.y() - a.y()*b.x());
 	}
 
 } // namespace math

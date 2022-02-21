@@ -12,8 +12,9 @@ FrameCounter::FrameCounter(TextSystem& text)
 	for(uint32_t i = 0; i < 2; ++i)
 	{
 		auto& obj = m_ShadowSprites[i];
-		obj.attribute[0] = 1<<13; // Top of the screen, normal rendering, 16bit palette tiles
-		obj.attribute[1] = 8*i; // Left of the screen, small size
+		obj.Configure(Sprite::ObjectMode::Normal, Sprite::GfxMode::Normal, Sprite::ColorMode::e16bits, Sprite::Shape::square8x8);
+		obj.SetNonAffineTransform(false, false, Sprite::Shape::square8x8);
+		obj.setPos(8*i, 0);
 	}
 	const uint8_t data[2] = {};
 	text.writeNumbers(data, m_ShadowSprites, 2);
@@ -33,9 +34,7 @@ void FrameCounter::render(TextSystem& text)
 	// Copy over to VRAM
 	for(int i = 0; i < 2; ++i)
 	{
-		m_sprites[i].attribute[0] = m_ShadowSprites[i].attribute[0];
-		m_sprites[i].attribute[1] = m_ShadowSprites[i].attribute[1];
-		m_sprites[i].attribute[2] = m_ShadowSprites[i].attribute[2];
+		m_sprites[i] = m_ShadowSprites[i];
 	}
 }
 

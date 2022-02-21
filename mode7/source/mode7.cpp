@@ -74,25 +74,43 @@ struct RasteredObj
 	RasteredObj(VECTOR startPos)
 		:m_pos(startPos)
 	{
-		m_paletteStart = gfx::SpritePalette::Allocator::alloc(1); // Alloc 1 color
+		// Allocate a palette of just two colors to do dithering with
+		m_paletteStart = gfx::SpritePalette::Allocator::alloc(2);
 
 		// Init palette
-		gfx::SpritePalette::color(m_paletteStart).raw = BasicColor::Green.raw;
+		gfx::SpritePalette::color(m_paletteStart).raw = BasicColor::Black.raw;
+		gfx::SpritePalette::color(m_paletteStart+1).raw = BasicColor::Red.raw;
+
+		// Alloc tiles
+		auto& tileBank = gfx::TileBank::GetBank(gfx::TileBank::LowSpriteBank);
+		constexpr auto spriteShape = Sprite::Shape::square16x16;
+		constexpr auto numTiles = Sprite::GetNumTiles(spriteShape);
+		m_tileNdx = tileBank.allocSTiles(numTiles);
 
 		// Init sprite
-		auto& tileBank = gfx::TileBank::GetBank(gfx::TileBank::LowSpriteBank);
 		m_sprite = Sprite::ObjectAllocator::alloc(1);
-		m_tileNdx = tileBank.allocSTiles(1);
-		m_sprite->attribute[2] = m_tileNdx;
+		m_sprite->Configure(Sprite::ObjectMode::Normal, Sprite::GfxMode::Normal, Sprite::ColorMode::e4bits, spriteShape);
+		m_sprite->SetNonAffineTransform(false, false, spriteShape);
+		m_sprite->setTiles(m_tileNdx, m_paletteStart/16);
+		
 		m_sprite->setPos(116, 76);
 
-		// Draw into the tile
+		// Draw into the tiles
+		const auto blackNdx = m_paletteStart&0x0f;
+		const auto redNdx = blackNdx+1;
+		uint32_t twoPixels = blackNdx<<4 | redNdx;
+		uint32_t rowA = twoPixels<<24 | twoPixels<<16 | twoPixels<<8 | twoPixels;
+		uint32_t rowB = rowA<<4 | blackNdx;
+
 		constexpr uint32_t lowBank = 4;
-		auto* spriteBase = (volatile uint16_t*)tileBank.GetSTile(m_tileNdx).pixelPair;
-		uint32_t fourTiles = (m_paletteStart<<8) | m_paletteStart;
-		for(uint16_t i = 0; i < 8*4; ++i) // Fill the tile
+		for(uint32_t t = 0; t < numTiles; ++t)
 		{
-			spriteBase[i] = (i&2) ? fourTiles : (fourTiles<<4);
+			auto& tile = tileBank.GetSTile(m_tileNdx + t);
+			for(uint16_t i = 0; i < 8;) // Fill the tile
+			{
+				tile.row(i++) = rowA;
+				tile.row(i++) = rowB;
+			}
 		}
 	}
 

@@ -14,9 +14,9 @@ namespace gfx
 			return reinterpret_cast<const uint32_t*>(pixelPair)[n];
 		}
 		
-		uint32_t& row(uint32_t n)
+		volatile uint32_t& row(uint32_t n) volatile
 		{
-			return reinterpret_cast<uint32_t*>(pixelPair)[n];
+			return reinterpret_cast<volatile uint32_t*>(pixelPair)[n];
 		}
 
 		void fill(uint8_t ndx)

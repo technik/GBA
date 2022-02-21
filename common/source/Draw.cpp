@@ -26,10 +26,10 @@ void rasterTriangle(uint16_t* dst, Vec2i scissor, uint16_t color, const math::Ve
 
 	for(auto y = yStart; y < yEnd; ++y)
 	{
-		p.y() = intp8(y, 1<<7);
+		p.y() = intp8(y) + 0.5_p8;
 		for(auto x = xStart; x < xEnd; ++x)
 		{
-			p.x() = intp8(x, 1<<7);
+			p.x() = intp8(x) + 0.5_p8;
 			
 			if(cross(p-v[0],e0).raw > 0)
 				if(cross(p-v[1],e1).raw > 0)

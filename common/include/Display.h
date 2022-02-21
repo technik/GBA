@@ -57,7 +57,7 @@ public:
 
 	void enableSprites()
 	{
-		control = control | (1<<12);
+		control = control | (1<<12) | (1<<6);
 	}
 
     void flipFrame()
