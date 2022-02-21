@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <concepts>
+#include <cmath>
 
 namespace math
 {
@@ -124,6 +125,16 @@ namespace math
 		return result;
 	}
 
+	template<class Store, size_t shift>
+	constexpr auto operator+(
+		Fixed<Store, shift> a,
+		std::integral auto b)
+	{
+		Fixed<Store, shift> result;
+		result.raw = a.raw + (b<<shift);
+		return result;
+	}
+
 	template<class StoreA, class StoreB, size_t shift>
 	constexpr auto operator-(
 		Fixed<StoreA, shift> a,
@@ -132,6 +143,17 @@ namespace math
 		using sub_type = decltype(a.raw - b.raw);
 		Fixed<sub_type, shift> result;
 		result.raw = a.raw - b.raw;
+		return result;
+	}
+
+	template<std::integral Store, size_t shift>
+	constexpr auto operator-(
+		Fixed<Store, shift> a)
+	{
+		static_assert(std::is_signed_v<Store>, "Can't flip the sign on an unsigned type");
+
+		Fixed<Store, shift> result;
+		result.raw = -a.raw;
 		return result;
 	}
 
@@ -161,10 +183,47 @@ namespace math
 		return result;
 	}
 
+	template<
+		class StoreA, size_t shiftA,
+		class StoreB, size_t shiftB>
+	constexpr auto operator / (
+		Fixed<StoreA, shiftA> a,
+		Fixed<StoreB, shiftB> b)
+	{
+		static_assert(shiftA >= shiftB);
+		using div_type = decltype(a.raw / b.raw);
+		Fixed<div_type, shiftA-shiftB> result;
+		result.raw = a.raw / b.raw;
+		return result;
+	}
+
+	template<
+		class StoreA, size_t shiftA,
+		std::integral T>
+	constexpr auto operator/(
+		Fixed<StoreA, shiftA> a,
+		T b)
+	{
+		using div_type = decltype(a.raw / b);
+		Fixed<div_type, shiftA> result;
+		result.raw = a.raw / b;
+		return result;
+	}
+
 	template<class StoreA, class StoreB, size_t shift>
 	constexpr bool operator< (Fixed<StoreA, shift> a, Fixed<StoreB, shift> b)
 	{
 		return a.raw < b.raw;
+	}
+
+	template<class Store, size_t shift>
+	constexpr auto sqrt(Fixed<Store,shift> x)
+	{
+		static_assert((shift & 1) == 0);
+		constexpr auto resultShift = shift/2;
+		Fixed<Store,resultShift> result;
+		result.raw = ::sqrt(x.raw);
+		return result;
 	}
 
 	using intp8 = Fixed<int32_t,8>;

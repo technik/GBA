@@ -4,7 +4,6 @@
 
 // External libraries
 #include <stdio.h>
-#include <tonc.h>
 
 // Engine code
 #include <Color.h>
@@ -29,6 +28,8 @@ math::Fixed<int32_t, 8> gCosf = math::Fixed<int32_t, 8>(1);
 math::Fixed<int32_t, 8> gSinf = math::Fixed<int32_t, 8>(0);
 
 TextSystem text;
+
+using namespace math;
 
 void initBackground()
 {
@@ -106,12 +107,50 @@ struct RasteredObj
 		for(uint32_t t = 0; t < numTiles; ++t)
 		{
 			auto& tile = tileBank.GetSTile(m_tileNdx + t);
-			for(uint16_t i = 0; i < 8;) // Fill the tile
-			{
-				tile.row(i++) = rowA;
-				tile.row(i++) = rowB;
-			}
+            renderTile(
+                t&1 ? 0.5_p8 : -7.5_p8,
+                t&2 ? 0.5_p8 : -7.5_p8,
+                tile);
 		}
+	}
+
+	void renderTile(intp8 x0, intp8 y0, volatile gfx::STile& dst)
+	{
+		constexpr auto R2 = 8_p8 * 8_p8;
+		// Precompute x coordinates
+		intp16 x2[8];
+		intp16 R2_y2[8];
+		intp16 nx2[8];
+		intp8 nx[8];
+		intp16 ny2[8];
+		intp8 ny[8];
+		for(int32_t i = 0; i < 8; ++i)
+		{
+			const auto x = x0+i;
+            const auto y = y0 + i;
+			x2[i] = x*x;
+			nx2[i] = x2[i] / R2.floor();
+			nx[i] = sqrt(nx2[i]) * (x < 0_p8? 1 : -1);
+			const auto y2 = y*y;
+			ny2[i] = y2 / R2.floor();
+			ny[i] = sqrt(ny2[i]) * (y < 0_p8 ? 1 : -1);
+			R2_y2[i] = R2 - y2;
+		}
+		// Raster circle
+		for(int row = 0; row < 8; ++row)
+		{
+            uint32_t rowColor = 0;
+            for(int i = 7; i >= 0; --i)
+            {
+				auto nz2 = 1_p16 - nx2[i] - ny2[row];
+				auto nz = sqrt(nz2);
+				auto light = nz+nx[i]+ny[row];
+				auto clr = (light < 0_p8) ? m_paletteStart : (m_paletteStart+1) ;
+                uint32_t pxlColor = (x2[i] < R2_y2[row]) ? clr : 0;
+                rowColor = rowColor<<4 | pxlColor;
+            }
+            dst.row(row) = rowColor;
+        }
 	}
 
 	void update(const Camera& cam)
