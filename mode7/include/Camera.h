@@ -10,31 +10,31 @@ extern "C" {
 // Game camera
 struct Camera
 {
-	Camera(VECTOR startPos)
+	Camera(math::Vec3p8 startPos)
 		: pos(startPos)
 	{}
 
 	void update()
 	{
-		VECTOR dir;
+		math::Vec3p8 dir;
 		// left/right : strafe
-		dir.x = horSpeed * (Keypad::Held(Keypad::R) - Keypad::Held(Keypad::L));
+		dir.x() = horSpeed * (Keypad::Held(Keypad::R) - Keypad::Held(Keypad::L));
 		// up/down : forward/back
-		dir.y = horSpeed * (Keypad::Held(Keypad::DOWN) - Keypad::Held(Keypad::UP));
+		dir.y() = horSpeed * (Keypad::Held(Keypad::DOWN) - Keypad::Held(Keypad::UP));
 		// B/A : rise/sink
-		dir.z = verSpeed*(Keypad::Held(Keypad::B) - Keypad::Held(Keypad::A));
+		dir.z() = verSpeed*(Keypad::Held(Keypad::B) - Keypad::Held(Keypad::A));
 
-		pos.x += dir.x * cosf.raw - dir.y * sinf.raw;
-		pos.y += dir.x * sinf.raw + dir.y * cosf.raw;
-		pos.z += dir.z;
+		pos.x() += (dir.x() * cosf - dir.y() * sinf).cast<8>();
+		pos.y() += (dir.x() * sinf + dir.y() * cosf).cast<8>();
+		pos.z() += dir.z();
 
 		// Limit z to reasonable values to not break the math
-		pos.z = max(0, min(250*256, pos.z));
+		pos.z() = math::max(math::intp8(0), min(math::intp8(250), pos.z()));
 
 		phi += angSpeed*(Keypad::Held(Keypad::RIGHT) - Keypad::Held(Keypad::LEFT));
 
-		cosf = math::Fixed<int32_t, 8>::castFromShiftedInteger<12>(lu_cos(phi));
-		sinf = math::Fixed<int32_t, 8>::castFromShiftedInteger<12>(lu_sin(phi));
+		cosf = math::Fixed<int32_t, 8>::castFromShiftedInteger<12>(lu_cos(phi.raw));
+		sinf = math::Fixed<int32_t, 8>::castFromShiftedInteger<12>(lu_sin(phi.raw));
 	}
 
 	void postGlobalState()
@@ -45,12 +45,12 @@ struct Camera
 		gCamPos = pos;
 	}
 
-	VECTOR pos;
-	FIXED phi = 0;
-	math::Fixed<int32_t, 8> sinf = math::Fixed<int32_t, 8>(0);
-	math::Fixed<int32_t, 8> cosf = math::Fixed<int32_t, 8>(1);
+	math::Vec3p8 pos;
+	math::intp8 phi {};
+	math::intp8 sinf = math::intp8(0);
+	math::intp8 cosf = math::intp8(1);
 
-	FIXED horSpeed = 1;
-	FIXED verSpeed = 64;
-	FIXED angSpeed = 128;
+	math::intp8 horSpeed = math::intp8(0.5f);
+	math::intp8 verSpeed = math::intp8(0.25f);
+	math::intp8 angSpeed = math::intp8(0.5f);
 };

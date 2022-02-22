@@ -22,14 +22,14 @@
 #include <demo.h>
 #include <Camera.h>
 
+using namespace math;
+
 // Global Camera State
-VECTOR gCamPos;
-math::Fixed<int32_t, 8> gCosf = math::Fixed<int32_t, 8>(1);
-math::Fixed<int32_t, 8> gSinf = math::Fixed<int32_t, 8>(0);
+Vec3p8 gCamPos;
+intp8 gCosf = 1_p8;
+intp8 gSinf = 0_p8;
 
 TextSystem text;
-
-using namespace math;
 
 void initBackground()
 {
@@ -72,17 +72,24 @@ void initBackground()
 
 struct RasteredObj
 {
-	RasteredObj(VECTOR startPos)
+	static constexpr auto ambientColor = BasicColor::Blue;
+	static constexpr auto litColor = BasicColor::White;
+
+	RasteredObj(Vec3p8 startPos)
 		:m_pos(startPos)
 	{
 		// Allocate a palette of just two colors to do dithering with
-		m_paletteStart = gfx::SpritePalette::Allocator::alloc(2);
+		m_paletteStart = gfx::SpritePalette::Allocator::alloc(5);
 
 		// Init palette
-		gfx::SpritePalette::color(m_paletteStart).raw = BasicColor::Black.raw;
-		gfx::SpritePalette::color(m_paletteStart+1).raw = BasicColor::Red.raw;
+		gfx::SpritePalette::color(m_paletteStart+0).raw = Color(0.2f,0.2f,0.2f).raw; // No direct light -> ambient color
+		gfx::SpritePalette::color(m_paletteStart+1).raw = Color(0.4f,0.4f,0.4f).raw;
+		gfx::SpritePalette::color(m_paletteStart+2).raw = Color(0.6f,0.6f,0.6f).raw;
+		gfx::SpritePalette::color(m_paletteStart+3).raw = Color(0.8f,0.8f,0.8f).raw;
+		gfx::SpritePalette::color(m_paletteStart+4).raw = Color(1.f,1.f,1.f).raw;
 
 		// Alloc tiles
+		m_anchor = { 8, 8 };
 		auto& tileBank = gfx::TileBank::GetBank(gfx::TileBank::LowSpriteBank);
 		constexpr auto spriteShape = Sprite::Shape::square16x16;
 		constexpr auto numTiles = Sprite::GetNumTiles(spriteShape);
@@ -137,16 +144,33 @@ struct RasteredObj
 			R2_y2[i] = R2 - y2;
 		}
 		// Raster circle
+		constexpr auto lx = intp8(1.f/1.41421356237f);
+		
+		intp16 forwardRow[8] = {};
 		for(int row = 0; row < 8; ++row)
 		{
+			intp16 carry = {};
             uint32_t rowColor = 0;
             for(int i = 7; i >= 0; --i)
             {
-				auto nz2 = 1_p16 - nx2[i] - ny2[row];
-				auto nz = sqrt(nz2);
-				auto light = nz+nx[i]+ny[row];
-				auto clr = (light < 0_p8) ? m_paletteStart : (m_paletteStart+1) ;
-                uint32_t pxlColor = (x2[i] < R2_y2[row]) ? clr : 0;
+                uint32_t pxlColor = 0;
+				if(x2[i] < R2_y2[row]) // hit
+				{
+					auto nz2 = 1_p16 - nx2[i] - ny2[row];
+					auto nz = sqrt(nz2);
+					auto ndl = saturate((nz+nx[i]+ny[row]) * lx);
+					// Color dithering
+					pxlColor = m_paletteStart;
+					auto dith_x = saturate(ndl + carry + forwardRow[i]);
+					auto approx = dith_x.cast<2>();
+					intp16 error = dith_x - approx.cast<16>();
+					pxlColor += approx.raw;
+
+					carry = error/2;
+					forwardRow[(i+7)%8] = forwardRow[(i+7)%8] + carry/2;
+					forwardRow[i] = forwardRow[i] + carry/2;
+					forwardRow[(i+9)%8] = 0_p16;
+				}
                 rowColor = rowColor<<4 | pxlColor;
             }
             dst.row(row) = rowColor;
@@ -155,17 +179,14 @@ struct RasteredObj
 
 	void update(const Camera& cam)
 	{
-		VECTOR relPos;
-		relPos.x = m_pos.x-cam.pos.x;
-		relPos.y = m_pos.y-cam.pos.y;
-		relPos.z = m_pos.z-cam.pos.z;
-		//VECTOR vsPos = relPos.x*
+		Vec3p8 relPos = m_pos - cam.pos;
 	}
 
 	void render()
 	{}
 
-	VECTOR m_pos;
+	math::Vec2u m_anchor;
+	math::Vec3p8 m_pos;
     uint32_t m_paletteStart;
 	volatile Sprite::Object* m_sprite {};
 	uint32_t m_tileNdx = 0;
@@ -207,11 +228,11 @@ int main()
 	initBackground();
 
 	// -- Init game state ---
-	auto camera = Camera({ 256<<8, 256<<8, 2<<8 });
+	auto camera = Camera(Vec3p8(256_p8, 256_p8, 1.7_p8));
 
 	// Create a 3d object in front of the camera
-	VECTOR objPos = camera.pos;
-	objPos.y += 5;
+	Vec3p8 objPos = camera.pos;
+	objPos.y() += 5_p8;
 	auto obj0 = RasteredObj(objPos);
 	
 	// Unlock the display and start rendering

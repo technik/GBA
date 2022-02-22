@@ -2,15 +2,24 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <concepts>
 
 struct Color
 {
 	Color();
 	
-	template<typename T>
+	template<std::integral T>
 	constexpr Color(T r, T g, T b)
 		: raw((r&0x1f)|((g&0x1f)<<5)|((b&0x1f)<<10))
 	{
+	}
+
+	constexpr Color(float r, float g, float b)
+		: raw(0)
+	{
+		raw |= uint32_t(r*0x1f) & 0x1f;
+		raw |= (uint32_t(g*0x1f) & 0x1f) << 5;
+		raw |= (uint32_t(b*0x1f) & 0x1f) << 10;
 	}
 
 	uint16_t raw;

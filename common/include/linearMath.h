@@ -9,14 +9,23 @@ namespace math
 {
 	template<class T>
 	constexpr auto max(T a, T b)
-	{
-		return b < a ? a : b;
+	{	
+		return a < b ? b : a;
 	}
 
 	template<class T>
 	constexpr auto min(T a, T b)
-	{
+	{	
 		return a < b ? a : b;
+	}
+
+	template<class T>
+	constexpr auto saturate(T x)
+	{
+		constexpr auto one = T(1);
+		constexpr auto zero = T(0);
+		
+		return max(zero, min(x, one));
 	}
 
 	template<std::integral Store, size_t Shift>
@@ -111,6 +120,28 @@ namespace math
 				result.raw = (raw+half) / (1<<diff);
 			}
 			return result;
+		}
+
+		template<std::integral T>
+		void operator+=(T x)
+		{
+			raw += x*(1<<shift);
+		}
+		
+		void operator+=(Fixed x)
+		{
+			raw += x.raw;
+		}
+
+		template<std::integral T>
+		void operator-=(T x)
+		{
+			raw += x*(1<<shift);
+		}
+		
+		void operator-=(Fixed x)
+		{
+			raw += x.raw;
 		}
 	};
 
@@ -214,6 +245,12 @@ namespace math
 	constexpr bool operator< (Fixed<StoreA, shift> a, Fixed<StoreB, shift> b)
 	{
 		return a.raw < b.raw;
+	}
+
+	template<class StoreA, class StoreB, size_t shift>
+	constexpr bool operator> (Fixed<StoreA, shift> a, Fixed<StoreB, shift> b)
+	{
+		return a.raw > b.raw;
 	}
 
 	template<class Store, size_t shift>

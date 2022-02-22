@@ -69,6 +69,9 @@ namespace math {
 	using Vec2i = Vector<int32_t,2>;
 	using Vec3i = Vector<int32_t,3>;
 
+	using Vec2u = Vector<uint32_t,2>;
+	using Vec3u = Vector<uint32_t,3>;
+
 	using Vec2p8 = Vec2<intp8>;
 	using Vec3p8 = Vec3<intp8>;
 	
@@ -116,6 +119,37 @@ namespace math {
 	constexpr inline auto cross(const Vec2<T>& a, const Vec2<T>&b)
 	{
 		return (a.x()*b.y() - a.y()*b.x());
+	}
+	
+	// 3d vector operators
+	template<class T>
+	constexpr inline Vec3<T> operator+(const Vec3<T>& a, const Vec3<T>& b)
+	{
+		return {a.x() + b.x(), a.y() + b.y(), a.z() + b.z() };
+	}
+
+	template<class T>
+	inline Vec3<T> operator+=(Vec3<T>& a, const Vec3<T>& b)
+	{
+		return a = {a.x() + b.x(), a.y() + b.y(), a.z() + b.z() };
+	}
+
+	template<class T>
+	constexpr inline Vec3<T> operator-(const Vec3<T>& a, const Vec3<T>& b)
+	{
+		return {a.x() - b.x(), a.y() - b.y(), a.z() - b.z() };
+	}
+
+	template<class T>
+	inline Vec3<T> operator-=(Vec3<T>& a, const Vec3<T>& b)
+	{
+		return a = {a.x() - b.x(), a.y() - b.y(), a.z() - b.z() };
+	}
+
+	template<class T>
+	constexpr inline auto dot(const Vec3<T>& a, const Vec3<T>&b)
+	{
+		return a.x()*b.x() + a.y()*b.y() +a.z()*b.z() ;
 	}
 
 } // namespace math

@@ -15,9 +15,9 @@ extern "C" {
 #define M7_D 160
 
 // === GLOBALS ========================================================
-extern VECTOR gCamPos;
-extern math::Fixed<int32_t, 8> gCosf;
-extern math::Fixed<int32_t, 8> gSinf;
+extern math::Vec3p8 gCamPos;
+extern math::intp8 gCosf;
+extern math::intp8 gSinf;
 
 // === PROTOTYPES =====================================================
 IWRAM_CODE void m7_hbl_c();
