@@ -89,7 +89,7 @@ struct RasteredObj
 		gfx::SpritePalette::color(m_paletteStart+4).raw = Color(1.f,1.f,1.f).raw;
 
 		// Alloc tiles
-		m_anchor = { 8, 8 };
+		m_anchor = Vec2u{ 8, 8 };
 		auto& tileBank = gfx::TileBank::GetBank(gfx::TileBank::LowSpriteBank);
 		constexpr auto spriteShape = Sprite::Shape::square16x16;
 		constexpr auto numTiles = Sprite::GetNumTiles(spriteShape);
@@ -177,10 +177,16 @@ struct RasteredObj
         }
 	}
 
+#pragma GCC push_options
+#pragma GCC optimize ("O0")
 	void update(const Camera& cam)
 	{
-		Vec3p8 relPos = m_pos - cam.pos;
+		Vec3p8 ssPos = cam.projectWorldPos(m_pos);
+		int16_t ssX = ssPos.x().roundToInt() - m_anchor.x();
+		int16_t ssY = ssPos.y().roundToInt() - m_anchor.y();
+		m_sprite->setPos(ssX, ssY);
 	}
+#pragma GCC pop_options
 
 	void render()
 	{}
@@ -250,9 +256,9 @@ int main()
 
 		// -- Render --
 		// Operations should be ordered from most to least time critical, in case they exceed VBlank time
+		// Prepare first scanline for next frame
 		resetBg2Projection();
 		camera.postGlobalState();
-		// Prepare first scanline for next frame
 
 		frameCounter.render(text);
 	}

@@ -45,6 +45,25 @@ struct Camera
 		gCamPos = pos;
 	}
 
+	// Returns x,y in screen space and depth as z
+#pragma GCC push_options
+#pragma GCC optimize ("O0")
+	math::Vec3p8 projectWorldPos(math::Vec3p8 worldPos) const
+	{
+		math::Vec3p8 viewSpace;
+		viewSpace.y() = pos.z() - worldPos.z();
+		math::Vec2p8 relHorPos = math::Vec2p8(worldPos.x() - pos.x(), worldPos.y() - pos.y());
+		viewSpace.x() = (relHorPos.x() * cosf - relHorPos.y() * sinf).cast<8>();
+		viewSpace.z() = (relHorPos.y() * cosf + relHorPos.x() * sinf).cast<8>();
+		math::intp8 invDepth = math::intp16(1) / viewSpace.z();
+		math::Vec3p8 result;
+		result.z() = viewSpace.z();
+		result.x() = (viewSpace.x() * invDepth).cast<8>() + (ScreenWidth/2);
+		result.y() = (viewSpace.y() * invDepth).cast<8>() + (ScreenHeight/2);
+		return result;
+	}
+#pragma GCC pop_options
+
 	math::Vec3p8 pos;
 	math::intp8 phi {};
 	math::intp8 sinf = math::intp8(0);
