@@ -31,6 +31,14 @@ intp8 gSinf = 0_p8;
 
 TextSystem text;
 
+void postGlobalState(const Camera& cam)
+{
+	// Copy local state into global variables that can be accessed by the renderer
+	gCosf = cam.cosf;
+	gSinf = cam.sinf;
+	gCamPos = cam.pos;
+}
+
 void initBackground()
 {
 	// Background clear color (used for blending too)
@@ -177,16 +185,15 @@ struct RasteredObj
         }
 	}
 
-#pragma GCC push_options
-#pragma GCC optimize ("O0")
 	void update(const Camera& cam)
 	{
 		Vec3p8 ssPos = cam.projectWorldPos(m_pos);
-		int16_t ssX = ssPos.x().roundToInt() - m_anchor.x();
-		int16_t ssY = ssPos.y().roundToInt() - m_anchor.y();
+		int16_t ssX = ssPos.x().roundToInt();
+		ssX = ssX - m_anchor.x();
+		int16_t ssY = ssPos.y().roundToInt();
+		ssY = ssY - m_anchor.y();
 		m_sprite->setPos(ssX, ssY);
 	}
-#pragma GCC pop_options
 
 	void render()
 	{}
@@ -258,7 +265,7 @@ int main()
 		// Operations should be ordered from most to least time critical, in case they exceed VBlank time
 		// Prepare first scanline for next frame
 		resetBg2Projection();
-		camera.postGlobalState();
+		postGlobalState(camera);
 
 		frameCounter.render(text);
 	}

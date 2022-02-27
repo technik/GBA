@@ -101,7 +101,7 @@ struct Sprite
 				(subPalette&0x0f)<<12; // Palette index
 		}
 		
-		inline void setPos(uint32_t x, uint32_t y) volatile
+		inline void setPos(int32_t x, int32_t y) volatile
 		{
 			attribute[0] = (attribute[0] & (0xff00)) | (y&0xff);
 			attribute[1] = (attribute[1] & (0xff00)) | (x&0xff);

@@ -16,7 +16,7 @@ namespace math {
 
 		// Constructors
 		Vector() = default;
-		constexpr Vector(T _x)
+		constexpr explicit Vector(T _x)
 		{
 			for(size_t i = 0; i < N; ++i)
 				m[i] = _x;

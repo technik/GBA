@@ -69,7 +69,7 @@ IARCH   := -mthumb-interwork -marm -mlong-calls
 
 # --- Main flags ---
 
-CFLAGS	:= -mcpu=arm7tdmi -mtune=arm7tdmi $(ARCH) -O2
+CFLAGS	:= -mcpu=arm7tdmi -mtune=arm7tdmi $(ARCH) -O2 -DGBA
 CFLAGS	+= -Wall
 CFLAGS	+= $(INCLUDE)
 CFLAGS	+= -fno-strict-aliasing -g

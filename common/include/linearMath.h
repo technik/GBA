@@ -104,8 +104,54 @@ namespace math
 		template<size_t resultShift>
 		constexpr auto round() const
 		{
-			static_assert(!std::is_signed_v<store_type>, "Can't round signed types with this method");
+			Fixed<store_type, resultShift> result;
+			if constexpr(resultShift >= shift) // the other type shift is bigger than this, shift left
+			{
+				constexpr size_t diff = resultShift - shift;
+				result.raw = raw * (1<<diff);
+			}
+			else
+			{
+				if constexpr(std::is_signed_v<store_type>)
+				{
+					// Dividing, need to round
+					constexpr size_t diff = shift - resultShift;
+					size_t half = raw >= 0 ? (1<<(diff-1)) : -(1<<(diff-1));
+					result.raw = (raw+half) / (1<<diff);
+				}
+				else
+				{
+					// Dividing, need to round
+					constexpr size_t diff = shift - resultShift;
+					constexpr size_t half = 1<<(diff-1);
+					result.raw = (raw+half) / (1<<diff);
+				}
+			}
+			return result;
+		}
+		
+		// Performs a destructive cast with rounding
+		constexpr auto roundToInt() const
+		{
+			store_type result;
+			if constexpr(std::is_signed_v<store_type>) // More expensive implementation for signed
+			{
+				// Dividing, need to round
+				size_t half = raw >= 0 ? (1<<(shift-1)) : -(1<<(shift-1));
+				result = (raw+half) / (1<<shift);
+			}
+			else
+			{
+				// Dividing, need to round
+				constexpr size_t half = 1<<(shift-1);
+				result = (raw+half) / (1<<shift);
+			}
+			return result;
+		}
 
+		template<size_t resultShift>
+		constexpr auto roundUnsafe() const // The caller is responsible for making sure the value is positive
+		{
 			Fixed<store_type, resultShift> result;
 			if constexpr(resultShift >= shift) // the other type shift is bigger than this, shift left
 			{
@@ -214,17 +260,30 @@ namespace math
 		return result;
 	}
 
+    template<
+        class StoreA, size_t shiftA,
+        std::integral T>
+        constexpr auto operator*(
+            T b,
+            Fixed<StoreA, shiftA> a)
+    {
+        using product_type = decltype(a.raw* b);
+        Fixed<product_type, shiftA> result;
+        result.raw = a.raw * b;
+        return result;
+    }
+
 	template<
-		class StoreA, size_t shiftA,
-		class StoreB, size_t shiftB>
+		class StoreA,
+		class StoreB,
+        size_t shift>
 	constexpr auto operator / (
-		Fixed<StoreA, shiftA> a,
-		Fixed<StoreB, shiftB> b)
+		Fixed<StoreA, shift> a,
+		Fixed<StoreB, shift> b)
 	{
-		static_assert(shiftA >= shiftB);
 		using div_type = decltype(a.raw / b.raw);
-		Fixed<div_type, shiftA-shiftB> result;
-		result.raw = a.raw / b.raw;
+		Fixed<div_type, shift> result;
+		result.raw = (a.raw<<shift) / b.raw;
 		return result;
 	}
 
