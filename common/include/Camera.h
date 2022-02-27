@@ -21,14 +21,14 @@ struct Camera
 		// B/A : rise/sink
 		dir.z() = verSpeed*(Keypad::Held(Keypad::B) - Keypad::Held(Keypad::A));
 
-		pos.x() += (dir.x() * cosf - dir.y() * sinf).cast<8>();
-		pos.y() += (dir.x() * sinf + dir.y() * cosf).cast<8>();
+		pos.x() += (dir.x() * cosf + dir.y() * sinf).cast<8>();
+		pos.y() += (dir.y() * cosf - dir.x() * sinf).cast<8>();
 		pos.z() += dir.z();
 
 		// Limit z to reasonable values to not break the math
 		pos.z() = math::max(math::intp8(0), min(math::intp8(250), pos.z()));
 
-		phi += angSpeed*(Keypad::Held(Keypad::RIGHT) - Keypad::Held(Keypad::LEFT));
+		phi += angSpeed*(Keypad::Held(Keypad::LEFT) - Keypad::Held(Keypad::RIGHT));
 
 		cosf = math::Fixed<int32_t, 8>::castFromShiftedInteger<12>(lu_cos(phi.raw));
 		sinf = math::Fixed<int32_t, 8>::castFromShiftedInteger<12>(lu_sin(phi.raw));
@@ -46,8 +46,8 @@ struct Camera
 		math::intp8 invDepth = math::intp8(1) / viewSpace.z();
 		math::Vec3p8 result;
 		result.z() = viewSpace.z();
-		result.x() = (viewSpace.x() * invDepth).cast<8>() + (ScreenWidth/2);
-		result.y() = (viewSpace.y() * invDepth).cast<8>() + (ScreenHeight/2);
+		result.x() = (viewSpace.x() * invDepth).cast<8>() * ScreenHeight + (ScreenWidth/2);
+		result.y() = (viewSpace.y() * invDepth).cast<8>() * ScreenHeight + (ScreenHeight/2);
 		return result;
 	}
 

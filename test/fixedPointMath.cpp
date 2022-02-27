@@ -49,7 +49,7 @@ void testCamera()
     camera.sinf = intp8(sin(15.f / 180 * 3.1415927f));
 
     ss = camera.projectWorldPos(objPos);
-    assert(ss.x().roundToInt() == 99);
+    assert(ss.x().roundToInt() == 141);
     assert(ss.y().roundToInt() == ScreenHeight / 2);
     assert(ss.z().roundToInt() == 5);
 }

@@ -71,10 +71,10 @@ struct Sprite
 		{
 			attribute[0] =
 				(attribute[0] & 0x00ff) | // preserve y pos
-				((uint8_t)objectMode << 8) |
-				((uint8_t)gfxMode << 10) |
-				((uint8_t)colorMode << 13) |
-				((uint8_t)shape << 14); // Lowest two bits store the shape
+				((uint16_t)objectMode << 8) |
+				((uint16_t)gfxMode << 10) |
+				((uint16_t)colorMode << 13) |
+				((uint16_t)shape << 14); // Lowest two bits store the shape
 		}
 
 		inline void SetAffineConfig(uint32_t affineIndex) volatile
@@ -90,7 +90,7 @@ struct Sprite
 				(attribute[1] & 0x01ff) | // preserve x pos
 				(horizontalFlip ? (1<<12) : 0) |
 				(verticalFlip ? (1<<13) : 0) |
-				((uint8_t(size)>>2)<<14);
+				((uint16_t(size)>>2)<<14);
 		}
 
 		inline void setTiles(uint32_t firstTile, uint32_t subPalette, uint32_t priority = 0) volatile
@@ -105,6 +105,18 @@ struct Sprite
 		{
 			attribute[0] = (attribute[0] & (0xff00)) | (y&0xff);
 			attribute[1] = (attribute[1] & (0xff00)) | (x&0xff);
+		}
+
+		inline void show() volatile
+		{
+			constexpr uint8_t visibilityMask = ~(0x03 << 8);
+			attribute[0] = (attribute[0] & visibilityMask) | (((uint16_t)ObjectMode::Normal) << 8);
+		}
+
+		inline void hide() volatile
+		{
+			constexpr uint8_t visibilityMask = ~(0x03 << 8);
+			attribute[0] = (attribute[0] & visibilityMask) | (((uint16_t)ObjectMode::Disabled) << 8);
 		}
 
 	private:

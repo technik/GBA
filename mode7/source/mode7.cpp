@@ -190,9 +190,17 @@ struct RasteredObj
 		Vec3p8 ssPos = cam.projectWorldPos(m_pos);
 		int16_t ssX = ssPos.x().roundToInt();
 		ssX = ssX - m_anchor.x();
-		int16_t ssY = ssPos.y().roundToInt();
-		ssY = ssY - m_anchor.y();
-		m_sprite->setPos(ssX, ssY);
+		if(ssPos.z() > 0_p8 && ssX + 2*8 >= 0 && ssX <= ScreenWidth)
+		{
+			int16_t ssY = ssPos.y().roundToInt();
+			ssY = ssY - m_anchor.y();
+			m_sprite->setPos(ssX, ssY);
+			m_sprite->show();
+		}
+		else
+		{
+			m_sprite->hide();
+		}
 	}
 
 	void render()
