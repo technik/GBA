@@ -3,6 +3,7 @@
 #include <cstdint>
 #include "vector.h"
 #include "Device.h"
+#include "Color.h"
 
 // Config display
 constexpr int32_t ScreenWidth = 240;
@@ -17,15 +18,9 @@ public:
 
 	void InitMode5()
 	{
-		set<5,BG2>();
+		SetMode<5,BG2>();
 		bg2RotScale.a = (160<<8)/ScreenWidth; // =(160/240.0)<<8
 		bg2RotScale.d = (128<<8)/ScreenHeight; // =(128/160.0)<<8
-	}
-
-	void InitMode2()
-	{
-		// Enable mode 2 with backgrounds 2 and 3
-		set<2,BG2>();
 	}
 
 	void StartBlank()
@@ -48,7 +43,7 @@ public:
 	static constexpr uint16_t OBJ = 1<<12;
 
 	template<uint16_t videoMode, uint16_t bgMode>
-	void set()
+	void SetMode()
 	{
 		static_assert(videoMode < 6, "Only video modes 0-5 are enabled in the GBA");
         static_assert(bgMode <= (BG0+BG1+BG2+BG3) && bgMode >= BG0);
@@ -65,9 +60,9 @@ public:
         control = control ^ FrameSelect;
     }
 
-    uint16_t* backBuffer() const
+    volatile uint16_t* backBuffer() const
 	{
-        return reinterpret_cast<uint16_t*>((control & FrameSelect) ? 0x06000000 : (0x06000000 + 0xA000));
+        return reinterpret_cast<volatile uint16_t*>((control & FrameSelect) ? 0x06000000 : (0x06000000 + 0xA000));
     }
 
 	void vSync()
@@ -104,3 +99,70 @@ private:
 };
 
 inline auto& Display() { return DisplayControl::Get(); }
+
+class Mode3Display
+{
+public:
+	static constexpr uint32_t Width = 240;
+	static constexpr uint32_t Height = 160;
+
+	void Init()
+	{
+		auto& disp = DisplayControl::Get();
+		disp.SetMode<3,DisplayControl::BG2>();
+	}
+
+	volatile Color* backBuffer()
+	{
+		auto& disp = DisplayControl::Get();
+		return reinterpret_cast<volatile Color*>(disp.backBuffer());
+	}
+};
+
+class Mode4Display
+{
+public:
+	static constexpr uint32_t Width = 240;
+	static constexpr uint32_t Height = 160;
+
+	void flip()
+	{
+		DisplayControl::Get().flipFrame();
+	}
+
+	void Init()
+	{
+		auto& disp = DisplayControl::Get();
+		disp.SetMode<4,DisplayControl::BG2>();
+	}
+
+	volatile uint16_t* backBuffer()
+	{
+		auto& disp = DisplayControl::Get();
+		return disp.backBuffer();
+	}
+};
+
+class Mode5Display
+{
+public:
+	static constexpr uint32_t Width = 160;
+	static constexpr uint32_t Height = 128;
+
+	void flip()
+	{
+		DisplayControl::Get().flipFrame();
+	}
+
+	void Init()
+	{
+		auto& disp = DisplayControl::Get();
+		disp.SetMode<5,DisplayControl::BG2>();
+	}
+
+	volatile Color* backBuffer()
+	{
+		auto& disp = DisplayControl::Get();
+		return reinterpret_cast<volatile Color*>(disp.backBuffer());
+	}
+};

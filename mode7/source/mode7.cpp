@@ -239,7 +239,7 @@ void InitSystems()
 int main()
 {
 	Display().StartBlank();
-	Display().InitMode2();
+	Display().SetMode<2,DisplayControl::BG2>();
 	
 	// --- Init systems ---
 	InitSystems();
