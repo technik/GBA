@@ -10,6 +10,8 @@ set(CMAKE_CXX_STANDARD 20)
 include_directories(common/include)
 add_executable(pcRT pc/rt/main.cpp)
 
+add_executable(lutGenerator tools/lutGenerator/main.cpp)
+
 enable_testing()
 add_executable(fixedPointMath test/fixedPointMath.cpp)
 set_target_properties(fixedPointMath PROPERTIES FOLDER test)

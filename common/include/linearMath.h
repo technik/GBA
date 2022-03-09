@@ -323,6 +323,7 @@ namespace math
 	}
 
 	using intp8 = Fixed<int32_t,8>;
+	using int8p8 = Fixed<int16_t,8>;
 	using intp12 = Fixed<int32_t,12>;
 	using intp16 = Fixed<int32_t,16>;
 	using intp24 = Fixed<int32_t,24>;

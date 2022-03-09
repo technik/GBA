@@ -7,7 +7,7 @@
 struct Camera
 {
 	Camera(math::Vec3p8 startPos)
-		: pos(startPos)
+		: m_pos(startPos)
 	{}
 
 	void update()
@@ -21,12 +21,12 @@ struct Camera
 		// B/A : rise/sink
 		dir.z() = verSpeed*(Keypad::Held(Keypad::B) - Keypad::Held(Keypad::A));
 
-		pos.x() += (dir.x() * cosf + dir.y() * sinf).cast<8>();
-		pos.y() += (dir.y() * cosf - dir.x() * sinf).cast<8>();
-		pos.z() += dir.z();
+		m_pos.x() += (dir.x() * cosf + dir.y() * sinf).cast<8>();
+		m_pos.y() += (dir.y() * cosf - dir.x() * sinf).cast<8>();
+		m_pos.z() += dir.z();
 
 		// Limit z to reasonable values to not break the math
-		pos.z() = math::max(math::intp8(0), min(math::intp8(250), pos.z()));
+		m_pos.z() = math::max(math::intp8(0), min(math::intp8(250), m_pos.z()));
 
 		phi += angSpeed*(Keypad::Held(Keypad::LEFT) - Keypad::Held(Keypad::RIGHT));
 
@@ -39,10 +39,10 @@ struct Camera
 	math::Vec3p8 projectWorldPos(math::Vec3p8 worldPos) const
 	{
 		math::Vec3p8 viewSpace;
-		viewSpace.y() = pos.z() - worldPos.z();
-		math::Vec2p8 relHorPos = math::Vec2p8(worldPos.x() - pos.x(), worldPos.y() - pos.y());
+		viewSpace.y() = m_pos.z() - worldPos.z(); // invert vertical sign because screen space y points downwards
+		math::Vec2p8 relHorPos = math::Vec2p8(worldPos.x() - m_pos.x(), worldPos.y() - m_pos.y());
 		viewSpace.x() = (relHorPos.x() * cosf + relHorPos.y() * sinf).cast<8>();
-		viewSpace.z() = (relHorPos.y() * cosf - relHorPos.x() * sinf).cast<8>();
+		viewSpace.z() = (-relHorPos.y() * cosf + relHorPos.x() * sinf).cast<8>();
 		math::intp8 invDepth = math::intp8(1) / viewSpace.z();
 		math::Vec3p8 result;
 		result.z() = viewSpace.z();
@@ -51,7 +51,7 @@ struct Camera
 		return result;
 	}
 
-	math::Vec3p8 pos;
+	math::Vec3p8 m_pos;
 	math::intp8 phi {};
 	math::intp8 sinf = math::intp8(0);
 	math::intp8 cosf = math::intp8(1);

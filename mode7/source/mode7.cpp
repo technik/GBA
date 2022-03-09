@@ -36,7 +36,7 @@ void postGlobalState(const Camera& cam)
 	// Copy local state into global variables that can be accessed by the renderer
 	gCosf = cam.cosf;
 	gSinf = cam.sinf;
-	gCamPos = cam.pos;
+	gCamPos = cam.m_pos;
 }
 
 void initBackground()
@@ -78,12 +78,12 @@ void initBackground()
 	}
 }
 
-struct RasteredObj
+struct Billboard
 {
 	static constexpr auto ambientColor = BasicColor::Blue;
 	static constexpr auto litColor = BasicColor::White;
 
-	RasteredObj(Vec3p8 startPos)
+	Billboard(Vec3p8 startPos)
 		:m_pos(startPos)
 	{
 		// Allocate a palette of just two colors to do dithering with
@@ -103,10 +103,14 @@ struct RasteredObj
 		constexpr auto numTiles = Sprite::GetNumTiles(spriteShape);
 		m_tileNdx = tileBank.allocSTiles(numTiles);
 
+		// Alloc transform
+		m_transformId = Sprite::TransformAllocator::alloc(1);
+
 		// Init sprite
 		m_sprite = Sprite::ObjectAllocator::alloc(1);
-		m_sprite->Configure(Sprite::ObjectMode::Normal, Sprite::GfxMode::Normal, Sprite::ColorMode::e4bits, spriteShape);
-		m_sprite->SetNonAffineTransform(false, false, spriteShape);
+		m_sprite->Configure(Sprite::ObjectMode::Affine2x, Sprite::GfxMode::Normal, Sprite::ColorMode::e4bits, spriteShape);
+		//m_sprite->SetNonAffineTransform(false, false, spriteShape);
+		m_sprite->SetAffineConfig(m_transformId, spriteShape);
 		m_sprite->setTiles(m_tileNdx, m_paletteStart/16);
 		
 		m_sprite->setPos(116, 76);
@@ -188,29 +192,47 @@ struct RasteredObj
 	void update(const Camera& cam)
 	{
 		Vec3p8 ssPos = cam.projectWorldPos(m_pos);
-		int16_t ssX = ssPos.x().roundToInt();
-		ssX = ssX - m_anchor.x();
-		if(ssPos.z() > 0_p8 && ssX + 2*8 >= 0 && ssX <= ScreenWidth)
+		m_ssX = ssPos.x().roundToInt() - m_anchor.x();
+		auto rightSide = m_ssX + 16;
+		auto z = ssPos.z();
+		if(z > 1_p8 && rightSide >= 0 && m_ssX <= ScreenWidth)
 		{
-			int16_t ssY = ssPos.y().roundToInt();
-			ssY = ssY - m_anchor.y();
-			m_sprite->setPos(ssX, ssY);
-			m_sprite->show();
+			m_scale.raw = int16_t(ssPos.z().raw);
+			m_ssY = ssPos.y().roundToInt() - m_anchor.y();
+			m_visible = true;
+		}
+		else
+		{
+			m_visible = false;
+		}
+	}
+
+	void render(const Camera& cam)
+	{
+		if(m_visible)
+		{
+			m_sprite->setPos(m_ssX, m_ssY);
+			m_sprite->show(Sprite::ObjectMode::Affine2x);
 		}
 		else
 		{
 			m_sprite->hide();
 		}
+
+		auto& tx = Sprite::OAM_Transforms()[m_transformId];
+		tx.pa = m_scale.raw;
+		tx.pd = m_scale.raw;
 	}
 
-	void render()
-	{}
-
+	bool m_visible = true;
+	int8p8 m_scale;
+	int16_t m_ssX, m_ssY;
 	math::Vec2u m_anchor;
 	math::Vec3p8 m_pos;
     uint32_t m_paletteStart;
 	volatile Sprite::Object* m_sprite {};
 	uint32_t m_tileNdx = 0;
+	int32_t m_transformId;
 };
 
 void resetBg2Projection()
@@ -252,9 +274,9 @@ int main()
 	auto camera = Camera(Vec3p8(256_p8, 256_p8, 1.7_p8));
 
 	// Create a 3d object in front of the camera
-	Vec3p8 objPos = camera.pos;
-	objPos.y() += 5_p8;
-	auto obj0 = RasteredObj(objPos);
+	Vec3p8 objPos = camera.m_pos;
+	objPos.y() -= 5_p8;
+	auto obj0 = Billboard(objPos);
 	
 	// Unlock the display and start rendering
 	Display().EndBlank();
@@ -268,6 +290,7 @@ int main()
 
 		// VSync
 		VBlankIntrWait();
+		obj0.render(camera);
 
 		// -- Render --
 		// Operations should be ordered from most to least time critical, in case they exceed VBlank time

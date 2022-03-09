@@ -71,17 +71,18 @@ struct Sprite
 		{
 			attribute[0] =
 				(attribute[0] & 0x00ff) | // preserve y pos
-				((uint16_t)objectMode << 8) |
-				((uint16_t)gfxMode << 10) |
-				((uint16_t)colorMode << 13) |
-				((uint16_t)shape << 14); // Lowest two bits store the shape
+				(((uint16_t)objectMode) << 8) |
+				(((uint16_t)gfxMode) << 10) |
+				(((uint16_t)colorMode) << 13) |
+				(((uint16_t)shape) << 14); // Lowest two bits store the shape
 		}
 
-		inline void SetAffineConfig(uint32_t affineIndex) volatile
+		inline void SetAffineConfig(uint32_t affineIndex, Shape size) volatile
 		{
 			attribute[1] =
 				(attribute[1] & 0x01ff) | // preserve x pos
-				((affineIndex&0x1f)<<9);
+				((affineIndex&0x1f)<<9) | // Select affine transform
+				((uint16_t(size)>>2)<<14); // Select size mode
 		}
 
 		inline void SetNonAffineTransform(bool horizontalFlip, bool verticalFlip, Shape size) volatile
@@ -104,13 +105,13 @@ struct Sprite
 		inline void setPos(int32_t x, int32_t y) volatile
 		{
 			attribute[0] = (attribute[0] & (0xff00)) | (y&0xff);
-			attribute[1] = (attribute[1] & (0xff00)) | (x&0xff);
+			attribute[1] = (attribute[1] & (0xfe00)) | (x&0x1ff);
 		}
 
-		inline void show() volatile
+		inline void show(ObjectMode objectMode) volatile
 		{
 			constexpr uint8_t visibilityMask = ~(0x03 << 8);
-			attribute[0] = (attribute[0] & visibilityMask) | (((uint16_t)ObjectMode::Normal) << 8);
+			attribute[0] = (attribute[0] & visibilityMask) | (((uint16_t)objectMode) << 8);
 		}
 
 		inline void hide() volatile
@@ -147,9 +148,9 @@ struct Sprite
 		return reinterpret_cast<Block*>(OAMAddress);
 	}
 
-	static Transform* OAM_Transforms()
+	static volatile Transform* OAM_Transforms()
 	{
-		return reinterpret_cast<Transform*>(OAMAddress);
+		return reinterpret_cast<volatile Transform*>(OAMAddress);
 	}
 
 	static Object* OAM_Objects()
@@ -164,8 +165,7 @@ struct Sprite
 			sNext = 0;
 		}
 
-		// Allocate small tiles where each dot is only 4 bits.
-		// Should return an object pointer
+		// Allocate Sprite Objects in OAM memory
 		static volatile Object* alloc(uint32_t n)
 		{
 			if(sNext+n > kCapacity)
@@ -179,5 +179,30 @@ struct Sprite
 
 		static inline uint32_t sNext = 0;
 		static constexpr uint32_t kCapacity = 128;
+	};
+
+	struct TransformAllocator
+	{
+		static void reset()
+		{
+			sNext = 0;
+		}
+
+		// Allocate affine transform blocks in OAM memory.
+		// Returns the transform index [0,31], or -1 to
+		// signal out of memory
+		static int32_t alloc(uint32_t n)
+		{
+			if(sNext+n > kCapacity)
+			{
+				return -1; // Out of memory.
+			}
+			auto pos = sNext;
+			sNext += n;
+			return pos;
+		}
+
+		static inline uint32_t sNext = 0;
+		static constexpr uint32_t kCapacity = 32;
 	};
 };
