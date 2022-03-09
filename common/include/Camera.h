@@ -41,8 +41,8 @@ struct Camera
 		math::Vec3p8 viewSpace;
 		viewSpace.y() = m_pos.z() - worldPos.z(); // invert vertical sign because screen space y points downwards
 		math::Vec2p8 relHorPos = math::Vec2p8(worldPos.x() - m_pos.x(), worldPos.y() - m_pos.y());
-		viewSpace.x() = (relHorPos.x() * cosf + relHorPos.y() * sinf).cast<8>();
-		viewSpace.z() = (-relHorPos.y() * cosf + relHorPos.x() * sinf).cast<8>();
+		viewSpace.x() = (relHorPos.x() * cosf - relHorPos.y() * sinf).cast<8>();
+		viewSpace.z() = (-relHorPos.y() * cosf - relHorPos.x() * sinf).cast<8>();
 		math::intp8 invDepth = math::intp8(1) / viewSpace.z();
 		math::Vec3p8 result;
 		result.z() = viewSpace.z();
@@ -56,7 +56,7 @@ struct Camera
 	math::intp8 sinf = math::intp8(0);
 	math::intp8 cosf = math::intp8(1);
 
-	math::intp8 horSpeed = math::intp8(0.5f);
-	math::intp8 verSpeed = math::intp8(0.25f);
+	math::intp8 horSpeed = math::intp8(0.06125f);
+	math::intp8 verSpeed = math::intp8(0.06125f);
 	math::intp8 angSpeed = math::intp8(0.5f);
 };

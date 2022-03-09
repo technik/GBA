@@ -195,7 +195,7 @@ struct Billboard
 		m_ssX = ssPos.x().roundToInt() - m_anchor.x();
 		auto rightSide = m_ssX + 16;
 		auto z = ssPos.z();
-		if(z > 1_p8 && rightSide >= 0 && m_ssX <= ScreenWidth)
+		if(z > 0.1_p8 && rightSide >= 0 && m_ssX <= ScreenWidth)
 		{
 			m_scale.raw = int16_t(ssPos.z().raw);
 			m_ssY = ssPos.y().roundToInt() - m_anchor.y();
@@ -275,7 +275,7 @@ int main()
 
 	// Create a 3d object in front of the camera
 	Vec3p8 objPos = camera.m_pos;
-	objPos.y() -= 5_p8;
+	objPos.y() += 5_p8;
 	auto obj0 = Billboard(objPos);
 	
 	// Unlock the display and start rendering
