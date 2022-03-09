@@ -17,16 +17,16 @@ struct Camera
 		// left/right : strafe
 		dir.x() = horSpeed * (Keypad::Held(Keypad::R) - Keypad::Held(Keypad::L));
 		// up/down : forward/back
-		dir.y() = horSpeed * (Keypad::Held(Keypad::DOWN) - Keypad::Held(Keypad::UP));
+		dir.y() = horSpeed * (Keypad::Held(Keypad::UP) - Keypad::Held(Keypad::DOWN));
 		// B/A : rise/sink
-		dir.z() = verSpeed*(Keypad::Held(Keypad::B) - Keypad::Held(Keypad::A));
+		dir.z() = verSpeed*(Keypad::Held(Keypad::A) - Keypad::Held(Keypad::B));
 
-		m_pos.x() += (dir.x() * cosf + dir.y() * sinf).cast<8>();
-		m_pos.y() += (dir.y() * cosf - dir.x() * sinf).cast<8>();
+		m_pos.x() += (dir.x() * cosf - dir.y() * sinf).cast<8>();
+		m_pos.y() += (-dir.x() * sinf - dir.y() * cosf).cast<8>();
 		m_pos.z() += dir.z();
 
 		// Limit z to reasonable values to not break the math
-		m_pos.z() = math::max(math::intp8(0), min(math::intp8(250), m_pos.z()));
+		m_pos.z() = math::max(math::intp8(0.5), min(math::intp8(25), m_pos.z()));
 
 		phi += angSpeed*(Keypad::Held(Keypad::LEFT) - Keypad::Held(Keypad::RIGHT));
 
