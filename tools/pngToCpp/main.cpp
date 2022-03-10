@@ -3,13 +3,46 @@
 #include <vector>
 #include <fstream>
 #include <memory>
+#include <unordered_map>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-auto img_deleter = [](uint8_t* ptr)
+#include <gfx/tile.h>
+
+struct Color3f
 {
-    stbi_image_free(ptr);
+    uint8_t r, g, b;
+};
+
+struct Color4f
+{
+    uint8_t r, g, b, a;
+};
+
+struct Color16b
+{
+    uint16_t c;
+
+    // Constructors
+    Color16b() = default;
+
+    Color16b(const Color16b&) = default;
+
+    Color16b(const Color3f& x)
+    {
+        c = (x.r >> 3) | ((x.g >> 3) << 5) | ((x.b >> 3) << 10) | (1 << 15); // Most significant bit prevents transparency on black
+    }
+
+    Color16b(const Color4f& x)
+    {
+        c = x.a ? ((x.r >> 3) | ((x.g >> 3) << 5) | ((x.b >> 3) << 10) | (1 << 15)) : 0;
+    }
+};
+
+auto img_deleter = [](Color4f* ptr)
+{
+    stbi_image_free(reinterpret_cast<uint8_t*>(ptr));
 };
 // Raw image
 // 32 bpp image as loaded from files.
@@ -17,7 +50,7 @@ auto img_deleter = [](uint8_t* ptr)
 // All channel intensities in the range [0,255]
 struct RawImage
 {
-     std::unique_ptr<uint8_t[],decltype(img_deleter)> data;
+     std::unique_ptr<Color4f[],decltype(img_deleter)> data;
      int32_t width = 0;
      int32_t height = 0;
 
@@ -32,12 +65,67 @@ struct RawImage
          {
              false;
          }
-         data = std::unique_ptr<uint8_t[], decltype(img_deleter)>(rawPixels, img_deleter);
+         data = std::unique_ptr<Color4f[], decltype(img_deleter)>(reinterpret_cast<Color4f*>(rawPixels), img_deleter);
          return true;
      }
 };
 
-// Palettized image (8b, 16b)
+struct TiledImage
+{
+
+};
+
+struct Image16bit
+{
+    std::vector<Color16b> pixels;
+    int32_t width = 0;
+    int32_t height = 0;
+
+    Image16bit() = default;
+    Image16bit(const Image16bit&) = default;
+    Image16bit(const RawImage& src)
+    {
+        resize(src.width, src.height);
+        for(int i = 0; i < area(); ++i)
+        {
+            pixels[i] = Color16b(src.data[i]);
+        }
+    }
+
+    void resize(int32_t x, int32_t y) // Invalidates content
+    {
+        width = x;
+        height = y;
+        pixels.resize(area());
+    }
+
+    gfx::DTile getTile(int x0, int y0)
+    {
+        gfx::DTile result;
+        for (int row = 0; row < 8; ++row)
+        {
+            const auto* rowStart = &pixels[(y0 + row) * width];
+            for (int col = 0; col < 8; ++col)
+            {
+                result.pixel[col + 8 * row] = rowStart[col].c;
+            }
+        }
+    }
+
+    int area() const { return width * height; }
+    bool empty() const { return area() == 0; }
+};
+
+// Palettized image (4b, 8b)
+struct PaletteImage8
+{
+    std::vector<Color16b> palette;
+
+    std::vector<uint8_t> indices;
+    int32_t width = 0;
+    int32_t height = 0;
+};
+
 // Color15Bit
 // STile, DTile
 // Colorf
@@ -53,8 +141,8 @@ void buildPalette(const RawImage& srcImage, std::vector<uint16_t>& palette)
 
     for (int i = 0; i < numPixels; ++i)
     {
-        const uint8_t* p = &srcImage.data[4 * i];
-        if (p[3] == 0) // Transparent pixel, not used in the palette.
+        const auto* p = &srcImage.data[4 * i];
+        if (p->a == 0) // Transparent pixel, not used in the palette.
             continue;
 
         uint16_t c = reduceColor(p);
@@ -77,18 +165,42 @@ void buildTiles(const RawImage& srcImage, const std::vector<uint16_t>& palette, 
                 for (int l = 0; l < 8; ++l)
                 {
                     auto* p = &tile[4 * (l + srcImage.width * k)];
-                    if (p[3] == 0) // Transparent pixel, not used in the palette.
+                    if (p->a == 0) // Transparent pixel, not used in the palette.
                     {
                         outTiles.push_back(0); // Transparent pixel;
                     }
 
-                    auto c = reduceColor(p);
+                    auto c = reduceColor(&p->r);
                     uint8_t index = std::find(palette.begin(), palette.end(), c) - palette.begin();
                     outTiles.push_back(index+1); // avoid 0
                 }
             }
         }
     }
+}
+
+
+
+void buildMapBackground(const RawImage& srcImage, const std::string& inputFileName)
+{
+    // Build a map of tiles
+    int tileCols = srcImage.width / 8;
+    int tileRows = srcImage.height / 8;
+
+    // Convert image to 15bit color
+    Image16bit map16bit = srcImage;
+
+    std::vector<gfx::DTile> mapTiles;
+
+    for (int row = 0; row < tileRows; ++row)
+    {
+        for (int col = 0; col < tileCols; ++col)
+        {
+            auto tile = map16bit.getTile(8 * col, 8 * row);
+        }
+    }
+
+    return;
 }
 
 int main(int _argc, const char** _argv)
@@ -102,6 +214,13 @@ int main(int _argc, const char** _argv)
 
     std::string fileName = _argv[1];
 
+    bool buildMapBg = false;
+    for (int i = 2; i < _argc; ++i)
+    {
+        if (std::string(_argv[i]) == "--bgMap")
+            buildMapBg = true;
+    }
+
     // Read PNG into a buffer
     RawImage srcImage;
     if(srcImage.load(fileName.c_str()))
@@ -112,6 +231,12 @@ int main(int _argc, const char** _argv)
     {
         std::cout << "Image data is not a multiple of tile size";
         return -1;
+    }
+
+    if (buildMapBg)
+    {
+        buildMapBackground(srcImage, fileName);
+        return 0;
     }
 
     // Palettize
