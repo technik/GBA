@@ -11,6 +11,10 @@ include_directories(common/include)
 add_executable(pcRT pc/rt/main.cpp)
 
 add_executable(lutGenerator tools/lutGenerator/main.cpp)
+set_target_properties(lutGenerator PROPERTIES FOLDER tools)
+
+add_executable(pngToCpp tools/pngToCpp/main.cpp tools/pngToCpp/stb_image.h)
+set_target_properties(pngToCpp PROPERTIES FOLDER tools)
 
 enable_testing()
 add_executable(fixedPointMath test/fixedPointMath.cpp)

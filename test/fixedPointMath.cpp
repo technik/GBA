@@ -37,7 +37,7 @@ void testCamera()
 {
     auto camera = Camera(Vec3p8(256_p8, 256_p8, 1.7_p8));
 
-    Vec3p8 objPos = camera.pos;
+    Vec3p8 objPos = camera.m_pos;
     objPos.y() += 5_p8;
 
     auto ss = camera.projectWorldPos(objPos);
