@@ -2,20 +2,58 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
+#include <memory>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+
+auto img_deleter = [](uint8_t* ptr)
+{
+    stbi_image_free(ptr);
+};
+// Raw image
+// 32 bpp image as loaded from files.
+// Includes 3 color channels + alpha.
+// All channel intensities in the range [0,255]
+struct RawImage
+{
+     std::unique_ptr<uint8_t[],decltype(img_deleter)> data;
+     int32_t width = 0;
+     int32_t height = 0;
+
+     int area() const { return width * height; }
+     bool empty() const { return area() == 0; }
+
+     bool load(const char* fileName)
+     {
+         int nChannels;
+         uint8_t* rawPixels = stbi_load(fileName, &width, &height, &nChannels, 4);
+         if (!rawPixels)
+         {
+             false;
+         }
+         data = std::unique_ptr<uint8_t[], decltype(img_deleter)>(rawPixels, img_deleter);
+         return true;
+     }
+};
+
+// Palettized image (8b, 16b)
+// Color15Bit
+// STile, DTile
+// Colorf
 
 uint16_t reduceColor(const uint8_t* color)
 {
     return (color[0] >> 3) | (color[1] >> 3) << 5 | (color[2] >> 3) << 10;
 }
 
-void buildPalette(const uint8_t* rawPixels, int numPixels, std::vector<uint16_t>& palette)
+void buildPalette(const RawImage& srcImage, std::vector<uint16_t>& palette)
 {
+    int numPixels = srcImage.area();
+
     for (int i = 0; i < numPixels; ++i)
     {
-        const uint8_t* p = &rawPixels[4 * i];
+        const uint8_t* p = &srcImage.data[4 * i];
         if (p[3] == 0) // Transparent pixel, not used in the palette.
             continue;
 
@@ -27,18 +65,18 @@ void buildPalette(const uint8_t* rawPixels, int numPixels, std::vector<uint16_t>
     }
 }
 
-void buildTiles(const uint8_t* rawPixels, int w, int h, const std::vector<uint16_t>& palette, std::vector<uint8_t>& outTiles)
+void buildTiles(const RawImage& srcImage, const std::vector<uint16_t>& palette, std::vector<uint8_t>& outTiles)
 {
-    for (int j = 0; j < h; j += 8)
+    for (int j = 0; j < srcImage.height; j += 8)
     {
-        for (int i = 0; i < w; i += 8)
+        for (int i = 0; i < srcImage.width; i += 8)
         {
-            auto* tile = &rawPixels[4 * (i + j * w)];
+            auto* tile = &srcImage.data[4 * (i + j * srcImage.width)];
             for (int k = 0; k < 8; ++k)
             {
                 for (int l = 0; l < 8; ++l)
                 {
-                    auto* p = &tile[4 * (l + w * k)];
+                    auto* p = &tile[4 * (l + srcImage.width * k)];
                     if (p[3] == 0) // Transparent pixel, not used in the palette.
                     {
                         outTiles.push_back(0); // Transparent pixel;
@@ -65,30 +103,28 @@ int main(int _argc, const char** _argv)
     std::string fileName = _argv[1];
 
     // Read PNG into a buffer
-    int w, h, n;
-    uint8_t *rawPixels = stbi_load(fileName.c_str(), &w, &h, &n, 4);
-    if (!rawPixels)
+    RawImage srcImage;
+    if(srcImage.load(fileName.c_str()))
     {
         std::cout << "Image not found\n";
     }
-    if (w & 0x7 != w || h & 0x7 != h)
+    if (srcImage.width & 0x7 != srcImage.width || srcImage.height & 0x7 != srcImage.height)
     {
         std::cout << "Image data is not a multiple of tile size";
         return -1;
     }
-    h = std::min(h, 16);
 
     // Palettize
     std::vector<uint16_t> palette;
     std::vector<uint8_t> tileData;
-    buildPalette(rawPixels, w * h, palette);
+    buildPalette(srcImage, palette);
     if (palette.size() > 255)
     {
         std::cout << "Too many unique colors. Image exceeds the 256 color palette\n";
         return -1;
     }
 
-    buildTiles(rawPixels, w, h, palette, tileData);
+    buildTiles(srcImage, palette, tileData);
 
     // Write into a header
     std::ofstream ss(fileName + ".cpp");
