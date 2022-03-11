@@ -38,6 +38,11 @@ namespace gfx
 			inline static uint32_t sEnd = 1;
 		};
 
+		static uint32_t* rawMemory()
+		{
+			return reinterpret_cast<uint32_t*>(StartAddressAddress);
+		}
+
 		static volatile Color& color(uint32_t n)
 		{
 			return reinterpret_cast<volatile Color*>(StartAddressAddress)[n];

@@ -101,21 +101,6 @@ struct Image16bit
         pixels.resize(area());
     }
 
-    gfx::DTile getTile(int x0, int y0)
-    {
-        gfx::DTile result;
-        for (int row = 0; row < 8; ++row)
-        {
-            const auto* rowStart = &pixels[(y0 + row) * width + x0];
-            for (int col = 0; col < 8; ++col)
-            {
-                result.pixel[col + 8 * row] = rowStart[col].c;
-            }
-        }
-
-        return result;
-    }
-
     int area() const { return width * height; }
     bool empty() const { return area() == 0; }
 };
@@ -125,9 +110,71 @@ struct PaletteImage8
 {
     std::vector<Color16b> palette;
 
-    std::vector<uint8_t> indices;
+    std::vector<uint8_t> pixels;
     int32_t width = 0;
     int32_t height = 0;
+
+    PaletteImage8() = default;
+    PaletteImage8(const PaletteImage8&) = default;
+    PaletteImage8(const Image16bit& src)
+    {
+        width = src.width;
+        height = src.height;
+        pixels.reserve(area());
+
+        // Prepare the palette
+        std::unordered_map<uint16_t, size_t> paletteMap;
+        // The first color is reserved for transparency
+        palette.push_back(Color16b({0,0,0,0}));
+        paletteMap[0] = 0;
+
+        // Translate pixels as we build the palette
+        for (int i = 0; i < area(); ++i)
+        {
+            auto color = src.pixels[i].c;
+            
+            auto iter = paletteMap.find(color);
+            if (iter == paletteMap.end())
+            {
+                paletteMap[color] = palette.size();
+                pixels.push_back(palette.size());
+                palette.push_back(src.pixels[i]);
+            }
+            else
+            {
+                pixels.push_back(iter->second);
+            }
+        }
+
+        // Enforce even sized palette
+        if (palette.size() % 2 != 0)
+            palette.push_back(Color16b({ 0, 0, 0, 0 }));
+    }
+
+    void resize(int32_t x, int32_t y) // Invalidates content
+    {
+        width = x;
+        height = y;
+        pixels.resize(area());
+    }
+
+    gfx::DTile getTile(int x0, int y0)
+    {
+        gfx::DTile result;
+        for (int row = 0; row < 8; ++row)
+        {
+            const auto* rowStart = &pixels[(y0 + row) * width + x0];
+            for (int col = 0; col < 8; ++col)
+            {
+                result.pixel[col + 8 * row] = rowStart[col];
+            }
+        }
+
+        return result;
+    }
+
+    int area() const { return width * height; }
+    bool empty() const { return area() == 0; }
 };
 
 // Color15Bit
@@ -246,6 +293,8 @@ void buildMapAffineBackground(const RawImage& srcImage, const std::string& input
 
     // Convert image to 15bit color
     Image16bit map16bit = srcImage;
+    // Palettize the image
+    PaletteImage8 palettizedMap = map16bit;
 
     auto hasher = [](const gfx::DTile& tile)
     {
@@ -260,7 +309,7 @@ void buildMapAffineBackground(const RawImage& srcImage, const std::string& input
     {
         for (int col = 0; col < tileCols; ++col)
         {
-            auto tile = map16bit.getTile(8 * col, 8 * row);
+            auto tile = palettizedMap.getTile(8 * col, 8 * row);
             auto iter = tileMap.find(tile);
             if (iter != tileMap.end())
             {
@@ -276,17 +325,24 @@ void buildMapAffineBackground(const RawImage& srcImage, const std::string& input
         }
     }
 
+    // --- Debug output ---
     // Export tile map for debug/preview?
 
-    // Serialize data
+    // --- Serialize data ---
     std::ofstream outHeader(fileWithoutExtension.string() + ".h");
     outHeader << "#pragma once\n#include <cstdint>\n\n";
     std::ofstream outCppFile(fileWithoutExtension.string() + ".cpp");
     outCppFile << "#include \"" << fileWithoutExtension.string() << ".h\"\n\n";
 
+    appendBuffer(outCppFile, outHeader, "mapPalette", palettizedMap.palette.data(), palettizedMap.palette.size() * sizeof(Color16b));
     appendBuffer(outCppFile, outHeader, "bgTiles", mapTiles.data(), mapTiles.size() * sizeof(gfx::DTile));
     outCppFile << "\n";
     appendBuffer(outCppFile, outHeader, "mapData", tileIndices.data(), tileIndices.size());
+
+    // Print stats
+    std::cout << "Palette size: " << palettizedMap.palette.size() << "\n";
+    std::cout << "Num tiles: " << mapTiles.size() << "\n";
+    std::cout << "Map Size: " << palettizedMap.width << "x" << palettizedMap.height << "\n";
 }
 
 int main(int _argc, const char** _argv)

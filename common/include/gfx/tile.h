@@ -2,6 +2,7 @@
 
 #include <Color.h>
 #include <Device.h>
+#include <cstring>
 
 namespace gfx
 {
@@ -107,6 +108,8 @@ namespace gfx
 		volatile DTile& GetDTile(uint32_t index);
 
 		static TileBank& GetBank(uint32_t bankIndex);
+
+		void* memory() { return reinterpret_cast<void*>(mBaseAddress); }
 
 		static constexpr uint32_t LowSpriteBank = 4;
 		static constexpr uint32_t HighSpriteBank = 5;

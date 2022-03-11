@@ -4,6 +4,7 @@
 
 // External libraries
 #include <stdio.h>
+#include <cstring>
 
 // Engine code
 #include <Color.h>
@@ -23,7 +24,7 @@
 #include <Camera.h>
 
 // Inline data
-#include <assets/poolMap.h>
+#include <poolMap.h>
 
 using namespace math;
 
@@ -44,13 +45,18 @@ void postGlobalState(const Camera& cam)
 
 void initBackground()
 {
-	// Background clear color (used for blending too)
+	// Load palette
+	memcpy(gfx::BackgroundPalette::rawMemory(), mapPalette, mapPaletteSize*4);
+	// Override Background clear color (used for blending too)
 	gfx::BackgroundPalette::color(0).raw = BasicColor::SkyBlue.raw;
-	// Prepare the background tile map
-	uint32_t numColors = 4; // 2 in tile colors + 2 border colors
-	auto paletteStart = gfx::BackgroundPalette::Allocator::alloc(2);
-	gfx::BackgroundPalette::color(paletteStart + 0).raw = BasicColor::White.raw;
-	gfx::BackgroundPalette::color(paletteStart + 1).raw = BasicColor::Red.raw;
+
+	// Load the background tile map
+	auto paletteStart = gfx::BackgroundPalette::Allocator::alloc(mapPaletteSize*2);
+	auto numTiles = bgTilesSize * 4 / sizeof(gfx::DTile);
+	auto& tileBank = gfx::TileBank::GetBank(0);
+	auto tileStart = tileBank.allocDTiles(numTiles);
+	
+	memcpy(tileBank.memory(), bgTiles, bgTilesSize*4);
 
 	// Config BG2
 	// Use charblock 0 for the tiles
@@ -59,26 +65,12 @@ void initBackground()
 	IO::BG2CNT::Get().value =
 		(1<<7) | // 16 bit color, technically not necessary as Affine backgrounds are always 16bit colors
 		(8<<8) | // screenblock 8
-		(3<<0xe); // size 1024*1024
-
-	// Fill in a couple tiles in video memory
-	auto& tileBank = gfx::TileBank::GetBank(0);
-	auto tileStart = tileBank.allocDTiles(2);
-    auto& tile0 = tileBank.GetDTile(tileStart + 0);
-	tile0.fill(1); // White
-	auto& tile1 = tileBank.GetDTile(tileStart + 1);
-	tile1.fill(2); // Red
+		(2<<0xe); // size 512x512
 
 	// Fill in map data
 	// Affine maps use 8 bit indices
-	auto* mapMem = reinterpret_cast<volatile uint16_t*>(VideoMemAddress+0x4000);
-	for(int32_t y = 0; y < 128; ++y)
-	{
-		for(int32_t x = 0; x < 64; ++x)
-		{
-			mapMem[y*64+x] = (y&1) ? 1 : (1<<8);
-		}
-	}
+	auto* mapMem = reinterpret_cast<uint16_t*>(VideoMemAddress+0x4000);
+	memcpy(mapMem, mapData, mapDataSize*4);
 }
 
 struct Billboard
