@@ -22,6 +22,9 @@
 #include <demo.h>
 #include <Camera.h>
 
+// Inline data
+#include <assets/poolMap.h>
+
 using namespace math;
 
 // Global Camera State

@@ -14,7 +14,7 @@ namespace IO
 		IORegister() = delete;
 		~IORegister() = delete;
 
-        static constexpr uint32_t address = _address;
+        static constexpr std::size_t address = _address;
         static auto& Get() { return *reinterpret_cast<IORegister*>(address); }
 		
         static auto& Value() { return Get().value; }
@@ -36,7 +36,9 @@ namespace IO
     // Reference: https://problemkaputt.de/gbatek.htm#gbaiomap
 
 	class DISPCNT : public IORegister<uint16_t, 0x4000000>
-	{};
+	{
+		~DISPCNT() = delete; // Get rid of warning C4624
+	};
 
     using GREENSWAP = IORegister<uint16_t, 0x4000002>;
     using DISPSTAT  = IORegister<uint16_t, 0x4000004>;

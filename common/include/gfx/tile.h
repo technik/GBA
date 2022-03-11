@@ -38,7 +38,12 @@ namespace gfx
 
 	struct DTile
 	{
-		volatile uint8_t pixel[64];
+		uint8_t pixel[64];
+
+		bool operator==(const DTile& other) const
+		{
+			return memcmp(pixel, other.pixel, sizeof(pixel)) == 0;
+		}
 
 		void fill(uint8_t ndx)
 		{
