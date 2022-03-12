@@ -120,8 +120,8 @@ struct PaletteImage8
     PaletteImage8(const PaletteImage8&) = default;
     PaletteImage8(const Image16bit& src)
     {
-        width = src.width/8;
-        height = src.height/8;
+        width = src.width;
+        height = src.height;
         pixels.reserve(area());
 
         // Prepare the palette
@@ -173,11 +173,6 @@ struct PaletteImage8
         }
 
         return result;
-    }
-
-    void saveIndexImage(const char* fileName) const
-    {
-        stbi_write_png(fileName, width, height, 1, pixels.data(), width);
     }
 
     int area() const { return width * height; }
