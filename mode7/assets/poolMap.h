@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-constexpr uint32_t mapPaletteSize = 81;
+constexpr uint32_t mapPaletteSize = 87;
 extern const uint32_t mapPalette[];
 
 constexpr uint32_t bgTilesSize = 9664;

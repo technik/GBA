@@ -9,6 +9,8 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
 
 #include <gfx/tile.h>
 
@@ -118,8 +120,8 @@ struct PaletteImage8
     PaletteImage8(const PaletteImage8&) = default;
     PaletteImage8(const Image16bit& src)
     {
-        width = src.width;
-        height = src.height;
+        width = src.width/8;
+        height = src.height/8;
         pixels.reserve(area());
 
         // Prepare the palette
@@ -171,6 +173,11 @@ struct PaletteImage8
         }
 
         return result;
+    }
+
+    void saveIndexImage(const char* fileName) const
+    {
+        stbi_write_png(fileName, width, height, 1, pixels.data(), width);
     }
 
     int area() const { return width * height; }
@@ -326,6 +333,7 @@ void buildMapAffineBackground(const RawImage& srcImage, const std::string& input
     }
 
     // --- Debug output ---
+    
     // Export tile map for debug/preview?
 
     // --- Serialize data ---
