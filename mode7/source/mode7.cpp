@@ -266,7 +266,7 @@ int main()
 	initBackground();
 
 	// -- Init game state ---
-	auto camera = Camera(Vec3p8(64_p8, 64_p8, 1.7_p8));
+	auto camera = Camera(Vec3p8(32_p8, 32_p8, 1.7_p8));
 
 	// Create a 3d object in front of the camera
 	Vec3p8 objPos = camera.m_pos;
