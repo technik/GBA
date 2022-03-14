@@ -21,6 +21,11 @@ void testCamera()
     assert(ss.x().roundToInt() == ScreenWidth / 2);
     assert(ss.y().roundToInt() == ScreenHeight / 2);
 
+    // Move the camera towards the object
+    camera.m_pos.y() += 5_p8;
+    ss = camera.projectWorldPos(objPos);
+    assert(ss.z().roundToInt() == 5);
+
     objPos = camera.m_pos;
     objPos.y() -= 10_p8;
     ss = camera.projectWorldPos(objPos);

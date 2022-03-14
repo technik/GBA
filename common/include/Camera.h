@@ -29,7 +29,7 @@ struct Camera
 		dir.z() = verSpeed*(Keypad::Held(Keypad::A) - Keypad::Held(Keypad::B));
 
 		m_pos.x() += (dir.x() * cosf - dir.y() * sinf).cast<8>();
-		m_pos.y() += (-dir.x() * sinf - dir.y() * cosf).cast<8>();
+		m_pos.y() += (dir.y() * cosf + dir.x() * sinf).cast<8>();
 		m_pos.z() += dir.z();
 
 		// Limit z to reasonable values to not break the math

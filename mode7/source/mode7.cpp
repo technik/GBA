@@ -189,10 +189,10 @@ struct Billboard
 		Vec3p8 ssPos = cam.projectWorldPos(m_pos);
 		m_ssX = ssPos.x().roundToInt() - m_anchor.x();
 		auto rightSide = m_ssX + 16;
-		auto z = ssPos.z();
-		if(z > 0.1_p8 && rightSide >= 0 && m_ssX <= ScreenWidth)
+		auto depth = ssPos.z();
+		if(depth > 0.1_p8 && rightSide >= 0 && m_ssX <= ScreenWidth)
 		{
-			m_scale.raw = int16_t(ssPos.z().raw);
+			m_scale.raw = int16_t(depth.raw);
 			m_ssY = ssPos.y().roundToInt() - m_anchor.y();
 			m_visible = true;
 		}
@@ -266,7 +266,7 @@ int main()
 	initBackground();
 
 	// -- Init game state ---
-	auto camera = Camera(Vec3p8(32_p8, 32_p8, 1.7_p8));
+	auto camera = Camera(ScreenWidth, ScreenHeight, Vec3p8(32_p8, 32_p8, 1.7_p8));
 
 	// Create a 3d object in front of the camera
 	Vec3p8 objPos = camera.m_pos;
