@@ -41,17 +41,14 @@ void setBg2AffineTx(uint16_t vCount)
 
 	// d = Lambda*VRes/(2)
 	// dx = d*tgx = lambda*VRes/(2*tgy) = lambda * VRes
-	constexpr int32_t kTexelsPerMeter = 10;
+	constexpr int32_t kTexelsPerMeter = 8;
 
 	auto lcf = (lambda*gCosf).cast<12>() * kTexelsPerMeter;
 	auto lsf = (lambda*gSinf).cast<12>() * kTexelsPerMeter;
 
 	IO::BG2P::Get().A = lcf.cast<8>().raw;
 	IO::BG2P::Get().C = -lsf.cast<8>().raw;
-
-	//REG_BG2X = (gCamPos.x() - (lcf*120 - lsf*160).cast<8>()).raw;
-	//REG_BG2Y = 1024-(gCamPos.y() - (lcf*160 + lsf*120).cast<8>()).raw;
 	
 	REG_BG2X = (gCamPos.x()*kTexelsPerMeter - (lcf*120 + lsf*160).cast<8>()).raw;
-	REG_BG2Y = (gCamPos.y()*kTexelsPerMeter + (lsf*120 - lcf*160).cast<8>()).raw;
+	REG_BG2Y = 512*256 + (-gCamPos.y()*kTexelsPerMeter + (lsf*120 - lcf*160).cast<8>()).raw;
 }
