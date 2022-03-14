@@ -15,7 +15,7 @@ using namespace math;
 void m7_hbl_c()
 {
 	auto vCount = IO::VCOUNT::Value();
-	if(vCount >= 160 | vCount < 90)
+	if(vCount >= 160 | vCount < 80)
 		return;
 
 	setBg2AffineTx(vCount+1);
@@ -41,7 +41,7 @@ void setBg2AffineTx(uint16_t vCount)
 
 	// d = Lambda*VRes/(2)
 	// dx = d*tgx = lambda*VRes/(2*tgy) = lambda * VRes
-	constexpr int32_t kTexelsPerMeter = 10;
+	constexpr int32_t kTexelsPerMeter = 8;
 
 	auto lcf = (lambda*gCosf).cast<12>() * kTexelsPerMeter;
 	auto lsf = (lambda*gSinf).cast<12>() * kTexelsPerMeter;
