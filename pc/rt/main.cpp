@@ -8,6 +8,8 @@
 
 using namespace math;
 
+
+
 int main()
 {
     return 0;

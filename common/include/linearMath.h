@@ -137,7 +137,7 @@ namespace math
 			if constexpr(std::is_signed_v<store_type>) // More expensive implementation for signed
 			{
 				// Dividing, need to round
-				size_t half = raw >= 0 ? (1<<(shift-1)) : -(1<<(shift-1));
+				store_type half = raw >= 0 ? (1<<(shift-1)) : -(1<<(shift-1));
 				result = (raw+half) / (1<<shift);
 			}
 			else
@@ -155,14 +155,14 @@ namespace math
 			Fixed<store_type, resultShift> result;
 			if constexpr(resultShift >= shift) // the other type shift is bigger than this, shift left
 			{
-				constexpr size_t diff = resultShift - shift;
+				constexpr store_type diff = resultShift - shift;
 				result.raw = raw * (1<<diff);
 			}
 			else
 			{
 				// Dividing, need to round
-				constexpr size_t diff = shift - resultShift;
-				constexpr size_t half = 1<<(diff-1);
+				constexpr store_type diff = shift - resultShift;
+				constexpr store_type half = 1<<(diff-1);
 				result.raw = (raw+half) / (1<<diff);
 			}
 			return result;
@@ -182,12 +182,12 @@ namespace math
 		template<std::integral T>
 		void operator-=(T x)
 		{
-			raw += x*(1<<shift);
+			raw -= x*(1<<shift);
 		}
 		
 		void operator-=(Fixed x)
 		{
-			raw += x.raw;
+			raw -= x.raw;
 		}
 	};
 
@@ -298,6 +298,18 @@ namespace math
 		Fixed<div_type, shiftA> result;
 		result.raw = a.raw / b;
 		return result;
+	}
+
+	template<class StoreA, class StoreB, size_t shift>
+	constexpr bool operator== (Fixed<StoreA, shift> a, Fixed<StoreB, shift> b)
+	{
+		return a.raw == b.raw;
+	}
+
+	template<class StoreA, class StoreB, size_t shift>
+	constexpr bool operator!= (Fixed<StoreA, shift> a, Fixed<StoreB, shift> b)
+	{
+		return a.raw != b.raw;
 	}
 
 	template<class StoreA, class StoreB, size_t shift>
