@@ -33,31 +33,9 @@ void testLinearMath()
     assert(ssx == 120);
 }
 
-void testCamera()
-{
-    auto camera = Camera(Vec3p8(256_p8, 256_p8, 1.7_p8));
-
-    Vec3p8 objPos = camera.m_pos;
-    objPos.y() += 5_p8;
-
-    auto ss = camera.projectWorldPos(objPos);
-    assert(ss.x().roundToInt() == ScreenWidth / 2);
-    assert(ss.y().roundToInt() == ScreenHeight / 2);
-    assert(ss.z().roundToInt() == 5);
-
-    camera.cosf = intp8(cos(15.f / 180 * 3.1415927f));
-    camera.sinf = intp8(sin(15.f / 180 * 3.1415927f));
-
-    ss = camera.projectWorldPos(objPos);
-    assert(ss.x().roundToInt() == 141);
-    assert(ss.y().roundToInt() == ScreenHeight / 2);
-    assert(ss.z().roundToInt() == 5);
-}
-
 int main()
 {
     testLinearMath();
-    testCamera();
 
     return 0;
 }
