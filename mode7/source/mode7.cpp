@@ -121,17 +121,18 @@ public:
 	{
 		math::Vec3p8 dir;
 		// left/right : strafe
-		dir.x() = horSpeed * (Keypad::Held(Keypad::RIGHT) - Keypad::Held(Keypad::LEFT));
+		//dir.x() = horSpeed * (Keypad::Held(Keypad::RIGHT) - Keypad::Held(Keypad::LEFT));
 		// up/down : forward/back
 		dir.y() = horSpeed * (Keypad::Held(Keypad::UP) - Keypad::Held(Keypad::DOWN));
+		m_pose.phi += angSpeed*(Keypad::Held(Keypad::LEFT) - Keypad::Held(Keypad::RIGHT));
 
-		m_pose.pos.x() += dir.x();
-		m_pose.pos.y() += dir.y();
+		m_pose.pos.x() += (dir.x() * m_pose.cosf - dir.y() * m_pose.sinf).cast<8>();
+		m_pose.pos.y() += (dir.y() * m_pose.cosf + dir.x() * m_pose.sinf).cast<8>();
 
 		// Jumps
 		if(Keypad::Pressed(Keypad::A) && m_pose.pos.z() == 0_p8)
 		{
-			jump = 4_p8; // Impulse
+			jump = 7_p8; // Impulse
 		}
 
 		if(m_pose.pos.z() > 0_p8 || jump > 0_p8)
@@ -156,6 +157,7 @@ public:
 
 	// Speed controls
 	math::intp8 horSpeed = math::intp8(0.06125f);
+	math::intp8 angSpeed = math::intp8(0.5f);
 };
 
 struct PoseFollower
@@ -165,12 +167,20 @@ struct PoseFollower
 		, m_offset(offset)
 	{
 		m_pose.phi = m_target.phi;
-		m_pose.pos = m_target.pos + m_offset;
+		m_pose.pos.z() = m_target.pos.z() + m_offset.z();
+		
+		m_pose.pos.x() = m_target.pos.x() + (m_offset.x() * m_pose.cosf - m_offset.y() * m_pose.sinf).cast<8>();
+		m_pose.pos.y() = m_target.pos.x() + (m_offset.y() * m_pose.cosf + m_offset.x() * m_pose.sinf).cast<8>();
 	}
 
 	void update()
 	{
-		m_pose.pos = m_target.pos + m_offset;
+		m_pose.phi = m_target.phi;
+		m_pose.pos.z() = m_target.pos.z() + m_offset.z();
+		
+		m_pose.pos.x() = m_target.pos.x() + (m_offset.x() * m_pose.cosf - m_offset.y() * m_pose.sinf).cast<8>();
+		m_pose.pos.y() = m_target.pos.y() + (m_offset.y() * m_pose.cosf + m_offset.x() * m_pose.sinf).cast<8>();
+
 		m_pose.update();
 	}
 
