@@ -35,12 +35,12 @@ intp8 gSinf = 0_p8;
 
 TextSystem text;
 
-void postGlobalState(const Camera& cam)
+void postGlobalState(const Pose& cam)
 {
 	// Copy local state into global variables that can be accessed by the renderer
-	gCosf = cam.m_pose.cosf;
-	gSinf = cam.m_pose.sinf;
-	gCamPos = cam.m_pose.pos;
+	gCosf = cam.cosf;
+	gSinf = cam.sinf;
+	gCamPos = cam.pos;
 }
 
 void initBackground()
@@ -73,10 +73,10 @@ void initBackground()
 	memcpy(mapMem, mapData, mapDataSize*4);
 }
 
-class CharacterController
+class FPSController
 {
 public:
-	CharacterController(Pose& target)
+	FPSController(Pose& target)
 		: m_pose(target)
 	{}
 
@@ -110,13 +110,81 @@ public:
 	math::intp8 angSpeed = math::intp8(0.5f);
 };
 
+class CharacterController
+{
+public:
+	CharacterController(Pose& target)
+		: m_pose(target)
+	{}
+
+	void update()
+	{
+		math::Vec3p8 dir;
+		// left/right : strafe
+		dir.x() = horSpeed * (Keypad::Held(Keypad::RIGHT) - Keypad::Held(Keypad::LEFT));
+		// up/down : forward/back
+		dir.y() = horSpeed * (Keypad::Held(Keypad::UP) - Keypad::Held(Keypad::DOWN));
+
+		m_pose.pos.x() += dir.x();
+		m_pose.pos.y() += dir.y();
+
+		// Jumps
+		if(Keypad::Pressed(Keypad::A) && m_pose.pos.z() == 0_p8)
+		{
+			jump = 4_p8; // Impulse
+		}
+
+		if(m_pose.pos.z() > 0_p8 || jump > 0_p8)
+		{
+			// Integrate jump
+			jump -= 10_p8 / 32; // Impulse
+			m_pose.pos.z() += jump / 32; // speed/~fps
+
+			// Reset state on contact
+			if(m_pose.pos.z() < 0_p8)
+			{
+				m_pose.pos.z() = 0_p8;
+				jump = 0_p8;
+			}
+		}
+
+		m_pose.update();
+	}
+
+	Pose& m_pose;
+	intp8 jump = 0_p8; // Jump velocity
+
+	// Speed controls
+	math::intp8 horSpeed = math::intp8(0.06125f);
+};
+
+struct PoseFollower
+{
+	PoseFollower(Pose& target, Vec3p8 offset)
+		: m_target(target)
+		, m_offset(offset)
+	{
+		m_pose.phi = m_target.phi;
+		m_pose.pos = m_target.pos + m_offset;
+	}
+
+	void update()
+	{
+		m_pose.pos = m_target.pos + m_offset;
+		m_pose.update();
+	}
+
+	Pose& m_target;
+	Pose m_pose;
+	Vec3p8 m_offset;
+};
+
 struct Billboard
 {
 	static constexpr auto ambientColor = BasicColor::Blue;
 	static constexpr auto litColor = BasicColor::White;
 
-	Billboard(Vec3p8 startPos)
-		:m_pos(startPos)
+	Billboard()
 	{
 		// Allocate a palette of just two colors to do dithering with
 		m_paletteStart = gfx::SpritePalette::Allocator::alloc(5);
@@ -217,7 +285,7 @@ struct Billboard
 	void update(const Camera& cam)
 	{
 		const int32_t kScale = 8;
-		Vec3p8 ssPos = cam.projectWorldPos(m_pos);
+		Vec3p8 ssPos = cam.projectWorldPos(m_pose.pos);
 		m_ssX = ssPos.x().roundToInt() - m_anchor.x();
 		m_ssY = ssPos.y().roundToInt() - m_anchor.y();
 		auto rightSide = m_ssX + 16;
@@ -260,11 +328,11 @@ struct Billboard
 	int8p8 m_scale;
 	int16_t m_ssX, m_ssY;
 	math::Vec2u m_anchor;
-	math::Vec3p8 m_pos;
     uint32_t m_paletteStart;
 	volatile Sprite::Object* m_sprite {};
 	uint32_t m_tileNdx = 0;
 	int32_t m_transformId;
+	Pose m_pose;
 };
 
 void resetBg2Projection()
@@ -304,13 +372,12 @@ int main()
 
 	// -- Init game state ---
 	auto camera = Camera(ScreenWidth, ScreenHeight, Vec3p8(26_p8, 15_p8, 3_p8));
-	CharacterController playerController(camera.m_pose);
 
 	// Create a 3d object in front of the camera
-	Vec3p8 objPos = camera.m_pose.pos;
-	objPos.y() += 5_p8;
-	objPos.z() = 1_p8;
-	auto obj0 = Billboard(objPos);
+	auto obj0 = Billboard();
+	obj0.m_pose.pos = Vec3p8(26_p8, 17_p8, 1_p8);
+	auto playerController = CharacterController(obj0.m_pose);
+	auto follower = PoseFollower(obj0.m_pose, Vec3p8(0_p8, -5_p8, 1.5_p8));
 	
 	// Unlock the display and start rendering
 	Display().EndBlank();
@@ -319,8 +386,11 @@ int main()
 	while(1)
 	{
 		// Next frame logic
+		Keypad::Update();
 		playerController.update();
-		obj0.update(camera);
+		follower.update();
+		camera.m_pose = follower.m_pose;
+		obj0.update(camera); // Prepare for render
 
 		// VSync
 		VBlankIntrWait();
@@ -330,7 +400,7 @@ int main()
 		// Operations should be ordered from most to least time critical, in case they exceed VBlank time
 		// Prepare first scanline for next frame
 		resetBg2Projection();
-		postGlobalState(camera);
+		postGlobalState(camera.m_pose);
 
 		frameCounter.render(text);
 	}

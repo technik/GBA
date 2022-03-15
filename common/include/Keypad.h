@@ -18,8 +18,23 @@ struct Keypad
 	static constexpr uint16_t R = 1<<8;
 	static constexpr uint16_t L = 1<<9;
 
-	inline static int32_t Held(uint16_t key)
+	inline static bool Held(uint16_t key)
 	{
-		return int32_t(!(IO::KEYINPUT::Get().value & key));
+		return s_curState & key;
 	}
+
+	inline static bool Pressed(uint16_t key)
+	{
+		auto lastHeld = s_lastState & key;
+		return Held(key) && !lastHeld;
+	}
+
+	inline static void Update()
+	{
+		s_lastState = s_curState;
+		s_curState = ~IO::KEYINPUT::Get().value;
+	}
+
+	static inline int32_t s_lastState = 0;
+	static inline int32_t s_curState = 0;
 };
