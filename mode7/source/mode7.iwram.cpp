@@ -15,7 +15,7 @@ using namespace math;
 void m7_hbl_c()
 {
 	auto vCount = IO::VCOUNT::Value();
-	if(vCount >= 160 | vCount < 90)
+	if(vCount >= 160 | vCount < 80)
 		return;
 
 	setBg2AffineTx(vCount+1);
