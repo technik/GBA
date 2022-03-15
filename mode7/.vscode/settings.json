@@ -23,7 +23,8 @@
 		"typeinfo": "cpp",
 		"utility": "cpp",
 		"xtr1common": "cpp",
-		"*.tcc": "cpp"
+		"*.tcc": "cpp",
+		"numbers": "cpp"
 	},
 	"compiler-explorer.url": "http://localhost:10240/", // url of the compiler explorer you want to use.
 	"compiler-explorer.compiler": "devkitARM-g++", // Compiler code - See help below.
