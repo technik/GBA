@@ -186,6 +186,7 @@ struct Billboard
 
 	void update(const Camera& cam)
 	{
+		const int32_t kScale = 8;
 		Vec3p8 ssPos = cam.projectWorldPos(m_pos);
 		m_ssX = ssPos.x().roundToInt() - m_anchor.x();
 		m_ssY = ssPos.y().roundToInt() - m_anchor.y();
@@ -198,7 +199,7 @@ struct Billboard
 		 && bottomSide >= 0
 		 && m_ssY <= ScreenWidth)
 		{
-			m_scale.raw = int16_t(depth.raw);
+			m_scale.raw = int16_t(depth.raw/kScale);
 			m_ssY = ssPos.y().roundToInt() - m_anchor.y();
 			m_visible = true;
 		}
@@ -272,11 +273,12 @@ int main()
 	initBackground();
 
 	// -- Init game state ---
-	auto camera = Camera(ScreenWidth, ScreenHeight, Vec3p8(0_p8, 0_p8, 3_p8));
+	auto camera = Camera(ScreenWidth, ScreenHeight, Vec3p8(26_p8, 15_p8, 3_p8));
 
 	// Create a 3d object in front of the camera
 	Vec3p8 objPos = camera.m_pos;
 	objPos.y() += 5_p8;
+	objPos.z() = 1_p8;
 	auto obj0 = Billboard(objPos);
 	
 	// Unlock the display and start rendering
