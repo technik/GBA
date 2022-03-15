@@ -38,9 +38,9 @@ TextSystem text;
 void postGlobalState(const Camera& cam)
 {
 	// Copy local state into global variables that can be accessed by the renderer
-	gCosf = cam.cosf;
-	gSinf = cam.sinf;
-	gCamPos = cam.m_pos;
+	gCosf = cam.m_pose.cosf;
+	gSinf = cam.m_pose.sinf;
+	gCamPos = cam.m_pose.pos;
 }
 
 void initBackground()
@@ -72,6 +72,43 @@ void initBackground()
 	auto* mapMem = reinterpret_cast<uint16_t*>(VideoMemAddress+0x4000);
 	memcpy(mapMem, mapData, mapDataSize*4);
 }
+
+class CharacterController
+{
+public:
+	CharacterController(Pose& target)
+		: m_pose(target)
+	{}
+
+	void update()
+	{
+		math::Vec3p8 dir;
+		// left/right : strafe
+		dir.x() = horSpeed * (Keypad::Held(Keypad::R) - Keypad::Held(Keypad::L));
+		// up/down : forward/back
+		dir.y() = horSpeed * (Keypad::Held(Keypad::UP) - Keypad::Held(Keypad::DOWN));
+		// B/A : rise/sink
+		dir.z() = verSpeed*(Keypad::Held(Keypad::A) - Keypad::Held(Keypad::B));
+
+		m_pose.pos.x() += (dir.x() * m_pose.cosf - dir.y() * m_pose.sinf).cast<8>();
+		m_pose.pos.y() += (dir.y() * m_pose.cosf + dir.x() * m_pose.sinf).cast<8>();
+		m_pose.pos.z() += dir.z();
+
+		// Limit z to reasonable values to not break the math
+		m_pose.pos.z() = math::max(math::intp8(0.5), min(math::intp8(25), m_pose.pos.z()));
+
+		m_pose.phi += angSpeed*(Keypad::Held(Keypad::LEFT) - Keypad::Held(Keypad::RIGHT));
+
+		m_pose.update();
+	}
+
+	Pose& m_pose;
+
+	// Speed controls
+	math::intp8 horSpeed = math::intp8(0.06125f);
+	math::intp8 verSpeed = math::intp8(0.06125f);
+	math::intp8 angSpeed = math::intp8(0.5f);
+};
 
 struct Billboard
 {
@@ -111,13 +148,6 @@ struct Billboard
 		m_sprite->setPos(116, 76);
 
 		// Draw into the tiles
-		const auto blackNdx = m_paletteStart&0x0f;
-		const auto redNdx = blackNdx+1;
-		uint32_t twoPixels = blackNdx<<4 | redNdx;
-		uint32_t rowA = twoPixels<<24 | twoPixels<<16 | twoPixels<<8 | twoPixels;
-		uint32_t rowB = rowA<<4 | blackNdx;
-
-		constexpr uint32_t lowBank = 4;
 		for(uint32_t t = 0; t < numTiles; ++t)
 		{
 			auto& tile = tileBank.GetSTile(m_tileNdx + t);
@@ -274,9 +304,10 @@ int main()
 
 	// -- Init game state ---
 	auto camera = Camera(ScreenWidth, ScreenHeight, Vec3p8(26_p8, 15_p8, 3_p8));
+	CharacterController playerController(camera.m_pose);
 
 	// Create a 3d object in front of the camera
-	Vec3p8 objPos = camera.m_pos;
+	Vec3p8 objPos = camera.m_pose.pos;
 	objPos.y() += 5_p8;
 	objPos.z() = 1_p8;
 	auto obj0 = Billboard(objPos);
@@ -288,7 +319,7 @@ int main()
 	while(1)
 	{
 		// Next frame logic
-		camera.update();
+		playerController.update();
 		obj0.update(camera);
 
 		// VSync
