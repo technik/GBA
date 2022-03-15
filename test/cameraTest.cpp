@@ -9,7 +9,7 @@ void testCamera()
 {
     auto camera = Camera(ScreenWidth, ScreenHeight, Vec3p8(0_p8, 0_p8, 0_p8));
 
-    Vec3p8 objPos = camera.m_pos;
+    Vec3p8 objPos = camera.m_pose.pos;
 
     auto ss = camera.projectWorldPos(objPos);
     assert(ss.z().roundToInt() == 0); // X and Y are undefined in this case, so we don't test it
@@ -22,11 +22,11 @@ void testCamera()
     assert(ss.y().roundToInt() == ScreenHeight / 2);
 
     // Move the camera towards the object
-    camera.m_pos.y() += 5_p8;
+    camera.m_pose.pos.y() += 5_p8;
     ss = camera.projectWorldPos(objPos);
     assert(ss.z().roundToInt() == 5);
 
-    objPos = camera.m_pos;
+    objPos = camera.m_pose.pos;
     objPos.y() -= 10_p8;
     ss = camera.projectWorldPos(objPos);
     assert(ss.z().roundToInt() == -10);
@@ -35,7 +35,7 @@ void testCamera()
     assert(ss.y().roundToInt() == ScreenHeight / 2);
 
     // Test off center coordinates
-    objPos = camera.m_pos;
+    objPos = camera.m_pose.pos;
     objPos.y() += 10_p8;
     objPos.x() += 7.5_p8; // Right edge of the screen
     objPos.z() += 5_p8; // Upper edge of the screen
@@ -47,7 +47,7 @@ void testCamera()
     assert(roundedX >= ScreenWidth-1 && roundedX <= ScreenWidth+1);
     assert(ss.y().roundToInt() == 0);
 
-    objPos = camera.m_pos;
+    objPos = camera.m_pose.pos;
     objPos.y() += 10_p8;
     objPos.x() -= 7.5_p8; // Left edge of the screen
     objPos.z() -= 5_p8; // Lower edge of the screen
@@ -61,13 +61,13 @@ void testCamera()
     assert(roundedY == ScreenHeight);
 
     // Rotate the game 90 degrees
-    camera.phi = intp8(0.25f);
-    camera.update();
+    camera.m_pose.phi = intp8(0.25f);
+    camera.m_pose.update();
     ss = camera.projectWorldPos(objPos);
-    assert(camera.sinf == 1_p8);
-    assert(camera.cosf == 0_p8);
+    assert(camera.m_pose.sinf == 1_p8);
+    assert(camera.m_pose.cosf == 0_p8);
 
-    objPos = camera.m_pos;
+    objPos = camera.m_pose.pos;
     objPos.x() -= 10_p8;
     objPos.y() -= 7.5_p8; // Left edge of the screen
     objPos.z() -= 5_p8; // Lower edge of the screen
