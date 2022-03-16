@@ -36,20 +36,25 @@ void postGlobalState(const Pose& cam)
 	PostCameraState(cam.pos, cam.cosf, cam.sinf);
 }
 
-void initBackground()
+void SetBackgroundClearColor(Color clr)
+{
+	gfx::BackgroundPalette::color(0).raw = clr.raw;
+}
+
+void InitMode7Background(
+	const uint32_t paletteSize, const uint32_t* paletteData,
+	const uint32_t tileDataSize, const uint32_t* tileData,
+	const uint32_t mapDataSize, const uint32_t* mapData)
 {
 	// Load palette
-	memcpy(gfx::BackgroundPalette::rawMemory(), mapPalette, mapPaletteSize*4);
-	// Override Background clear color (used for blending too)
-	gfx::BackgroundPalette::color(0).raw = BasicColor::SkyBlue.raw;
+	memcpy(gfx::BackgroundPalette::rawMemory(), paletteData, paletteSize*4);
 
 	// Load the background tile map
-	auto paletteStart = gfx::BackgroundPalette::Allocator::alloc(mapPaletteSize*2);
-	auto numTiles = bgTilesSize * 4 / sizeof(gfx::DTile);
+	auto numTiles = tileDataSize * 4 / sizeof(gfx::DTile);
 	auto& tileBank = gfx::TileBank::GetBank(0);
 	auto tileStart = tileBank.allocDTiles(numTiles);
 	
-	memcpy(tileBank.memory(), bgTiles, bgTilesSize*4);
+	memcpy(tileBank.memory(), tileData, tileDataSize*4);
 
 	// Config BG2
 	// Use charblock 0 for the tiles
@@ -66,121 +71,12 @@ void initBackground()
 	memcpy(mapMem, mapData, mapDataSize*4);
 }
 
-class FPSController
+void initBackground()
 {
-public:
-	FPSController(Pose& target)
-		: m_pose(target)
-	{}
-
-	void update()
-	{
-		math::Vec3p8 dir;
-		// left/right : strafe
-		dir.x() = horSpeed * (Keypad::Held(Keypad::R) - Keypad::Held(Keypad::L));
-		// up/down : forward/back
-		dir.y() = horSpeed * (Keypad::Held(Keypad::UP) - Keypad::Held(Keypad::DOWN));
-		// B/A : rise/sink
-		dir.z() = verSpeed*(Keypad::Held(Keypad::A) - Keypad::Held(Keypad::B));
-
-		m_pose.pos.x() += (dir.x() * m_pose.cosf - dir.y() * m_pose.sinf).cast<8>();
-		m_pose.pos.y() += (dir.y() * m_pose.cosf + dir.x() * m_pose.sinf).cast<8>();
-		m_pose.pos.z() += dir.z();
-
-		// Limit z to reasonable values to not break the math
-		m_pose.pos.z() = math::max(math::intp8(0.5), min(math::intp8(25), m_pose.pos.z()));
-
-		m_pose.phi += angSpeed*(Keypad::Held(Keypad::LEFT) - Keypad::Held(Keypad::RIGHT));
-
-		m_pose.update();
-	}
-
-	Pose& m_pose;
-
-	// Speed controls
-	math::intp8 horSpeed = math::intp8(0.06125f);
-	math::intp8 verSpeed = math::intp8(0.06125f);
-	math::intp8 angSpeed = math::intp8(0.5f);
-};
-
-class CharacterController
-{
-public:
-	CharacterController(Pose& target)
-		: m_pose(target)
-	{}
-
-	void update()
-	{
-		math::Vec3p8 dir;
-		// left/right : strafe
-		//dir.x() = horSpeed * (Keypad::Held(Keypad::RIGHT) - Keypad::Held(Keypad::LEFT));
-		// up/down : forward/back
-		dir.y() = horSpeed * (Keypad::Held(Keypad::UP) - Keypad::Held(Keypad::DOWN));
-		m_pose.phi += angSpeed*(Keypad::Held(Keypad::LEFT) - Keypad::Held(Keypad::RIGHT));
-
-		m_pose.pos.x() += (dir.x() * m_pose.cosf - dir.y() * m_pose.sinf).cast<8>();
-		m_pose.pos.y() += (dir.y() * m_pose.cosf + dir.x() * m_pose.sinf).cast<8>();
-
-		// Jumps
-		if(Keypad::Pressed(Keypad::A) && m_pose.pos.z() == 0_p8)
-		{
-			jump = 7_p8; // Impulse
-		}
-
-		if(m_pose.pos.z() > 0_p8 || jump > 0_p8)
-		{
-			// Integrate jump
-			jump -= 10_p8 / 32; // Impulse
-			m_pose.pos.z() += jump / 32; // speed/~fps
-
-			// Reset state on contact
-			if(m_pose.pos.z() < 0_p8)
-			{
-				m_pose.pos.z() = 0_p8;
-				jump = 0_p8;
-			}
-		}
-
-		m_pose.update();
-	}
-
-	Pose& m_pose;
-	intp8 jump = 0_p8; // Jump velocity
-
-	// Speed controls
-	math::intp8 horSpeed = math::intp8(0.06125f);
-	math::intp8 angSpeed = math::intp8(0.5f);
-};
-
-struct PoseFollower
-{
-	PoseFollower(Pose& target, Vec3p8 offset)
-		: m_target(target)
-		, m_offset(offset)
-	{
-		m_pose.phi = m_target.phi;
-		m_pose.pos.z() = m_target.pos.z() + m_offset.z();
-		
-		m_pose.pos.x() = m_target.pos.x() + (m_offset.x() * m_pose.cosf - m_offset.y() * m_pose.sinf).cast<8>();
-		m_pose.pos.y() = m_target.pos.x() + (m_offset.y() * m_pose.cosf + m_offset.x() * m_pose.sinf).cast<8>();
-	}
-
-	void update()
-	{
-		m_pose.phi = m_target.phi;
-		m_pose.pos.z() = m_target.pos.z() + m_offset.z();
-		
-		m_pose.pos.x() = m_target.pos.x() + (m_offset.x() * m_pose.cosf - m_offset.y() * m_pose.sinf).cast<8>();
-		m_pose.pos.y() = m_target.pos.y() + (m_offset.y() * m_pose.cosf + m_offset.x() * m_pose.sinf).cast<8>();
-
-		m_pose.update();
-	}
-
-	Pose& m_target;
-	Pose m_pose;
-	Vec3p8 m_offset;
-};
+	InitMode7Background(mapPaletteSize, mapPalette,
+		bgTilesSize, bgTiles,
+		mapDataSize, mapData);
+}
 
 struct Billboard
 {
@@ -372,6 +268,9 @@ int main()
 
 	// Configure graphics
 	initBackground();
+	
+	// Override Background clear color (used for blending too)
+	SetBackgroundClearColor(BasicColor::SkyBlue);
 
 	// -- Init game state ---
 	auto camera = Camera(ScreenWidth, ScreenHeight, Vec3p8(26_p8, 15_p8, 3_p8));
