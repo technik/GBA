@@ -41,42 +41,45 @@ void SetBackgroundClearColor(Color clr)
 	gfx::BackgroundPalette::color(0).raw = clr.raw;
 }
 
-void InitMode7Background(
+struct Mode7Bg
+{
+	void Init(
 	const uint32_t paletteSize, const uint32_t* paletteData,
 	const uint32_t tileDataSize, const uint32_t* tileData,
 	const uint32_t mapDataSize, const uint32_t* mapData)
-{
-	// Load palette
-	memcpy(gfx::BackgroundPalette::rawMemory(), paletteData, paletteSize*4);
+	{
+		// Load palette
+		memcpy(gfx::BackgroundPalette::rawMemory(), paletteData, paletteSize*4);
 
-	// Load the background tile map
-	auto numTiles = tileDataSize * 4 / sizeof(gfx::DTile);
-	auto& tileBank = gfx::TileBank::GetBank(0);
-	auto tileStart = tileBank.allocDTiles(numTiles);
-	
-	memcpy(tileBank.memory(), tileData, tileDataSize*4);
+		// Load the background tile map
+		auto numTiles = tileDataSize * 4 / sizeof(gfx::DTile);
+		auto& tileBank = gfx::TileBank::GetBank(0);
+		auto tileStart = tileBank.allocDTiles(numTiles);
+		
+		memcpy(tileBank.memory(), tileData, tileDataSize*4);
 
-	// Config BG2
-	// Use charblock 0 for the tiles
-	// Use the first screen block after charblock 0 (i.e. screenblock 8)
-	// 128*128 map size
-	IO::BG2CNT::Get().value =
-		(1<<7) | // 16 bit color, technically not necessary as Affine backgrounds are always 16bit colors
-		(8<<8) | // screenblock 8
-		(2<<0xe); // size 512x512
+		// Config BG2
+		// Use charblock 0 for the tiles
+		// Use the first screen block after charblock 0 (i.e. screenblock 8)
+		// 128*128 map size
+		IO::BG2CNT::Get().value =
+			(1<<7) | // 16 bit color, technically not necessary as Affine backgrounds are always 16bit colors
+			(8<<8) | // screenblock 8
+			(2<<0xe); // size 512x512
 
-	// Fill in map data
-	// Affine maps use 8 bit indices
-	auto* mapMem = reinterpret_cast<uint16_t*>(VideoMemAddress+0x4000);
-	memcpy(mapMem, mapData, mapDataSize*4);
-}
+		// Fill in map data
+		// Affine maps use 8 bit indices
+		auto* mapMem = reinterpret_cast<uint16_t*>(VideoMemAddress+0x4000);
+		memcpy(mapMem, mapData, mapDataSize*4);
+	}
 
-void initBackground()
-{
-	InitMode7Background(mapPaletteSize, mapPalette,
-		bgTilesSize, bgTiles,
-		mapDataSize, mapData);
-}
+	void End()
+	{
+		// Invalidate all allocated tiles
+		auto& tileBank = gfx::TileBank::GetBank(0);
+		tileBank.reset();
+	}
+};
 
 struct Billboard
 {
@@ -267,10 +270,13 @@ int main()
 	FrameCounter frameCounter(text);
 
 	// Configure graphics
-	initBackground();
-	
-	// Override Background clear color (used for blending too)
-	SetBackgroundClearColor(BasicColor::SkyBlue);
+	Mode7Bg mode7bg;
+	mode7bg.Init(
+		mapPaletteSize, mapPalette,
+		bgTilesSize, bgTiles,
+		mapDataSize, mapData
+	);
+	SetBackgroundClearColor(BasicColor::SkyBlue); // Override Background clear color (used for blending too)
 
 	// -- Init game state ---
 	auto camera = Camera(ScreenWidth, ScreenHeight, Vec3p8(26_p8, 15_p8, 3_p8));
