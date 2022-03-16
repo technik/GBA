@@ -110,13 +110,13 @@ struct Sprite
 
 		inline void show(ObjectMode objectMode) volatile
 		{
-			constexpr uint8_t visibilityMask = ~(0x03 << 8);
+			constexpr uint8_t visibilityMask = uint8_t(~(0x03 << 8));
 			attribute[0] = (attribute[0] & visibilityMask) | (((uint16_t)objectMode) << 8);
 		}
 
 		inline void hide() volatile
 		{
-			constexpr uint8_t visibilityMask = ~(0x03 << 8);
+			constexpr uint8_t visibilityMask = uint8_t(~(0x03 << 8));
 			attribute[0] = (attribute[0] & visibilityMask) | (((uint16_t)ObjectMode::Disabled) << 8);
 		}
 

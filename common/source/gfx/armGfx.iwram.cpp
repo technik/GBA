@@ -1,16 +1,35 @@
-//
-// mode7.iwram.c
-// Interrupts
-//
+// GFX code that needs to live in IWRAM
+#ifdef GBA
 extern "C" {
 	#include <tonc.h>
 }
+#endif // GBA
+
+#include <gfx/palette.h>
 #include <Device.h>
 #include <Color.h>
 #include <gfx/palette.h>
-#include <demo.h>
+#include <Display.h>
+#include <gfx/armGfx.h>
 
 using namespace math;
+
+namespace // Exposed shared state
+{
+	math::Vec3p8 gCamPos;
+	math::intp8 gCosf;
+	math::intp8 gSinf;
+}
+
+void PostCameraState(
+	math::Vec3p8 Pos,
+	math::intp8 Cosf,
+	math::intp8 Sinf)
+{
+	gCamPos = Pos;
+	gCosf = Cosf;
+	gSinf = Sinf;
+}
 
 void m7_hbl_c()
 {
@@ -50,5 +69,5 @@ void setBg2AffineTx(uint16_t vCount)
 	IO::BG2P::Get().C = -lsf.cast<8>().raw;
 	
 	REG_BG2X = (gCamPos.x()*kTexelsPerMeter - (lcf*120 + lsf*160).cast<8>()).raw;
-	REG_BG2Y = 512*256 + (-gCamPos.y()*kTexelsPerMeter + (lsf*120 - lcf*160).cast<8>()).raw;
+	REG_BG2Y = 512 * 256 + (- gCamPos.y()*kTexelsPerMeter + (lsf*120 - lcf*160).cast<8>()).raw;
 }

@@ -53,9 +53,9 @@ namespace math {
 		auto& x() { return m[0]; }
 		auto& y() { static_assert(N>1); return m[1]; }
 		auto& z() { static_assert(N>2); return m[2]; }
-		auto& x() volatile { return m[0]; }
-		auto& y() volatile { static_assert(N>1); return m[1]; }
-		auto& z() volatile { static_assert(N>2); return m[2]; }
+		volatile auto& x() volatile { return m[0]; }
+		volatile auto& y() volatile { static_assert(N>1); return m[1]; }
+		volatile auto& z() volatile { static_assert(N>2); return m[2]; }
 	};
 
 	template<class T>

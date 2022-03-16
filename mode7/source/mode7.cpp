@@ -17,10 +17,10 @@
 #include <gfx/palette.h>
 #include <gfx/sprite.h>
 #include <gfx/tile.h>
+#include <gfx/armGfx.h>
 #include <tools/frameCounter.h>
 
 // Demo code
-#include <demo.h>
 #include <Camera.h>
 
 // Inline data
@@ -28,19 +28,12 @@
 
 using namespace math;
 
-// Global Camera State
-Vec3p8 gCamPos;
-intp8 gCosf = 1_p8;
-intp8 gSinf = 0_p8;
-
 TextSystem text;
 
 void postGlobalState(const Pose& cam)
 {
 	// Copy local state into global variables that can be accessed by the renderer
-	gCosf = cam.cosf;
-	gSinf = cam.sinf;
-	gCamPos = cam.pos;
+	PostCameraState(cam.pos, cam.cosf, cam.sinf);
 }
 
 void initBackground()
@@ -308,7 +301,7 @@ struct Billboard
 		 && m_ssY <= ScreenWidth)
 		{
 			m_scale.raw = int16_t(depth.raw/kScale);
-			m_ssY = ssPos.y().roundToInt() - m_anchor.y();
+			m_ssY = ssPos.y().roundToInt() - m_anchor.y() - 16;
 			m_visible = true;
 		}
 		else
@@ -385,7 +378,7 @@ int main()
 
 	// Create a 3d object in front of the camera
 	auto obj0 = Billboard();
-	obj0.m_pose.pos = Vec3p8(26_p8, 17_p8, 1_p8);
+	obj0.m_pose.pos = Vec3p8(26_p8, 20_p8, 1_p8);
 	auto playerController = CharacterController(obj0.m_pose);
 	auto follower = PoseFollower(obj0.m_pose, Vec3p8(0_p8, -5_p8, 1.5_p8));
 	

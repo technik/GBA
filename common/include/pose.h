@@ -3,6 +3,12 @@
 #include <linearMath.h>
 #include <vector.h>
 
+#ifdef GBA
+extern "C" {
+	#include <tonc.h>
+}
+#endif // GBA
+
 struct Pose
 {
 	math::Vec3p8 pos;

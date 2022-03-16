@@ -1,19 +1,9 @@
-#
-# Template for projects using grit.
-# 
-# Making gfx into a library in a separate makefile and using that here.
-#
-
 # ---------------------------------------------------------------------
 # SETUP
 # ---------------------------------------------------------------------
 
 # --- No implicit rules ---
 .SUFFIXES:
-
-# --- Tonc paths ---
-# If not defined as environment var, assumed to be 2 dirs up
-export TONCCODE	?= $(CURDIR)/../..
 
 include $(DEVKITARM)/gba_rules
 
@@ -37,9 +27,8 @@ export PATH	:=	$(DEVKITARM)/bin:$(PATH)
 
 export PROJ	?= $(notdir $(CURDIR))
 TITLE		:= $(PROJ)
-GFXLIBS		:= libgfx.a
 
-LIBS		:= -ltonc -lgfx
+LIBS		:= -ltonc
 
 BUILD		:= build
 SRCDIRS		:= source ../common/source ../common/source/gfx ../common/source/tools assets
@@ -156,14 +145,13 @@ export LIBPATHS	:=	-L$(CURDIR) $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
-	@make --no-print-directory -f $(CURDIR)/gfxmake
 	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
 all	: $(BUILD)
 
 clean:
 	@echo clean ...
-	@rm -fr $(BUILD) $(TARGET).elf $(TARGET).gba $(GFXLIBS)
+	@rm -fr $(BUILD) $(TARGET).elf $(TARGET).gba
 
 
 else		# If we're here, we should be in the BUILD dir
@@ -174,7 +162,7 @@ DEPENDS	:=	$(OFILES:.o=.d)
 
 $(OUTPUT).gba	:	$(OUTPUT).elf
 
-$(OUTPUT).elf	:	$(OFILES) libgfx.a
+$(OUTPUT).elf	:	$(OFILES)
 
 
 -include $(DEPENDS)
