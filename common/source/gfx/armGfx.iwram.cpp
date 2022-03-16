@@ -42,6 +42,7 @@ void m7_hbl_c()
 
 void setBg2AffineTx(uint16_t vCount)
 {
+#ifdef GBA
 	constexpr int32_t scanlineOffset = ScreenHeight/2;
 	constexpr int32_t scanlineRange = ScreenHeight-scanlineOffset;
 	// Using tg(y) = 0.5, vertical field of view ~= 53.13 deg.
@@ -70,4 +71,5 @@ void setBg2AffineTx(uint16_t vCount)
 	
 	REG_BG2X = (gCamPos.x()*kTexelsPerMeter - (lcf*120 + lsf*160).cast<8>()).raw;
 	REG_BG2Y = 512 * 256 + (- gCamPos.y()*kTexelsPerMeter + (lsf*120 - lcf*160).cast<8>()).raw;
+#endif // GBA
 }
