@@ -30,8 +30,10 @@ endmacro()
 # Collect all sources
 file(GLOB_RECURSE COMMON_FILES "common/source/*.cpp" "common/include/*.inl" "common/include/*.h" "common/include/*.hpp")
 GroupSources(common common)
+GroupSources(pc pc)
 
 include_directories(common/include)
+include_directories(pc/include)
 add_executable(pcRT pc/rt/main.cpp ${COMMON_FILES})
 
 add_executable(lutGenerator tools/lutGenerator/main.cpp)
