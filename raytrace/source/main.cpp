@@ -53,9 +53,11 @@ uint16_t trace(const Camera& cam, int32_t x, int32_t y)
 {
 	// View space ray
 	Vec3p8 rayDir;
-	rayDir.y() = 1_p8;
-	rayDir.x() = intp8(x-Mode4Display::Width/2)/int(Mode4Display::Width/2);
-	rayDir.z() = intp8(Mode4Display::Height/2-y)/int(Mode4Display::Height/2);
+	rayDir.z() = intp8(Mode4Display::Height/2-y)/int(Mode4Display::Width/2);
+	intp8 vx = intp8(x-Mode4Display::Width/2)/int(Mode4Display::Width/2);
+	// rotate around the camera
+	rayDir.x() = (cam.m_pose.cosf * vx).cast<8>() - cam.m_pose.sinf;
+	rayDir.y() = -(cam.m_pose.sinf * vx).cast<8>() - cam.m_pose.cosf;
 	return (rayDir.x() > rayDir.z()) ? 1 : 2;
 }
 
@@ -67,9 +69,8 @@ void Render(const Camera& cam)
 		auto row = &backBuffer[Mode4Display::Width/2 * y];
 		for(int x = 0; x < Mode4Display::Width/2; ++x)
 		{
-			auto pixelA = trace(cam, 2*x,y);
-			auto pixelB = trace(cam, 2*x+1,y);
-			row[x] = (pixelA + (pixelB<<8));
+			auto pixel = trace(cam, 2*x + 1,y);
+			row[x] = (pixel + (pixel<<8));
 		}
 	}
 }
