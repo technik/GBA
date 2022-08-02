@@ -23,11 +23,16 @@
 #include <Camera.h>
 
 using namespace math;
+using namespace gfx;
 
 TextSystem text;
 
 void initBackground()
 {
+	// Initialize the palette
+	auto paletteNdx = BackgroundPalette::Allocator::alloc(2);
+	BackgroundPalette::color(paletteNdx++).raw = BasicColor::Red.raw;
+	BackgroundPalette::color(paletteNdx++).raw = BasicColor::Blue.raw;
 }
 
 void InitSystems()
@@ -37,10 +42,30 @@ void InitSystems()
 	text.Init();
 }
 
+void Render()
+{
+	uint16_t pixelPair[2] = {
+		1,
+		1<<8
+	};
+	auto backBuffer = DisplayControl::Get().backBuffer();
+	for(int y = 0; y < Mode4Display::Height; ++y)
+	{
+		auto row = &backBuffer[Mode4Display::Width/2 * y];
+		for(int x = 0; x < Mode4Display::Width/2; ++x)
+		{
+			row[x] = pixelPair[y&1];
+		}
+	}
+}
+
 int main()
 {
 	Display().StartBlank();
-	Display().SetMode<2,DisplayControl::BG2>();
+
+	// Full resolution, paletized color mode.
+	Mode4Display mode4;
+	mode4.Init();
 	
 	// --- Init systems ---
 	InitSystems();
@@ -50,7 +75,7 @@ int main()
 	initBackground();
 
 	// -- Init game state ---
-	auto camera = Camera(Vec3p8(256_p8, 256_p8, 1.7_p8));
+	auto camera = Camera(ScreenWidth, ScreenHeight, Vec3p8(256_p8, 256_p8, 1.7_p8));
 	
 	// Unlock the display and start rendering
 	Display().EndBlank();
@@ -59,13 +84,13 @@ int main()
 	while(1)
 	{
 		// Next frame logic
-		camera.update();
-
-		// VSync
-		VBlankIntrWait();
 
 		// -- Render --
+		Render();
 		frameCounter.render(text);
+
+		// Present
+		Display().flipFrame();
 	}
 	return 0;
 }

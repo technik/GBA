@@ -7,13 +7,14 @@
 #include <unordered_map>
 #include <xxhash/xxh3.h>
 
+#include <gfx/tile.h>
+#include <imageUtils.h>
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
-#include <gfx/tile.h>
-#include <imageUtils.h>
 
 void serializeData(const void* data, size_t byteCount, const std::string& variableName, std::ostream& out)
 {

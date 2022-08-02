@@ -5,6 +5,9 @@
 #include <unordered_map>
 #include <vector>
 
+#include <stb_image.h>
+#include <stb_image_write.h>
+
 #include <gfx/tile.h>
 
 struct Color3f
@@ -85,6 +88,11 @@ struct Image16bit
         }
     }
 
+    auto& at(int32_t x, int32_t y)
+    {
+        return pixels[x + width * y];
+    }
+
     void resize(int32_t x, int32_t y) // Invalidates content
     {
         width = x;
@@ -94,6 +102,23 @@ struct Image16bit
 
     int area() const { return width * height; }
     bool empty() const { return area() == 0; }
+
+    void save(const char* fileName)
+    {
+        std::vector<Color3f> expandedColor;
+        expandedColor.reserve(pixels.size());
+        for (auto& c : pixels)
+        {
+            auto r = c.c & 0x1f;
+            auto g = (c.c>>5) & 0x1f;
+            auto b = c.c >> 10;
+            Color3f& color = expandedColor.emplace_back();
+            color.r = r << 3 | r >> 2;
+            color.g = g << 3 | g >> 2;
+            color.b = b << 3 | b >> 2;
+        }
+        stbi_write_png(fileName, width, height, 3, expandedColor.data(), width * sizeof(Color3f));
+    }
 };
 
 struct GreyScaleImage8bit
