@@ -49,9 +49,14 @@ void InitSystems()
 }
 
 // returns the background palette index with this pixel's color
-uint16_t trace(const Camera& cam, uint32_t x, uint32_t y)
+uint16_t trace(const Camera& cam, int32_t x, int32_t y)
 {
-	return 2;
+	// View space ray
+	Vec3p8 rayDir;
+	rayDir.y() = 1_p8;
+	rayDir.x() = intp8(x-Mode4Display::Width/2)/int(Mode4Display::Width/2);
+	rayDir.z() = intp8(Mode4Display::Height/2-y)/int(Mode4Display::Height/2);
+	return (rayDir.x() > rayDir.z()) ? 1 : 2;
 }
 
 void Render(const Camera& cam)
