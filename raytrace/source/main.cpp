@@ -27,6 +27,12 @@ using namespace gfx;
 
 TextSystem text;
 
+struct Sphere
+{
+	Vec3p8 pos;
+	intp8 radius;
+};
+
 void initBackground()
 {
 	// Initialize the palette
@@ -42,19 +48,23 @@ void InitSystems()
 	text.Init();
 }
 
-void Render()
+// returns the background palette index with this pixel's color
+uint16_t trace(const Camera& cam, uint32_t x, uint32_t y)
 {
-	uint16_t pixelPair[2] = {
-		1,
-		1<<8
-	};
+	return 2;
+}
+
+void Render(const Camera& cam)
+{
 	auto backBuffer = DisplayControl::Get().backBuffer();
 	for(int y = 0; y < Mode4Display::Height; ++y)
 	{
 		auto row = &backBuffer[Mode4Display::Width/2 * y];
 		for(int x = 0; x < Mode4Display::Width/2; ++x)
 		{
-			row[x] = pixelPair[y&1];
+			auto pixelA = trace(cam, 2*x,y);
+			auto pixelB = trace(cam, 2*x+1,y);
+			row[x] = (pixelA + (pixelB<<8));
 		}
 	}
 }
@@ -75,8 +85,9 @@ int main()
 	initBackground();
 
 	// -- Init game state ---
-	auto camera = Camera(ScreenWidth, ScreenHeight, Vec3p8(256_p8, 256_p8, 1.7_p8));
-	
+	auto camera = Camera(ScreenWidth, ScreenHeight, Vec3p8(0_p8, 0_p8, 0_p8));
+	auto playerController = CharacterController(camera.m_pose);
+
 	// Unlock the display and start rendering
 	Display().EndBlank();
 
@@ -84,9 +95,11 @@ int main()
 	while(1)
 	{
 		// Next frame logic
+		Keypad::Update();
+		playerController.update();
 
 		// -- Render --
-		Render();
+		Render(camera);
 		frameCounter.render(text);
 
 		// Present
