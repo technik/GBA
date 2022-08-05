@@ -58,7 +58,20 @@ uint16_t trace(const Camera& cam, int32_t x, int32_t y)
 	// rotate around the camera
 	rayDir.x() = (cam.m_pose.cosf * vx).cast<8>() - cam.m_pose.sinf;
 	rayDir.y() = -(cam.m_pose.sinf * vx).cast<8>() - cam.m_pose.cosf;
-	return (rayDir.x() > rayDir.z()) ? 1 : 2;
+
+	// Intersect ray against a unit sphere
+	// p = p0 + t*d
+	// p*p <= R2
+	// p0*p0 + t^2*d*d + 2*t*p0*d <= R^2
+	// t^2*|d|^2 + t * (2*dot(p0,d)) + (|p0|^2 - R^2) = 0
+	// t = -b +- sqrt(b^2 - 4*a*c) / (2*a)
+	// b^2 > 4*a*c -> 4*(p0*d)*(p0*d) > 4*(d*d * (p0*p0 - R*R))
+	// (p0*d)*(p0*d) > (d*d * (p0*p0 - R*R))
+	Vec3p8 p0 = cam.m_pose.pos - Vec3p8(0_p8,10_p8,0_p8);
+	intp8 p0d = dot(p0, rayDir).cast<8>();
+	auto dd = dot(rayDir,rayDir).cast<12>();
+	intp8 p02 = dot(p0,p0).cast<8>();
+	return ((p0d*p0d) > (dd * (p02 - 1_p8)).cast<16>()) ? 1 : 2;
 }
 
 void Render(const Camera& cam)
