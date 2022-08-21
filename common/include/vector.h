@@ -120,6 +120,13 @@ namespace math {
 	{
 		return (a.x()*b.y() - a.y()*b.x());
 	}
+
+	template<class T, class K>
+	constexpr inline auto operator*(const Vec2<T>& v, K x)
+	{
+		using retT = decltype(v.x()*x);
+		return Vec2<retT>{v.x()*x, v.y()*x};
+	}
 	
 	// 3d vector operators
 	template<class T>
