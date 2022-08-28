@@ -20,12 +20,12 @@
             "targetArchitecture": "arm",
             "miDebuggerServerAddress": "localhost:2345",
             "windows": {
-                "miDebuggerPath": "${env:DEVKITARM}/bin/arm-none-eabi-gdb.exe",
+                "miDebuggerPath": "C:/devkitPro/devkitARM/bin/arm-none-eabi-gdb.exe",
                 "setupCommands": [
                     {
                     "description": "Enable pretty-printing for gdb",
                     "ignoreFailures": true,
-                        "text": "file ${workspaceFolder}/${workspaceFolderBasename}.elf -enable-pretty-printing"
+                    "text": "file ${workspaceFolder}/${workspaceFolderBasename}.elf -enable-pretty-printing"
                     }]
             },
             "osx":{
@@ -34,7 +34,7 @@
                     {
                     "description": "Enable pretty-printing for gdb",
                     "ignoreFailures": true,
-                        "text": "file ${workspaceFolder}/${workspaceFolderBasename}.elf -enable-pretty-printing"
+                    "text": "file ${workspaceFolder}/${workspaceFolderBasename}.elf -enable-pretty-printing"
                     }]
             },
         }

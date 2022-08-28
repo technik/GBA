@@ -44,6 +44,8 @@ namespace math
 
 		constexpr store_type floor() const { return raw >> shift; }
 
+		explicit operator float() const { return float(raw) / (1<<shift); }
+
 		// Cast without rounding
 		template<size_t otherShift, std::integral otherStore>
 		static constexpr Fixed castFromShiftedInteger(otherStore x)
