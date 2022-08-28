@@ -15,7 +15,7 @@ void FPSController::update()
 	dir.z() = verSpeed*(Keypad::Held(Keypad::A) - Keypad::Held(Keypad::B));
 
 	m_pose.pos.x() += (dir.x() * m_pose.cosf - dir.y() * m_pose.sinf).cast<8>();
-	m_pose.pos.y() += (dir.y() * m_pose.cosf + dir.x() * m_pose.sinf).cast<8>();
+	m_pose.pos.y() += (dir.x() * m_pose.sinf + dir.y() * m_pose.cosf).cast<8>();
 	m_pose.pos.z() += dir.z();
 
 	// Limit z to reasonable values to not break the math
