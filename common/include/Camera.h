@@ -15,7 +15,7 @@ struct Camera
 	Camera(int32_t clipWidth, int32_t clipHeight, math::Vec3p8 startPos)
 		: m_halfClipWidth(clipWidth / 2)
 		, m_halfClipHeight(clipHeight / 2)
-		, m_pose{ startPos, math::intp8(0) }
+		, m_pose{ startPos, math::intp16(0) }
 	{}
 
 	// Returns x,y in screen space and depth as z

@@ -98,14 +98,14 @@ void verLine(int x, int drawStart, int drawEnd, int worldColor)
 void Render(const Camera& cam)
 {
 	// Reconstruct local axes for fast ray interpolation
-	float cosPhi = cos(float(cam.m_pose.phi));
-	float sinPhi = sin(float(cam.m_pose.phi));
+	float cosPhi = cos(float(cam.m_pose.phi) * 6.28f);
+	float sinPhi = sin(float(cam.m_pose.phi) * 6.28f);
 	Vec2f sideDir = { cosPhi/2, sinPhi/2 }; // 45deg FoV
 	Vec2f viewDir = { -sinPhi, cosPhi };
 
 	for(int col = 0; col < Mode4Display::Width/2; col++)
 	{
-		float ndcX = 2.f * col / Mode4Display::Width - 1; // screen x from -1 to 1
+		float ndcX = 4.f * col / Mode4Display::Width - 1; // screen x from -1 to 1
 		// Compute a ray direction for this column
 		Vec2f rayDir = viewDir + sideDir * ndcX;
 
@@ -215,8 +215,8 @@ int main()
 	// -- Init game state ---
 	auto camera = Camera(ScreenWidth, ScreenHeight, Vec3p8(2.5_p8, 2.5_p8, 0_p8));
 	auto playerController = CharacterController(camera.m_pose);
-	playerController.horSpeed = 0.0625_p8;
-	playerController.angSpeed = 0.125_p8;
+	playerController.horSpeed = 0.125_p8;
+	playerController.angSpeed = 0.02_p16;
 
 	// Unlock the display and start rendering
 	Display().EndBlank();

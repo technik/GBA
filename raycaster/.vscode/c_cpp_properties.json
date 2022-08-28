@@ -13,7 +13,8 @@
             "defines": [
                 "UNICODE",
                 "_UNICODE",
-                "ARM7"
+                "ARM7",
+                "GBA"
             ],
             "intelliSenseMode": "msvc-x64",
             "browse": {

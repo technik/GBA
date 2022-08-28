@@ -13,21 +13,21 @@ extern "C" {
 struct Pose
 {
 	math::Vec3p8 pos;
-	math::intp8 phi{}; // Rotation around the z axis (normalized to 1 revolution).
+	math::intp16 phi{}; // Rotation around the z axis (normalized to 1 revolution).
 
 	// Cached state
-	math::intp8 sinf = math::intp8(0);
-	math::intp8 cosf = math::intp8(1);
+	math::intp12 sinf = math::intp12(0);
+	math::intp12 cosf = math::intp12(1);
 
 	void update()
 	{
 #ifdef GBA
-		cosf = math::Fixed<int32_t, 8>::castFromShiftedInteger<12>(lu_cos(phi.raw));
-		sinf = math::Fixed<int32_t, 8>::castFromShiftedInteger<12>(lu_sin(phi.raw));
+		cosf = math::intp12::castFromShiftedInteger<12>(lu_cos(phi.raw));
+		sinf = math::intp12::castFromShiftedInteger<12>(lu_sin(phi.raw));
 #else
-		float phiFloat = phi.raw * 2 * std::numbers::pi_v<float> / float(1 << 8);
-		cosf = math::intp8((float)cos(phiFloat));
-		sinf = math::intp8((float)sin(phiFloat));
+		float phiFloat = float(phi.raw) * 2 * std::numbers::pi_v<float>;
+		cosf = math::intp12((float)cos(phiFloat));
+		sinf = math::intp12((float)sin(phiFloat));
 #endif
 	}
 };
@@ -63,7 +63,7 @@ public:
 
 	// Speed controls
 	math::intp8 horSpeed = math::intp8(0.06125f);
-	math::intp8 angSpeed = math::intp8(0.5f);
+	math::intp16 angSpeed = math::intp16(0.5f);
 };
 
 struct PoseFollower
