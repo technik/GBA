@@ -51,7 +51,7 @@ void InitSystems()
 constexpr int kCellSize = 64;
 constexpr int kMapRows = 8;
 constexpr int kMapCols = 8;
-uint8_t map[kMapRows * kMapCols] = {
+uint8_t worldMap[kMapRows * kMapCols] = {
 	1, 1, 1, 1, 1, 1, 1, 1,
 	1, 0, 0, 0, 0, 0, 0, 1,
 	1, 0, 0, 0, 0, 1, 0, 1,
@@ -62,10 +62,25 @@ uint8_t map[kMapRows * kMapCols] = {
 	1, 1, 1, 1, 1, 1, 1, 1,
 };
 
+// Actually draws two pixels at once
 void verLine(int x, int drawStart, int drawEnd)
 {
+	auto backBuffer = DisplayControl::Get().backBuffer();
+	// Draw ceiling
 	for(int i = 0; i < drawStart; ++i)
-	{}
+	{
+		backBuffer[x + i*Mode4Display::Width/2] = 0; // Black
+	}
+	// Draw wall
+	for(int i = drawStart; i < drawEnd; ++i)
+	{
+		backBuffer[x + i*Mode4Display::Width/2] = 1|(1<<8); // Wall color
+	}
+	// Draw ground
+	for(int i = drawEnd; i < Mode4Display::Height; ++i)
+	{
+		backBuffer[x + i*Mode4Display::Width/2] = 0; // Black
+	}
 }
 
 void Render(const Camera& cam)
@@ -73,17 +88,17 @@ void Render(const Camera& cam)
 	// Reconstruct local axes for fast ray interpolation
 	float cosPhi = cos(float(cam.m_pose.phi));
 	float sinPhi = sin(float(cam.m_pose.phi));
-	Vec2f SideDir = { cosPhi/2, sinPhi/2 }; // 45deg FoV
+	Vec2f sideDir = { cosPhi/2, sinPhi/2 }; // 45deg FoV
 	Vec2f viewDir = { -sinPhi, cosPhi };
 
-	for(int col = 0; col < Mode4Display::Width; col += 2)
+	for(int col = 2; col < Mode4Display::Width/2 - 2; col++)
 	{
 		float ndcX = 2.f * col / Mode4Display::Width - 1; // screen x from -1 to 1
 		// Compute a ray direction for this column
-		Vec2f rayDir = viewDir + ndcX * camDirX;
+		Vec2f rayDir = viewDir + sideDir * ndcX;
 
-		int tileX = std::floor(cam.m_pose.pos.x);
-		int tileY = std::floor(cam.m_pose.pos.y);
+		int tileX = std::floor((float)cam.m_pose.pos.x());
+		int tileY = std::floor((float)cam.m_pose.pos.y());
 
 		//length of ray from current position to next x or y-side
       	float sideDistX;
@@ -105,22 +120,22 @@ void Render(const Camera& cam)
 		if (rayDir.x() < 0)
 		{
 			stepX = -1;
-			sideDistX = (cam.m_pose.pos.x() - tileX) * deltaDistX;
+			sideDistX = ((float)cam.m_pose.pos.x() - tileX) * deltaDistX;
 		}
 		else
 		{
 			stepX = 1;
-			sideDistX = (tileX + 1.0 - cam.m_pose.pos.x()) * deltaDistX;
+			sideDistX = (tileX + 1.0 - (float)cam.m_pose.pos.x()) * deltaDistX;
 		}
 		if (rayDir.y() < 0)
 		{
 			stepY = -1;
-			sideDistY = (cam.m_pose.pos.y() - tileY) * deltaDistY;
+			sideDistY = ((float)cam.m_pose.pos.y() - tileY) * deltaDistY;
 		}
 		else
 		{
 			stepY = 1;
-			sideDistY = (tileY + 1.0 - cam.m_pose.pos.y()) * deltaDistY;
+			sideDistY = (tileY + 1.0 - (float)cam.m_pose.pos.y()) * deltaDistY;
 		}
 
 		//perform DDA
@@ -140,7 +155,7 @@ void Render(const Camera& cam)
 				side = 1;
 			}
 			//Check if ray has hit a wall
-			if (worldMap[tileX][tileY] > 0)
+			if (worldMap[tileX + kMapCols * tileY] > 0)
 			{
 				hit = 1;
 			}
@@ -166,7 +181,7 @@ void Render(const Camera& cam)
 		if(drawEnd >= Mode4Display::Height) drawEnd = Mode4Display::Height - 1;
 
 		//draw the pixels of the stripe as a vertical line
-      	verLine(x, drawStart, drawEnd);
+      	verLine(col, drawStart, drawEnd);
 	}
 }
 
@@ -188,6 +203,8 @@ int main()
 	// -- Init game state ---
 	auto camera = Camera(ScreenWidth, ScreenHeight, Vec3p8(2.5_p8, 2.5_p8, 0_p8));
 	auto playerController = CharacterController(camera.m_pose);
+	playerController.horSpeed = 0.02_p8;
+	playerController.angSpeed = 0.125_p8;
 
 	// Unlock the display and start rendering
 	Display().EndBlank();
