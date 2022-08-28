@@ -33,12 +33,15 @@ struct Sphere
 	intp8 radius;
 };
 
-void initBackground()
+void initBackgroundPalette()
 {
 	// Initialize the palette
-	auto paletteNdx = BackgroundPalette::Allocator::alloc(2);
-	BackgroundPalette::color(paletteNdx++).raw = BasicColor::Red.raw;
-	BackgroundPalette::color(paletteNdx++).raw = BasicColor::Blue.raw;
+	auto paletteNdx = BackgroundPalette::Allocator::alloc(4);
+	BackgroundPalette::color(paletteNdx++).raw = BasicColor::SkyBlue.raw;
+	BackgroundPalette::color(paletteNdx++).raw = BasicColor::MidGrey.raw;
+	// Wall color
+	BackgroundPalette::color(paletteNdx++).raw = BasicColor::Green.raw;
+	BackgroundPalette::color(paletteNdx++).raw = BasicColor::DarkGreen.raw;
 }
 
 void InitSystems()
@@ -49,10 +52,18 @@ void InitSystems()
 }
 
 constexpr int kCellSize = 64;
-constexpr int kMapRows = 8;
+constexpr int kMapRows = 16;
 constexpr int kMapCols = 8;
 uint8_t worldMap[kMapRows * kMapCols] = {
 	1, 1, 1, 1, 1, 1, 1, 1,
+	1, 0, 0, 0, 0, 0, 0, 1,
+	1, 0, 0, 0, 0, 1, 0, 1,
+	1, 0, 0, 0, 0, 0, 0, 1,
+	1, 0, 0, 0, 0, 0, 0, 1,
+	1, 0, 0, 1, 1, 0, 0, 1,
+	1, 0, 0, 1, 1, 0, 0, 1,
+	1, 0, 0, 0, 0, 0, 0, 1,
+	1, 0, 0, 0, 0, 0, 0, 1,
 	1, 0, 0, 0, 0, 0, 0, 1,
 	1, 0, 0, 0, 0, 1, 0, 1,
 	1, 0, 0, 0, 0, 0, 0, 1,
@@ -63,23 +74,24 @@ uint8_t worldMap[kMapRows * kMapCols] = {
 };
 
 // Actually draws two pixels at once
-void verLine(int x, int drawStart, int drawEnd)
+void verLine(int x, int drawStart, int drawEnd, int worldColor)
 {
+	int16_t dPxl = worldColor | (worldColor<<8);
 	auto backBuffer = DisplayControl::Get().backBuffer();
 	// Draw ceiling
 	for(int i = 0; i < drawStart; ++i)
 	{
-		backBuffer[x + i*Mode4Display::Width/2] = 0; // Black
+		backBuffer[x + i*Mode4Display::Width/2] = 1|(1<<8); // Sky color
 	}
 	// Draw wall
 	for(int i = drawStart; i < drawEnd; ++i)
 	{
-		backBuffer[x + i*Mode4Display::Width/2] = 1|(1<<8); // Wall color
+		backBuffer[x + i*Mode4Display::Width/2] = dPxl; // Wall color
 	}
 	// Draw ground
 	for(int i = drawEnd; i < Mode4Display::Height; ++i)
 	{
-		backBuffer[x + i*Mode4Display::Width/2] = 0; // Black
+		backBuffer[x + i*Mode4Display::Width/2] = 2|(2<<8); // Ground color
 	}
 }
 
@@ -91,7 +103,7 @@ void Render(const Camera& cam)
 	Vec2f sideDir = { cosPhi/2, sinPhi/2 }; // 45deg FoV
 	Vec2f viewDir = { -sinPhi, cosPhi };
 
-	for(int col = 2; col < Mode4Display::Width/2 - 2; col++)
+	for(int col = 0; col < Mode4Display::Width/2; col++)
 	{
 		float ndcX = 2.f * col / Mode4Display::Width - 1; // screen x from -1 to 1
 		// Compute a ray direction for this column
@@ -181,7 +193,7 @@ void Render(const Camera& cam)
 		if(drawEnd >= Mode4Display::Height) drawEnd = Mode4Display::Height - 1;
 
 		//draw the pixels of the stripe as a vertical line
-      	verLine(col, drawStart, drawEnd);
+      	verLine(col, drawStart, drawEnd, 3+side);
 	}
 }
 
@@ -198,12 +210,12 @@ int main()
 	FrameCounter frameCounter(text);
 
 	// Configure graphics
-	initBackground();
+	initBackgroundPalette();
 
 	// -- Init game state ---
 	auto camera = Camera(ScreenWidth, ScreenHeight, Vec3p8(2.5_p8, 2.5_p8, 0_p8));
 	auto playerController = CharacterController(camera.m_pose);
-	playerController.horSpeed = 0.02_p8;
+	playerController.horSpeed = 0.0625_p8;
 	playerController.angSpeed = 0.125_p8;
 
 	// Unlock the display and start rendering
@@ -215,6 +227,10 @@ int main()
 		// Next frame logic
 		Keypad::Update();
 		playerController.update();
+		playerController.m_pose.pos.x() = max(1.125_p8, playerController.m_pose.pos.x());
+		playerController.m_pose.pos.y() = max(1.125_p8, playerController.m_pose.pos.y());
+		playerController.m_pose.pos.x() = min(intp8(kMapCols) - 1.125_p8, playerController.m_pose.pos.x());
+		playerController.m_pose.pos.y() = min(intp8(kMapRows) - 1.125_p8, playerController.m_pose.pos.y());
 
 		// -- Render --
 		Render(camera);
