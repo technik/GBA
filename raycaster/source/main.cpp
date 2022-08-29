@@ -157,8 +157,8 @@ intp8 rayCast(Vec3p8 rayStart, Vec2p8 rayDir, int& hitVal, int& side, uint8_t* m
 	}
 
 	//Calculate distance projected on camera direction (Euclidean distance would give fisheye effect!)
-	float hitDistance = (side == 0) ? (sideDistX - deltaDistX) : (sideDistY - deltaDistY);
-	return intp8(hitDistance);
+	intp8 hitDistance = (side == 0) ? intp8(sideDistX - deltaDistX) : intp8(sideDistY - deltaDistY);
+	return hitDistance;
 }
 
 void DrawMinimap(Vec3p8 centerPos)
