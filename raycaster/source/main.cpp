@@ -42,6 +42,8 @@ void initBackgroundPalette()
 	// Wall color
 	BackgroundPalette::color(paletteNdx++).raw = BasicColor::Green.raw;
 	BackgroundPalette::color(paletteNdx++).raw = BasicColor::DarkGreen.raw;
+	// Player color
+	BackgroundPalette::color(paletteNdx++).raw = BasicColor::Yellow.raw;
 }
 
 void InitSystems()
@@ -95,7 +97,7 @@ void verLine(int x, int drawStart, int drawEnd, int worldColor)
 	}
 }
 
-float rayCast(Vec3p8 rayStart, Vec2f rayDir, int& hitVal, int& side)
+float rayCast(Vec3p8 rayStart, Vec2f rayDir, int& hitVal, int& side, uint8_t* map, int yStride)
 {
 	//calculate step and initial sideDist
 
@@ -149,24 +151,52 @@ float rayCast(Vec3p8 rayStart, Vec2f rayDir, int& hitVal, int& side)
 			side = 1;
 		}
 		//Check if ray has hit a wall
-		if (worldMap[tileX + kMapCols * tileY] > 0)
-		{
-			hitVal = 1;
-		}
+		hitVal = map[tileX + yStride * tileY];
 	}
 
 	//Calculate distance projected on camera direction (Euclidean distance would give fisheye effect!)
-	float hitDistance;
-	if(side == 0)
+	float hitDistance = (side == 0) ? (sideDistX - deltaDistX) : (sideDistY - deltaDistY);
+	return hitDistance;
+}
+
+void DrawMinimap(Vec3p8 centerPos)
+{
+	// TODO: Could probably use a sprite for this
+	// That way we could also have rotation
+
+	auto backBuffer = DisplayControl::Get().backBuffer();
+	auto startRow = Mode4Display::Width/2 * (Mode4Display::Height - kMapRows);
+	auto pixelOffset = startRow + (Mode4Display::Width - kMapCols) / 2;
+	auto dst = &backBuffer[pixelOffset];
+
+	// Minimap center
+	int tileX = centerPos.x().floor();
+	int tileY = centerPos.y().floor();
+
+	for(int y = 0; y < kMapRows; y++)
 	{
-		hitDistance = (sideDistX - deltaDistX);
+		for(int x = 0; x < kMapCols; x++)
+		{
+			uint16_t clr = worldMap[x+kMapCols*y] ? 3 : 0;
+			++x;
+			clr |= (worldMap[x+kMapCols*y] ? 3 : 0) << 8;
+
+			// Write
+			dst[(x + Mode4Display::Width*(kMapRows-y))/2] = clr;
+		}
+	}
+
+	// Draw the character
+	auto base = dst[(tileX + Mode4Display::Width*(kMapRows-tileY))/2];
+	if(tileX & 1)
+	{
+		base = (base & 0x0f) | (5<<8);
 	}
 	else
 	{
-		hitDistance = (sideDistY - deltaDistY);
+		base = (base & 0xf0) | 5;
 	}
-
-	return hitDistance;
+	dst[(tileX + Mode4Display::Width*(kMapRows-tileY))/2] = base;
 }
 
 void Render(const Camera& cam)
@@ -185,7 +215,7 @@ void Render(const Camera& cam)
 
 		int cellVal;
 		int side;
-		const float hitDistance = rayCast(cam.m_pose.pos, rayDir, cellVal, side);
+		const float hitDistance = rayCast(cam.m_pose.pos, rayDir, cellVal, side, worldMap, kMapCols);
 		//Calculate height of line to draw on screen
 		const int lineHeight = (int)(Mode4Display::Height / hitDistance);
 
@@ -198,6 +228,8 @@ void Render(const Camera& cam)
 		//draw the pixels of the stripe as a vertical line
       	verLine(col, drawStart, drawEnd, 3+side);
 	}
+
+	DrawMinimap(cam.m_pose.pos);
 }
 
 int main()
