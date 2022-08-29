@@ -97,13 +97,13 @@ void verLine(int x, int drawStart, int drawEnd, int worldColor)
 	}
 }
 
-float rayCast(Vec3p8 rayStart, Vec2f rayDir, int& hitVal, int& side, uint8_t* map, int yStride)
+intp8 rayCast(Vec3p8 rayStart, Vec2f rayDir, int& hitVal, int& side, uint8_t* map, int yStride)
 {
 	//calculate step and initial sideDist
 
 	//length of ray from one x-side to next x-side
 	float deltaDistX = (rayDir.x() == 0) ? 1e20f : std::abs(1 / rayDir.x());
-	int tileX = std::floor((float)rayStart.x());
+	int tileX = rayStart.x().floor();
 	float sideDistX; // length of ray from current position to next x-side
 	int stepX; //what direction to step in x-direction (either +1 or -1)
 	if (rayDir.x() < 0)
@@ -114,12 +114,12 @@ float rayCast(Vec3p8 rayStart, Vec2f rayDir, int& hitVal, int& side, uint8_t* ma
 	else
 	{
 		stepX = 1;
-		sideDistX = (tileX + 1.0 - (float)rayStart.x()) * deltaDistX;
+		sideDistX = (tileX + 1.f - (float)rayStart.x()) * deltaDistX;
 	}
 
 	//length of ray from one y-side to next y-side
 	float deltaDistY = (rayDir.y() == 0) ? 1e20f : std::abs(1 / rayDir.y());
-	int tileY = std::floor((float)rayStart.y());
+	int tileY = rayStart.y().floor();
 	float sideDistY; // length of ray from current position to next y-side
 	int stepY; //what direction to step in y-direction (either +1 or -1)
 	if (rayDir.y() < 0)
@@ -130,7 +130,7 @@ float rayCast(Vec3p8 rayStart, Vec2f rayDir, int& hitVal, int& side, uint8_t* ma
 	else
 	{
 		stepY = 1;
-		sideDistY = (tileY + 1.0 - (float)rayStart.y()) * deltaDistY;
+		sideDistY = (tileY + 1.f - (float)rayStart.y()) * deltaDistY;
 	}
 
 	//perform DDA
@@ -156,7 +156,7 @@ float rayCast(Vec3p8 rayStart, Vec2f rayDir, int& hitVal, int& side, uint8_t* ma
 
 	//Calculate distance projected on camera direction (Euclidean distance would give fisheye effect!)
 	float hitDistance = (side == 0) ? (sideDistX - deltaDistX) : (sideDistY - deltaDistY);
-	return hitDistance;
+	return intp8(hitDistance);
 }
 
 void DrawMinimap(Vec3p8 centerPos)
@@ -165,7 +165,7 @@ void DrawMinimap(Vec3p8 centerPos)
 	// That way we could also have rotation
 
 	auto backBuffer = DisplayControl::Get().backBuffer();
-	auto startRow = Mode4Display::Width/2 * (Mode4Display::Height - kMapRows);
+	auto startRow = Mode4Display::Width/2 * (Mode4Display::Height - kMapRows - 1);
 	auto pixelOffset = startRow + (Mode4Display::Width - kMapCols) / 2;
 	auto dst = &backBuffer[pixelOffset];
 
@@ -199,6 +199,8 @@ void DrawMinimap(Vec3p8 centerPos)
 	dst[(tileX + Mode4Display::Width*(kMapRows-tileY))/2] = base;
 }
 
+volatile uint32_t timerT = 0;
+
 void Render(const Camera& cam)
 {
 	// Reconstruct local axes for fast ray interpolation
@@ -206,6 +208,9 @@ void Render(const Camera& cam)
 	float sinPhi = sin(float(cam.m_pose.phi) * 6.28f);
 	Vec2f sideDir = { cosPhi, sinPhi }; // 45deg FoV
 	Vec2f viewDir = { -sinPhi, cosPhi };
+
+	// Profiling
+	Timer1().reset<Timer::e256>(); // Set high precision profiler
 
 	for(int col = 0; col < Mode4Display::Width/2; col++)
 	{
@@ -215,9 +220,13 @@ void Render(const Camera& cam)
 
 		int cellVal;
 		int side;
-		const float hitDistance = rayCast(cam.m_pose.pos, rayDir, cellVal, side, worldMap, kMapCols);
+		const intp8 hitDistance = rayCast(cam.m_pose.pos, rayDir, cellVal, side, worldMap, kMapCols);
 		//Calculate height of line to draw on screen
-		const int lineHeight = (int)(Mode4Display::Height / hitDistance);
+		int lineHeight = Mode4Display::Height;
+		if(hitDistance > 0_p8)
+		{
+			lineHeight = (intp8(Mode4Display::Height * 64) / (hitDistance * 64)).floor();
+		}
 
 		//calculate lowest and highest pixel to fill in current stripe
 		int drawStart = -lineHeight / 2 + Mode4Display::Height / 2;
@@ -229,6 +238,8 @@ void Render(const Camera& cam)
       	verLine(col, drawStart, drawEnd, 3+side);
 	}
 
+	// Measure render time
+	timerT = Timer1().counter;
 	DrawMinimap(cam.m_pose.pos);
 }
 
