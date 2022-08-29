@@ -99,44 +99,42 @@ void verLine(int x, int drawStart, int drawEnd, int worldColor)
 
 intp8 rayCast(Vec3p8 rayStart, Vec2p8 rayDir, int& hitVal, int& side, uint8_t* map, int yStride)
 {
-	//calculate step and initial sideDist
-
-	//length of ray from one x-side to next x-side
-	float deltaDistX = (rayDir.x() == 0_p8) ? 1e20f : std::abs(1.f / (float)rayDir.x());
+	// length of ray from one x-side to next x-side
+	float deltaDistXfloat = (rayDir.x() == 0_p8) ? 1e20f : std::abs(1.f / (float)rayDir.x());
 	int tileX = rayStart.x().floor();
-	float sideDistX; // length of ray from current position to next x-side
-	int stepX; //what direction to step in x-direction (either +1 or -1)
+	intp8 sideDistX; // length of ray from current position to next x-side
+	int stepX; // what direction to step in x-direction (either +1 or -1)
 	if (rayDir.x() < 0_p8)
 	{
 		stepX = -1;
-		sideDistX = ((float)rayStart.x() - tileX);
+		sideDistX = ((rayStart.x() - tileX) * intp12(deltaDistXfloat)).cast<8>();
 	}
 	else
 	{
 		stepX = 1;
-		sideDistX = (tileX + 1.f - (float)rayStart.x());
+		sideDistX = intp8(float((tileX + 1 - rayStart.x())) * deltaDistXfloat);
 	}
-    sideDistX *= deltaDistX;
 
-	//length of ray from one y-side to next y-side
-	float deltaDistY = (rayDir.y() == 0_p8) ? 1e20f : std::abs(1.f / (float)rayDir.y());
+	// length of ray from one y-side to next y-side
+	float deltaDistYfloat = (rayDir.y() == 0_p8) ? 1e20f : std::abs(1.f / (float)rayDir.y());
 	int tileY = rayStart.y().floor();
-	float sideDistY; // length of ray from current position to next y-side
-	int stepY; //what direction to step in y-direction (either +1 or -1)
+	intp8 sideDistY; // length of ray from current position to next y-side
+	int stepY; // what direction to step in y-direction (either +1 or -1)
 	if (rayDir.y() < 0_p8)
 	{
 		stepY = -1;
-		sideDistY = ((float)rayStart.y() - tileY);
+		sideDistY = ((rayStart.y() - tileY) * intp12(deltaDistYfloat)).cast<8>();
 	}
 	else
 	{
 		stepY = 1;
-		sideDistY = (tileY + 1.f - (float)rayStart.y());
+		sideDistY = intp8(float((tileY + 1 - rayStart.y())) * deltaDistYfloat);
 	}
-    sideDistY *= deltaDistY;
 
 	//perform DDA
 	hitVal = 0;
+	intp8 deltaDistX = intp8(deltaDistXfloat);
+	intp8 deltaDistY = intp8(deltaDistYfloat);
 	while (hitVal == 0)
 	{
 		//jump to next map square, either in x-direction, or in y-direction
@@ -156,8 +154,9 @@ intp8 rayCast(Vec3p8 rayStart, Vec2p8 rayDir, int& hitVal, int& side, uint8_t* m
 		hitVal = map[tileX + yStride * tileY];
 	}
 
+
 	//Calculate distance projected on camera direction (Euclidean distance would give fisheye effect!)
-	intp8 hitDistance = (side == 0) ? intp8(sideDistX - deltaDistX) : intp8(sideDistY - deltaDistY);
+	intp8 hitDistance = (side == 0) ? (sideDistX - deltaDistX) : (sideDistY - deltaDistY);
 	return hitDistance;
 }
 

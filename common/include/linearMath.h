@@ -214,6 +214,16 @@ namespace math
 		return result;
 	}
 
+	template<class Store, size_t shift>
+	constexpr auto operator+(
+		std::integral auto a,
+		Fixed<Store, shift> b)
+	{
+		Fixed<Store, shift> result;
+		result.raw = (a<<shift) + b.raw;
+		return result;
+	}
+
 	template<class StoreA, class StoreB, size_t shift>
 	constexpr auto operator-(
 		Fixed<StoreA, shift> a,
@@ -233,6 +243,26 @@ namespace math
 
 		Fixed<Store, shift> result;
 		result.raw = -a.raw;
+		return result;
+	}
+
+	template<class Store, size_t shift>
+	constexpr auto operator-(
+		Fixed<Store, shift> a,
+		std::integral auto b)
+	{
+		Fixed<Store, shift> result;
+		result.raw = a.raw - (b<<shift);
+		return result;
+	}
+
+	template<class Store, size_t shift>
+	constexpr auto operator-(
+		std::integral auto a,
+		Fixed<Store, shift> b)
+	{
+		Fixed<Store, shift> result;
+		result.raw = (a<<shift) - b.raw;
 		return result;
 	}
 
