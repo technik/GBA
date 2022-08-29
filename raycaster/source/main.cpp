@@ -95,12 +95,86 @@ void verLine(int x, int drawStart, int drawEnd, int worldColor)
 	}
 }
 
+float rayCast(Vec3p8 rayStart, Vec2f rayDir, int& hitVal, int& side)
+{
+	//calculate step and initial sideDist
+
+	//length of ray from one x-side to next x-side
+	float deltaDistX = (rayDir.x() == 0) ? 1e20f : std::abs(1 / rayDir.x());
+	int tileX = std::floor((float)rayStart.x());
+	float sideDistX; // length of ray from current position to next x-side
+	int stepX; //what direction to step in x-direction (either +1 or -1)
+	if (rayDir.x() < 0)
+	{
+		stepX = -1;
+		sideDistX = ((float)rayStart.x() - tileX) * deltaDistX;
+	}
+	else
+	{
+		stepX = 1;
+		sideDistX = (tileX + 1.0 - (float)rayStart.x()) * deltaDistX;
+	}
+
+	//length of ray from one y-side to next y-side
+	float deltaDistY = (rayDir.y() == 0) ? 1e20f : std::abs(1 / rayDir.y());
+	int tileY = std::floor((float)rayStart.y());
+	float sideDistY; // length of ray from current position to next y-side
+	int stepY; //what direction to step in y-direction (either +1 or -1)
+	if (rayDir.y() < 0)
+	{
+		stepY = -1;
+		sideDistY = ((float)rayStart.y() - tileY) * deltaDistY;
+	}
+	else
+	{
+		stepY = 1;
+		sideDistY = (tileY + 1.0 - (float)rayStart.y()) * deltaDistY;
+	}
+
+	//perform DDA
+	hitVal = 0;
+	while (hitVal == 0)
+	{
+		//jump to next map square, either in x-direction, or in y-direction
+		if (sideDistX < sideDistY)
+		{
+			sideDistX += deltaDistX;
+			tileX += stepX;
+			side = 0;
+		}
+		else
+		{
+			sideDistY += deltaDistY;
+			tileY += stepY;
+			side = 1;
+		}
+		//Check if ray has hit a wall
+		if (worldMap[tileX + kMapCols * tileY] > 0)
+		{
+			hitVal = 1;
+		}
+	}
+
+	//Calculate distance projected on camera direction (Euclidean distance would give fisheye effect!)
+	float hitDistance;
+	if(side == 0)
+	{
+		hitDistance = (sideDistX - deltaDistX);
+	}
+	else
+	{
+		hitDistance = (sideDistY - deltaDistY);
+	}
+
+	return hitDistance;
+}
+
 void Render(const Camera& cam)
 {
 	// Reconstruct local axes for fast ray interpolation
 	float cosPhi = cos(float(cam.m_pose.phi) * 6.28f);
 	float sinPhi = sin(float(cam.m_pose.phi) * 6.28f);
-	Vec2f sideDir = { cosPhi/2, sinPhi/2 }; // 45deg FoV
+	Vec2f sideDir = { cosPhi, sinPhi }; // 45deg FoV
 	Vec2f viewDir = { -sinPhi, cosPhi };
 
 	for(int col = 0; col < Mode4Display::Width/2; col++)
@@ -109,82 +183,11 @@ void Render(const Camera& cam)
 		// Compute a ray direction for this column
 		Vec2f rayDir = viewDir + sideDir * ndcX;
 
-		int tileX = std::floor((float)cam.m_pose.pos.x());
-		int tileY = std::floor((float)cam.m_pose.pos.y());
-
-		//length of ray from current position to next x or y-side
-      	float sideDistX;
-        float sideDistY;
-
-        //length of ray from one x or y-side to next x or y-side
-        float deltaDistX = (rayDir.x() == 0) ? 1e20f : std::abs(1 / rayDir.x());
-        float deltaDistY = (rayDir.y() == 0) ? 1e20f : std::abs(1 / rayDir.y());
-		double perpWallDist;
-
-		//what direction to step in x or y-direction (either +1 or -1)
-		int stepX;
-		int stepY;
-
-		int hit = 0; //was there a wall hit?
-		int side; //was a NS or a EW wall hit?
-
-		//calculate step and initial sideDist
-		if (rayDir.x() < 0)
-		{
-			stepX = -1;
-			sideDistX = ((float)cam.m_pose.pos.x() - tileX) * deltaDistX;
-		}
-		else
-		{
-			stepX = 1;
-			sideDistX = (tileX + 1.0 - (float)cam.m_pose.pos.x()) * deltaDistX;
-		}
-		if (rayDir.y() < 0)
-		{
-			stepY = -1;
-			sideDistY = ((float)cam.m_pose.pos.y() - tileY) * deltaDistY;
-		}
-		else
-		{
-			stepY = 1;
-			sideDistY = (tileY + 1.0 - (float)cam.m_pose.pos.y()) * deltaDistY;
-		}
-
-		//perform DDA
-		while (hit == 0)
-		{
-			//jump to next map square, either in x-direction, or in y-direction
-			if (sideDistX < sideDistY)
-			{
-				sideDistX += deltaDistX;
-				tileX += stepX;
-				side = 0;
-			}
-			else
-			{
-				sideDistY += deltaDistY;
-				tileY += stepY;
-				side = 1;
-			}
-			//Check if ray has hit a wall
-			if (worldMap[tileX + kMapCols * tileY] > 0)
-			{
-				hit = 1;
-			}
-		}
-
-		//Calculate distance projected on camera direction (Euclidean distance would give fisheye effect!)
-		if(side == 0)
-		{
-			perpWallDist = (sideDistX - deltaDistX);
-		}
-		else
-		{
-			perpWallDist = (sideDistY - deltaDistY);
-		}
-
+		int cellVal;
+		int side;
+		const float hitDistance = rayCast(cam.m_pose.pos, rayDir, cellVal, side);
 		//Calculate height of line to draw on screen
-		int lineHeight = (int)(Mode4Display::Height / perpWallDist);
+		const int lineHeight = (int)(Mode4Display::Height / hitDistance);
 
 		//calculate lowest and highest pixel to fill in current stripe
 		int drawStart = -lineHeight / 2 + Mode4Display::Height / 2;
@@ -199,11 +202,10 @@ void Render(const Camera& cam)
 
 int main()
 {
-	Display().StartBlank();
-
 	// Full resolution, paletized color mode.
 	Mode4Display mode4;
 	mode4.Init();
+	Display().StartBlank();
 	
 	// --- Init systems ---
 	InitSystems();
