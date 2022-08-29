@@ -208,22 +208,24 @@ void Render(const Camera& cam)
 	// Reconstruct local axes for fast ray interpolation
 	float cosPhi = cos(float(cam.m_pose.phi) * 6.28f);
 	float sinPhi = sin(float(cam.m_pose.phi) * 6.28f);
-	Vec2f sideDir = { cosPhi, sinPhi }; // 45deg FoV
-	Vec2f viewDir = { -sinPhi, cosPhi };
+	Vec2p8 sideDir = { intp8(cosPhi), intp8(sinPhi) }; // 45deg FoV
+	Vec2p8 viewDir = { -intp8(sinPhi), intp8(cosPhi) };
 
 	// Profiling
 	Timer1().reset<Timer::e256>(); // Set high precision profiler
 
 	for(int col = 0; col < Mode4Display::Width/2; col++)
 	{
-		float ndcX = 4.f * col / Mode4Display::Width - 1; // screen x from -1 to 1
+		intp8 ndcX = (intp8(4 * col) * intp12::castFromShiftedInteger<16>(lu_div(Mode4Display::Width))).cast<8>() - 1_p8; // screen x from -1 to 1
 		// Compute a ray direction for this column
-		Vec2f rayDir = viewDir + sideDir * ndcX;
-		Vec2p8 rayDirP8 = { intp8(rayDir.x()), intp8(rayDir.y()) };
+		Vec2p8 rayDir = { 
+			viewDir.x() + (sideDir.x() * ndcX).cast<8>(),
+			viewDir.y() + (sideDir.y() * ndcX).cast<8>()
+		};
 
 		int cellVal;
 		int side;
-		const intp8 hitDistance = rayCast(cam.m_pose.pos, rayDirP8, cellVal, side, worldMap, kMapCols);
+		const intp8 hitDistance = rayCast(cam.m_pose.pos, rayDir, cellVal, side, worldMap, kMapCols);
 		//Calculate height of line to draw on screen
 		int lineHeight = Mode4Display::Height;
 		if(hitDistance > 0_p8)
