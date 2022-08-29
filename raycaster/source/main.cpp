@@ -97,41 +97,43 @@ void verLine(int x, int drawStart, int drawEnd, int worldColor)
 	}
 }
 
-intp8 rayCast(Vec3p8 rayStart, Vec2f rayDir, int& hitVal, int& side, uint8_t* map, int yStride)
+intp8 rayCast(Vec3p8 rayStart, Vec2p8 rayDir, int& hitVal, int& side, uint8_t* map, int yStride)
 {
 	//calculate step and initial sideDist
 
 	//length of ray from one x-side to next x-side
-	float deltaDistX = (rayDir.x() == 0) ? 1e20f : std::abs(1 / rayDir.x());
+	float deltaDistX = (rayDir.x() == 0_p8) ? 1e20f : std::abs(1.f / (float)rayDir.x());
 	int tileX = rayStart.x().floor();
 	float sideDistX; // length of ray from current position to next x-side
 	int stepX; //what direction to step in x-direction (either +1 or -1)
-	if (rayDir.x() < 0)
+	if (rayDir.x() < 0_p8)
 	{
 		stepX = -1;
-		sideDistX = ((float)rayStart.x() - tileX) * deltaDistX;
+		sideDistX = ((float)rayStart.x() - tileX);
 	}
 	else
 	{
 		stepX = 1;
-		sideDistX = (tileX + 1.f - (float)rayStart.x()) * deltaDistX;
+		sideDistX = (tileX + 1.f - (float)rayStart.x());
 	}
+    sideDistX *= deltaDistX;
 
 	//length of ray from one y-side to next y-side
-	float deltaDistY = (rayDir.y() == 0) ? 1e20f : std::abs(1 / rayDir.y());
+	float deltaDistY = (rayDir.y() == 0_p8) ? 1e20f : std::abs(1.f / (float)rayDir.y());
 	int tileY = rayStart.y().floor();
 	float sideDistY; // length of ray from current position to next y-side
 	int stepY; //what direction to step in y-direction (either +1 or -1)
-	if (rayDir.y() < 0)
+	if (rayDir.y() < 0_p8)
 	{
 		stepY = -1;
-		sideDistY = ((float)rayStart.y() - tileY) * deltaDistY;
+		sideDistY = ((float)rayStart.y() - tileY);
 	}
 	else
 	{
 		stepY = 1;
-		sideDistY = (tileY + 1.f - (float)rayStart.y()) * deltaDistY;
+		sideDistY = (tileY + 1.f - (float)rayStart.y());
 	}
+    sideDistY *= deltaDistY;
 
 	//perform DDA
 	hitVal = 0;
@@ -217,10 +219,11 @@ void Render(const Camera& cam)
 		float ndcX = 4.f * col / Mode4Display::Width - 1; // screen x from -1 to 1
 		// Compute a ray direction for this column
 		Vec2f rayDir = viewDir + sideDir * ndcX;
+		Vec2p8 rayDirP8 = { intp8(rayDir.x()), intp8(rayDir.y()) };
 
 		int cellVal;
 		int side;
-		const intp8 hitDistance = rayCast(cam.m_pose.pos, rayDir, cellVal, side, worldMap, kMapCols);
+		const intp8 hitDistance = rayCast(cam.m_pose.pos, rayDirP8, cellVal, side, worldMap, kMapCols);
 		//Calculate height of line to draw on screen
 		int lineHeight = Mode4Display::Height;
 		if(hitDistance > 0_p8)

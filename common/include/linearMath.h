@@ -236,6 +236,15 @@ namespace math
 		return result;
 	}
 
+	template<std::integral Store, size_t shift>
+	constexpr auto abs(
+		Fixed<Store, shift> a)
+	{
+		Fixed<Store, shift> result;
+		result.raw = std::abs(a.raw);
+		return result;
+	}
+
 	template<
 		class StoreA, size_t shiftA,
 		class StoreB, size_t shiftB>
