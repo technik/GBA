@@ -228,7 +228,7 @@ void Render(const Camera& cam)
 		int lineHeight = Mode4Display::Height;
 		if(hitDistance > 0_p8)
 		{
-			lineHeight = (intp8(Mode4Display::Height * 64) / (hitDistance * 64)).floor();
+			lineHeight = (intp8(Mode4Display::Height ) / hitDistance).floor();
 		}
 
 		//calculate lowest and highest pixel to fill in current stripe
