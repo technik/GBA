@@ -113,8 +113,7 @@ intp8 rayCast(Vec3p8 rayStart, Vec2p8 rayDir, int& hitVal, int& side, uint8_t* m
 	if(rayDir.x() == 0)
 	{
 		stepX = 0;
-		deltaDistX = 1e10_p8; // Very high number. Overflow danger!
-		sideDistX = 1e20_p8; // Make sure this is always the largest distance.
+		sideDistX = intp8(1<<20); // Make sure this is always the largest distance.
 	}
 	else
 	{
@@ -140,8 +139,7 @@ intp8 rayCast(Vec3p8 rayStart, Vec2p8 rayDir, int& hitVal, int& side, uint8_t* m
 	if(rayDir.y() == 0)
 	{
 		stepY = 0;
-		deltaDistY = 1e10_p8; // Very high number. Overflow danger!
-		sideDistY = 1e20_p8; // Make sure this is always the largest distance.
+		sideDistY = intp8(1<<20); // Make sure this is always the largest distance.
 	}
 	else
 	{

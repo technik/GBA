@@ -5,22 +5,24 @@
 #include <concepts>
 #include <cmath>
 
+#include <base.h>
+
 namespace math
 {
 	template<class T>
-	constexpr auto max(T a, T b)
+	FORCE_INLINE constexpr auto max(T a, T b)
 	{	
 		return a < b ? b : a;
 	}
 
 	template<class T>
-	constexpr auto min(T a, T b)
+	FORCE_INLINE constexpr auto min(T a, T b)
 	{	
 		return a < b ? a : b;
 	}
 
 	template<class T>
-	constexpr auto saturate(T x)
+	FORCE_INLINE constexpr auto saturate(T x)
 	{
 		constexpr auto one = T(1);
 		constexpr auto zero = T(0);
@@ -37,14 +39,14 @@ namespace math
 
 		store_type raw;
 		
-		constexpr Fixed() : raw(0) {}
+		FORCE_INLINE constexpr Fixed() : raw(0) {}
 		template<std::integral T>
-		constexpr explicit Fixed(T x) : raw(x<<shift) {}
+		FORCE_INLINE constexpr explicit Fixed(T x) : raw(x<<shift) {}
 		constexpr explicit Fixed(float x) : raw(x * (1<<shift)) {}
 
-		constexpr store_type floor() const { return raw >> shift; }
+		FORCE_INLINE constexpr store_type floor() const { return raw >> shift; }
 
-		explicit operator float() const { return float(raw) / (1<<shift); }
+		FORCE_INLINE explicit operator float() const { return float(raw) / (1<<shift); }
 
 		// Cast without rounding
 		template<size_t otherShift, std::integral otherStore>
@@ -66,7 +68,7 @@ namespace math
 
 		// Cast with rounding
 		template<size_t otherShift, std::unsigned_integral otherStore>
-		static constexpr Fixed roundFromShiftedInteger(otherStore x)
+		FORCE_INLINE static constexpr Fixed roundFromShiftedInteger(otherStore x)
 		{
 			Fixed result;
 			if constexpr(otherShift > shift) // the other type shift is bigger than this, need to shift it right and round
@@ -86,7 +88,7 @@ namespace math
 
 		// Performs a destructive cast without rounding
 		template<size_t resultShift, class resultStore = store_type>
-		constexpr auto cast() const
+		FORCE_INLINE constexpr auto cast() const
 		{
 			Fixed<resultStore, resultShift> result;
 			if constexpr(resultShift > shift) // the other type shift is bigger than this, shift left
@@ -171,30 +173,30 @@ namespace math
 		}
 
 		template<std::integral T>
-		void operator+=(T x)
+		FORCE_INLINE void operator+=(T x)
 		{
 			raw += x*(1<<shift);
 		}
 		
-		void operator+=(Fixed x)
+		FORCE_INLINE void operator+=(Fixed x)
 		{
 			raw += x.raw;
 		}
 
 		template<std::integral T>
-		void operator-=(T x)
+		FORCE_INLINE void operator-=(T x)
 		{
 			raw -= x*(1<<shift);
 		}
 		
-		void operator-=(Fixed x)
+		FORCE_INLINE void operator-=(Fixed x)
 		{
 			raw -= x.raw;
 		}
 	};
 
 	template<class StoreA, class StoreB, size_t shift>
-	constexpr auto operator+(
+	FORCE_INLINE constexpr auto operator+(
 		Fixed<StoreA, shift> a,
 		Fixed<StoreB, shift> b)
 	{
@@ -205,7 +207,7 @@ namespace math
 	}
 
 	template<class Store, size_t shift>
-	constexpr auto operator+(
+	FORCE_INLINE constexpr auto operator+(
 		Fixed<Store, shift> a,
 		std::integral auto b)
 	{
@@ -215,7 +217,7 @@ namespace math
 	}
 
 	template<class Store, size_t shift>
-	constexpr auto operator+(
+	FORCE_INLINE constexpr auto operator+(
 		std::integral auto a,
 		Fixed<Store, shift> b)
 	{
@@ -225,7 +227,7 @@ namespace math
 	}
 
 	template<class StoreA, class StoreB, size_t shift>
-	constexpr auto operator-(
+	FORCE_INLINE constexpr auto operator-(
 		Fixed<StoreA, shift> a,
 		Fixed<StoreB, shift> b)
 	{
@@ -236,7 +238,7 @@ namespace math
 	}
 
 	template<std::integral Store, size_t shift>
-	constexpr auto operator-(
+	FORCE_INLINE constexpr auto operator-(
 		Fixed<Store, shift> a)
 	{
 		static_assert(std::is_signed_v<Store>, "Can't flip the sign on an unsigned type");
@@ -247,7 +249,7 @@ namespace math
 	}
 
 	template<class Store, size_t shift>
-	constexpr auto operator-(
+	FORCE_INLINE constexpr auto operator-(
 		Fixed<Store, shift> a,
 		std::integral auto b)
 	{
@@ -257,7 +259,7 @@ namespace math
 	}
 
 	template<class Store, size_t shift>
-	constexpr auto operator-(
+	FORCE_INLINE constexpr auto operator-(
 		std::integral auto a,
 		Fixed<Store, shift> b)
 	{
@@ -267,7 +269,7 @@ namespace math
 	}
 
 	template<std::integral Store, size_t shift>
-	constexpr auto abs(
+	FORCE_INLINE constexpr auto abs(
 		Fixed<Store, shift> a)
 	{
 		Fixed<Store, shift> result;
@@ -278,7 +280,7 @@ namespace math
 	template<
 		class StoreA, size_t shiftA,
 		class StoreB, size_t shiftB>
-	constexpr auto operator*(
+	FORCE_INLINE constexpr auto operator*(
 		Fixed<StoreA, shiftA> a,
 		Fixed<StoreB, shiftB> b)
 	{
@@ -291,7 +293,7 @@ namespace math
 	template<
 		class StoreA, size_t shiftA,
 		std::integral T>
-	constexpr auto operator*(
+	FORCE_INLINE constexpr auto operator*(
 		Fixed<StoreA, shiftA> a,
 		T b)
 	{
@@ -304,7 +306,7 @@ namespace math
     template<
         class StoreA, size_t shiftA,
         std::integral T>
-        constexpr auto operator*(
+	FORCE_INLINE constexpr auto operator*(
             T b,
             Fixed<StoreA, shiftA> a)
     {
@@ -318,7 +320,7 @@ namespace math
 		class StoreA,
 		class StoreB,
         size_t shift>
-	constexpr auto operator / (
+	FORCE_INLINE constexpr auto operator / (
 		Fixed<StoreA, shift> a,
 		Fixed<StoreB, shift> b)
 	{
@@ -331,7 +333,7 @@ namespace math
 	template<
 		class StoreA, size_t shiftA,
 		std::integral T>
-	constexpr auto operator/(
+	FORCE_INLINE constexpr auto operator/(
 		Fixed<StoreA, shiftA> a,
 		T b)
 	{
@@ -342,43 +344,43 @@ namespace math
 	}
 
 	template<class StoreA, size_t shiftA, std::integral T>
-	constexpr bool operator== (Fixed<StoreA, shiftA> a, T b)
+	FORCE_INLINE constexpr bool operator== (Fixed<StoreA, shiftA> a, T b)
 	{
 		return a.raw == (b<<shiftA);
 	}
 
 	template<class StoreA, size_t shiftA, std::integral T>
-	constexpr bool operator!= (Fixed<StoreA, shiftA> a, T b)
+	FORCE_INLINE constexpr bool operator!= (Fixed<StoreA, shiftA> a, T b)
 	{
 		return a.raw != (b<<shiftA);
 	}
 
 	template<class StoreA, class StoreB, size_t shift>
-	constexpr bool operator== (Fixed<StoreA, shift> a, Fixed<StoreB, shift> b)
+	FORCE_INLINE constexpr bool operator== (Fixed<StoreA, shift> a, Fixed<StoreB, shift> b)
 	{
 		return a.raw == b.raw;
 	}
 
 	template<class StoreA, class StoreB, size_t shift>
-	constexpr bool operator!= (Fixed<StoreA, shift> a, Fixed<StoreB, shift> b)
+	FORCE_INLINE constexpr bool operator!= (Fixed<StoreA, shift> a, Fixed<StoreB, shift> b)
 	{
 		return a.raw != b.raw;
 	}
 
 	template<class StoreA, class StoreB, size_t shift>
-	constexpr bool operator< (Fixed<StoreA, shift> a, Fixed<StoreB, shift> b)
+	FORCE_INLINE constexpr bool operator< (Fixed<StoreA, shift> a, Fixed<StoreB, shift> b)
 	{
 		return a.raw < b.raw;
 	}
 
 	template<class StoreA, class StoreB, size_t shift>
-	constexpr bool operator> (Fixed<StoreA, shift> a, Fixed<StoreB, shift> b)
+	FORCE_INLINE constexpr bool operator> (Fixed<StoreA, shift> a, Fixed<StoreB, shift> b)
 	{
 		return a.raw > b.raw;
 	}
 
 	template<class Store, size_t shift>
-	constexpr auto sqrt(Fixed<Store,shift> x)
+	FORCE_INLINE constexpr auto sqrt(Fixed<Store,shift> x)
 	{
 		static_assert((shift & 1) == 0);
 		constexpr auto resultShift = shift/2;
@@ -393,13 +395,13 @@ namespace math
 	using intp16 = Fixed<int32_t,16>;
 	using intp24 = Fixed<int32_t,24>;
 
-	constexpr intp8 operator""_p8(long double x) { return intp8(float(x)); }
-	constexpr intp8 operator""_p8(unsigned long long x) { return intp8(long(x)); }
-	constexpr intp12 operator""_p12(long double x) { return intp12(float(x)); }
-	constexpr intp12 operator""_p12(unsigned long long x) { return intp12(long(x)); }
-	constexpr intp16 operator""_p16(long double x) { return intp16(float(x)); }
-	constexpr intp16 operator""_p16(unsigned long long x) { return intp16(long(x)); }
-	constexpr intp24 operator""_p24(long double x) { return intp24(float(x)); }
-	constexpr intp24 operator""_p24(unsigned long long x) { return intp24(long(x)); }
+	consteval intp8 operator""_p8(long double x) { return intp8(float(x)); }
+	consteval intp8 operator""_p8(unsigned long long x) { return intp8(long(x)); }
+	consteval intp12 operator""_p12(long double x) { return intp12(float(x)); }
+	consteval intp12 operator""_p12(unsigned long long x) { return intp12(long(x)); }
+	consteval intp16 operator""_p16(long double x) { return intp16(float(x)); }
+	consteval intp16 operator""_p16(unsigned long long x) { return intp16(long(x)); }
+	consteval intp24 operator""_p24(long double x) { return intp24(float(x)); }
+	consteval intp24 operator""_p24(unsigned long long x) { return intp24(long(x)); }
 
 } // namespace math

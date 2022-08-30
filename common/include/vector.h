@@ -46,16 +46,16 @@ namespace math {
 		}
 
 		// Accessors
-		auto x() const { return m[0]; }
-		auto y() const { static_assert(N>1); return m[1]; }
-		auto z() const { static_assert(N>2); return m[2]; }
+		FORCE_INLINE  auto x() const { return m[0]; }
+		FORCE_INLINE  auto y() const { static_assert(N>1); return m[1]; }
+		FORCE_INLINE  auto z() const { static_assert(N>2); return m[2]; }
 		
-		auto& x() { return m[0]; }
-		auto& y() { static_assert(N>1); return m[1]; }
-		auto& z() { static_assert(N>2); return m[2]; }
-		volatile auto& x() volatile { return m[0]; }
-		volatile auto& y() volatile { static_assert(N>1); return m[1]; }
-		volatile auto& z() volatile { static_assert(N>2); return m[2]; }
+		FORCE_INLINE  auto& x() { return m[0]; }
+		FORCE_INLINE  auto& y() { static_assert(N>1); return m[1]; }
+		FORCE_INLINE  auto& z() { static_assert(N>2); return m[2]; }
+		FORCE_INLINE  volatile auto& x() volatile { return m[0]; }
+		FORCE_INLINE  volatile auto& y() volatile { static_assert(N>1); return m[1]; }
+		FORCE_INLINE  volatile auto& z() volatile { static_assert(N>2); return m[2]; }
 	};
 
 	template<class T>
