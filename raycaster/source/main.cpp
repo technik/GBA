@@ -104,20 +104,31 @@ void verLine(int x, int drawStart, int drawEnd, int worldColor)
 
 intp8 rayCast(Vec3p8 rayStart, Vec2p8 rayDir, int& hitVal, int& side, uint8_t* map, int yStride)
 {
-	// length of ray from one x-side to next x-side
-	float deltaDistXfloat = (rayDir.x() == 0_p8) ? 1e10f : std::abs(1.f / (float)rayDir.x());
+	// length of ray from one y-side to next y-side
 	int tileX = rayStart.x().floor();
-	intp8 sideDistX; // length of ray from current position to next x-side
-	int stepX; // what direction to step in x-direction (either +1 or -1)
-	if (rayDir.x() < 0_p8)
+	int stepX; // what direction to step in y-direction (either +1 or -1)
+	intp8 deltaDistX;
+	intp8 sideDistX; // length of ray from current position to next y-side
+
+	if(rayDir.x() == 0)
 	{
-		stepX = -1;
-		sideDistX = ((rayStart.x() - tileX) * intp12(deltaDistXfloat)).cast<8>();
+		stepX = 0;
+		deltaDistX = 1e10_p8; // Very high number. Overflow danger!
+		sideDistX = 1e20_p8; // Make sure this is always the largest distance.
 	}
 	else
 	{
-		stepX = 1;
-		sideDistX = intp8(float((tileX + 1 - rayStart.x())) * deltaDistXfloat);
+		deltaDistX = abs(1_p8 / rayDir.x());
+		if (rayDir.x() < 0_p8)
+		{
+			stepX = -1;
+			sideDistX = ((rayStart.x() - tileX) * deltaDistX).cast<8>();
+		}
+		else
+		{
+			stepX = 1;
+			sideDistX = ((tileX + 1 - rayStart.x()) * deltaDistX).cast<8>();
+		}
 	}
 
 	// length of ray from one y-side to next y-side
@@ -149,7 +160,6 @@ intp8 rayCast(Vec3p8 rayStart, Vec2p8 rayDir, int& hitVal, int& side, uint8_t* m
 
 	//perform DDA
 	hitVal = 0;
-	intp8 deltaDistX = intp8(deltaDistXfloat);
 	while (hitVal == 0)
 	{
 		//jump to next map square, either in x-direction, or in y-direction
@@ -168,7 +178,6 @@ intp8 rayCast(Vec3p8 rayStart, Vec2p8 rayDir, int& hitVal, int& side, uint8_t* m
 		//Check if ray has hit a wall
 		hitVal = map[tileX + yStride * tileY];
 	}
-
 
 	//Calculate distance projected on camera direction (Euclidean distance would give fisheye effect!)
 	intp8 hitDistance = (side == 0) ? (sideDistX - deltaDistX) : (sideDistY - deltaDistY);
