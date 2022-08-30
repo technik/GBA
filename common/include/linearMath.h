@@ -341,6 +341,18 @@ namespace math
 		return result;
 	}
 
+	template<class StoreA, size_t shiftA, std::integral T>
+	constexpr bool operator== (Fixed<StoreA, shiftA> a, T b)
+	{
+		return a.raw == (b<<shiftA);
+	}
+
+	template<class StoreA, size_t shiftA, std::integral T>
+	constexpr bool operator!= (Fixed<StoreA, shiftA> a, T b)
+	{
+		return a.raw != (b<<shiftA);
+	}
+
 	template<class StoreA, class StoreB, size_t shift>
 	constexpr bool operator== (Fixed<StoreA, shift> a, Fixed<StoreB, shift> b)
 	{

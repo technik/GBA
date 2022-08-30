@@ -51,6 +51,11 @@ void InitSystems()
 	Display().enableSprites();
 	// TextInit
 	text.Init();
+
+	// Set up interrupts
+	irq_init(NULL);
+	// vblank int for vsync
+	irq_add(II_VBLANK, NULL);
 }
 
 constexpr int kCellSize = 64;
@@ -100,7 +105,7 @@ void verLine(int x, int drawStart, int drawEnd, int worldColor)
 intp8 rayCast(Vec3p8 rayStart, Vec2p8 rayDir, int& hitVal, int& side, uint8_t* map, int yStride)
 {
 	// length of ray from one x-side to next x-side
-	float deltaDistXfloat = (rayDir.x() == 0_p8) ? 1e20f : std::abs(1.f / (float)rayDir.x());
+	float deltaDistXfloat = (rayDir.x() == 0_p8) ? 1e10f : std::abs(1.f / (float)rayDir.x());
 	int tileX = rayStart.x().floor();
 	intp8 sideDistX; // length of ray from current position to next x-side
 	int stepX; // what direction to step in x-direction (either +1 or -1)
@@ -116,19 +121,30 @@ intp8 rayCast(Vec3p8 rayStart, Vec2p8 rayDir, int& hitVal, int& side, uint8_t* m
 	}
 
 	// length of ray from one y-side to next y-side
-	float deltaDistYfloat = (rayDir.y() == 0_p8) ? 1e20f : std::abs(1.f / (float)rayDir.y());
 	int tileY = rayStart.y().floor();
-	intp8 sideDistY; // length of ray from current position to next y-side
 	int stepY; // what direction to step in y-direction (either +1 or -1)
-	if (rayDir.y() < 0_p8)
+	float deltaDistYfloat;
+	intp8 sideDistY; // length of ray from current position to next y-side
+
+	if(rayDir.y() == 0)
 	{
-		stepY = -1;
-		sideDistY = ((rayStart.y() - tileY) * intp12(deltaDistYfloat)).cast<8>();
+		stepY = 0;
+		deltaDistYfloat = 1e10f; // Very high number. Overflow danger!
+		sideDistY = 1e20_p8; // Make sure this is always the largest distance.
 	}
 	else
 	{
-		stepY = 1;
-		sideDistY = intp8(float((tileY + 1 - rayStart.y())) * deltaDistYfloat);
+		deltaDistYfloat = std::abs(1.f / (float)rayDir.y());
+		if (rayDir.y() < 0_p8)
+		{
+			stepY = -1;
+			sideDistY = ((rayStart.y() - tileY) * intp12(deltaDistYfloat)).cast<8>();
+		}
+		else
+		{
+			stepY = 1;
+			sideDistY = ((tileY + 1 - rayStart.y()) * intp12(deltaDistYfloat)).cast<8>();
+		}
 	}
 
 	//perform DDA
@@ -286,6 +302,7 @@ int main()
 		frameCounter.render(text);
 
 		// Present
+		VBlankIntrWait();
 		Display().flipFrame();
 	}
 	return 0;
