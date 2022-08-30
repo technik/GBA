@@ -123,34 +123,33 @@ intp8 rayCast(Vec3p8 rayStart, Vec2p8 rayDir, int& hitVal, int& side, uint8_t* m
 	// length of ray from one y-side to next y-side
 	int tileY = rayStart.y().floor();
 	int stepY; // what direction to step in y-direction (either +1 or -1)
-	float deltaDistYfloat;
+	intp8 deltaDistY;
 	intp8 sideDistY; // length of ray from current position to next y-side
 
 	if(rayDir.y() == 0)
 	{
 		stepY = 0;
-		deltaDistYfloat = 1e10f; // Very high number. Overflow danger!
+		deltaDistY = 1e10_p8; // Very high number. Overflow danger!
 		sideDistY = 1e20_p8; // Make sure this is always the largest distance.
 	}
 	else
 	{
-		deltaDistYfloat = std::abs(1.f / (float)rayDir.y());
+		deltaDistY = abs(1_p8 / rayDir.y());
 		if (rayDir.y() < 0_p8)
 		{
 			stepY = -1;
-			sideDistY = ((rayStart.y() - tileY) * intp12(deltaDistYfloat)).cast<8>();
+			sideDistY = ((rayStart.y() - tileY) * deltaDistY).cast<8>();
 		}
 		else
 		{
 			stepY = 1;
-			sideDistY = ((tileY + 1 - rayStart.y()) * intp12(deltaDistYfloat)).cast<8>();
+			sideDistY = ((tileY + 1 - rayStart.y()) * deltaDistY).cast<8>();
 		}
 	}
 
 	//perform DDA
 	hitVal = 0;
 	intp8 deltaDistX = intp8(deltaDistXfloat);
-	intp8 deltaDistY = intp8(deltaDistYfloat);
 	while (hitVal == 0)
 	{
 		//jump to next map square, either in x-direction, or in y-direction
