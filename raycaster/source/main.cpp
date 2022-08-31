@@ -4,6 +4,10 @@
 
 // External libraries
 #include <stdio.h>
+extern "C"
+ {
+#include <tonc_types.h>
+ }
 
 // Engine code
 #include <Color.h>
@@ -82,10 +86,9 @@ constexpr uint8_t worldMap[kMapRows * kMapCols] = {
 };
 
 // Actually draws two pixels at once
-void verLine(int x, int drawStart, int drawEnd, int worldColor)
+void verLine(volatile uint16_t* backBuffer, int x, int drawStart, int drawEnd, int worldColor)
 {
 	int16_t dPxl = worldColor | (worldColor<<8);
-	auto backBuffer = DisplayControl::Get().backBuffer();
 	// Draw ceiling
 	for(int i = 0; i < drawStart; ++i)
 	{
@@ -145,8 +148,12 @@ void DrawMinimap(Vec3p8 centerPos)
 
 volatile uint32_t timerT = 0;
 
+EWRAM_DATA uint16_t renderTarget[Mode4Display::Width * Mode4Display::Height / 2];
+
 void Render(const Camera& cam)
 {
+	auto backBuffer = DisplayControl::Get().backBuffer();
+	
 	// Reconstruct local axes for fast ray interpolation
 	float cosPhi = cos(float(cam.m_pose.phi) * 6.28f);
 	float sinPhi = sin(float(cam.m_pose.phi) * 6.28f);
@@ -182,7 +189,7 @@ void Render(const Camera& cam)
 		if(drawEnd > Mode4Display::Height) drawEnd = Mode4Display::Height;
 
 		//draw the pixels of the stripe as a vertical line
-      	verLine(col, drawStart, drawEnd, 3+side);
+      	verLine(backBuffer, col, drawStart, drawEnd, 3+side);
 	}
 
 	// Measure render time
