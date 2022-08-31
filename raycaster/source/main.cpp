@@ -11,6 +11,7 @@
 #include <Display.h>
 #include <Keypad.h>
 #include <linearMath.h>
+#include <raycast.h>
 #include <Text.h>
 #include <Timer.h>
 #include <gfx/palette.h>
@@ -61,7 +62,7 @@ void InitSystems()
 constexpr int kCellSize = 64;
 constexpr int kMapRows = 16;
 constexpr int kMapCols = 16;
-uint8_t worldMap[kMapRows * kMapCols] = {
+constexpr uint8_t worldMap[kMapRows * kMapCols] = {
 	1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1,
 	1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
 	1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1,
@@ -102,94 +103,14 @@ void verLine(int x, int drawStart, int drawEnd, int worldColor)
 	}
 }
 
-intp8 rayCast(Vec3p8 rayStart, Vec2p8 rayDir, int& hitVal, int& side, uint8_t* map, int yStride)
-{
-	// length of ray from one y-side to next y-side
-	int tileX = rayStart.x().floor();
-	int stepX; // what direction to step in y-direction (either +1 or -1)
-	intp8 deltaDistX;
-	intp8 sideDistX; // length of ray from current position to next y-side
-
-	if(rayDir.x() == 0)
-	{
-		stepX = 0;
-		sideDistX = intp8(1<<20); // Make sure this is always the largest distance.
-	}
-	else
-	{
-		deltaDistX = abs(1_p8 / rayDir.x());
-		if (rayDir.x() < 0_p8)
-		{
-			stepX = -1;
-			sideDistX = ((rayStart.x() - tileX) * deltaDistX).cast<8>();
-		}
-		else
-		{
-			stepX = 1;
-			sideDistX = ((tileX + 1 - rayStart.x()) * deltaDistX).cast<8>();
-		}
-	}
-
-	// length of ray from one y-side to next y-side
-	int tileY = rayStart.y().floor();
-	int stepY; // what direction to step in y-direction (either +1 or -1)
-	intp8 deltaDistY;
-	intp8 sideDistY; // length of ray from current position to next y-side
-
-	if(rayDir.y() == 0)
-	{
-		stepY = 0;
-		sideDistY = intp8(1<<20); // Make sure this is always the largest distance.
-	}
-	else
-	{
-		deltaDistY = abs(1_p8 / rayDir.y());
-		if (rayDir.y() < 0_p8)
-		{
-			stepY = -1;
-			sideDistY = ((rayStart.y() - tileY) * deltaDistY).cast<8>();
-		}
-		else
-		{
-			stepY = 1;
-			sideDistY = ((tileY + 1 - rayStart.y()) * deltaDistY).cast<8>();
-		}
-	}
-
-	//perform DDA
-	hitVal = 0;
-	while (hitVal == 0)
-	{
-		//jump to next map square, either in x-direction, or in y-direction
-		if (sideDistX < sideDistY)
-		{
-			sideDistX += deltaDistX;
-			tileX += stepX;
-			side = 0;
-		}
-		else
-		{
-			sideDistY += deltaDistY;
-			tileY += stepY;
-			side = 1;
-		}
-		//Check if ray has hit a wall
-		hitVal = map[tileX + yStride * tileY];
-	}
-
-	//Calculate distance projected on camera direction (Euclidean distance would give fisheye effect!)
-	intp8 hitDistance = (side == 0) ? (sideDistX - deltaDistX) : (sideDistY - deltaDistY);
-	return hitDistance;
-}
-
 void DrawMinimap(Vec3p8 centerPos)
 {
 	// TODO: Could probably use a sprite for this
 	// That way we could also have rotation
 
 	auto backBuffer = DisplayControl::Get().backBuffer();
-	auto startRow = Mode4Display::Width/2 * (Mode4Display::Height - kMapRows - 1);
-	auto pixelOffset = startRow + (Mode4Display::Width - kMapCols) / 2;
+	auto startRow = Mode4Display::Width/2 * (Mode4Display::Height - kMapRows - 1 - 4);
+	auto pixelOffset = startRow + (Mode4Display::Width - kMapCols - 4) / 2;
 	auto dst = &backBuffer[pixelOffset];
 
 	// Minimap center
@@ -258,7 +179,7 @@ void Render(const Camera& cam)
 		int drawStart = -lineHeight / 2 + Mode4Display::Height / 2;
 		if(drawStart < 0)drawStart = 0;
 		int drawEnd = lineHeight / 2 + Mode4Display::Height / 2;
-		if(drawEnd >= Mode4Display::Height) drawEnd = Mode4Display::Height - 1;
+		if(drawEnd > Mode4Display::Height) drawEnd = Mode4Display::Height;
 
 		//draw the pixels of the stripe as a vertical line
       	verLine(col, drawStart, drawEnd, 3+side);
@@ -266,7 +187,7 @@ void Render(const Camera& cam)
 
 	// Measure render time
 	timerT = Timer1().counter;
-	DrawMinimap(cam.m_pose.pos);
+	// DrawMinimap(cam.m_pose.pos);
 }
 
 int main()
