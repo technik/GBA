@@ -142,8 +142,6 @@ void DrawMinimap(uint16_t* backBuffer, Vec3p8 centerPos)
 
 volatile uint32_t timerT = 0;
 
-EWRAM_DATA alignas(uint32_t) uint16_t renderTarget[Mode4Display::Width * Mode4Display::Height / 2];
-
 void Render(const Camera& cam)
 {	
 	// Reconstruct local axes for fast ray interpolation
@@ -155,11 +153,14 @@ void Render(const Camera& cam)
 	// Profiling
 	Timer1().reset<Timer::e64>(); // Set high precision profiler
 
-	intp12 widthRCP = intp12::castFromShiftedInteger<16>(lu_div(Mode4Display::Width));
+	// TODO: We can leverage the fact that we're now multiplying by col only and transform the in-loop multiplication into an addition.
+	// On top of that, sideDir.x() * ndcX can really be extracted and transformed into two separate additions too.
+	// This should remove two two muls and to casts per loop.
+	constexpr intp8 widthRCP = intp8(4.f/Mode4Display::Width);
 
+	intp8 ndcX = -1_p8;
 	for(int col = 0; col < Mode4Display::Width/2; col++)
 	{
-		intp8 ndcX = ((4 * col) * widthRCP).cast<8>() - 1_p8; // screen x from -1 to 1
 		// Compute a ray direction for this column
 		Vec2p8 rayDir = { 
 			viewDir.x() + (sideDir.x() * ndcX).cast<8>(),
@@ -171,7 +172,7 @@ void Render(const Camera& cam)
 		const intp8 hitDistance = rayCast(cam.m_pose.pos, rayDir, cellVal, side, worldMap, kMapCols);
 		//Calculate height of line to draw on screen
 		int lineHeight = Mode4Display::Height;
-		if(hitDistance > 0_p8)
+		if(hitDistance > 0_p8) // This could really be > 1, as it will saturate to full screen anyway for distances < 1
 		{
 			lineHeight = (intp8(Mode4Display::Height ) / hitDistance).floor();
 		}
@@ -184,6 +185,7 @@ void Render(const Camera& cam)
 
 		//draw the pixels of the stripe as a vertical line
       	verLine(DisplayControl::Get().backBuffer(), col, drawStart, drawEnd, 3+side);
+		ndcX += widthRCP; // screen x from -1 to 1
 	}
 
 	// Measure render time
@@ -240,8 +242,6 @@ int main()
 		// TODO: Use the dma here
 		// Use DMA channel 3 so that we can copy data from external RAM. If we split the FB into chunks, we may be able to use IWRAM and channel 0.
 		//auto backBuffer = (uint32_t*)DisplayControl::Get().backBuffer();
-		//auto src = (uint32_t*)renderTarget;
-
 		//DMA::Channel3().Copy(backBuffer, src, Mode4Display::Width * Mode4Display::Height / 4);
 		timerT2 = Timer1().counter;
 	}
