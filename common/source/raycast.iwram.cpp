@@ -1,4 +1,5 @@
 #include <raycast.h>
+#include <tonc_math.h>
 
 using namespace math;
 
@@ -12,7 +13,11 @@ intp8 rayCast(Vec3p8 rayStart, Vec2p8 rayDir, int& hitVal, int& side, const uint
 
 	if(rayDir.x() != 0)
 	{
+		// Because we know rayDir.x is always between 0 and 2, we can be smart and approximate the division with a LUT
 		deltaDistX = abs(1_p8 / rayDir.x());
+		//int rcpX = abs(rayDir.x().raw) << 7; // So it fits between 0 and 256
+		//deltaDistX = intp12::castFromShiftedInteger<16>(lu_div(rcpX)).cast<8>();
+
 		if (rayDir.x() < 0_p8)
 		{
 			stepX = -1;
