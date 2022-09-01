@@ -97,12 +97,21 @@ namespace DMA
 		volatile uint16_t wordCount;
 		volatile uint16_t control;
 
-		enum class AddrAdjust : uint16_t
+		static constexpr uint16_t dstAdjustShift = 5;
+		enum class DstAddrAdjust : uint16_t
 		{
-			Inc = 0,
-			Dec = 1,
-			Fixed = 2,
-			Reload = 3 // Destination only
+			Inc = 0 << dstAdjustShift,
+			Dec = 1 << dstAdjustShift,
+			Fixed = 2 << dstAdjustShift
+		};
+
+		static constexpr uint16_t srcAdjustShift = 7;
+		enum class SrcAddrAdjust : uint16_t
+		{
+			Inc = 0<<srcAdjustShift,
+			Dec = 1<<srcAdjustShift,
+			Fixed = 2<<srcAdjustShift,
+			Reload = 3<<srcAdjustShift
 		};
 
 		enum class ChunkSize : uint16_t
@@ -122,16 +131,39 @@ namespace DMA
 			Refresh = 3<<12
 		};
 
-		static constexpr uint16_t dstAdjustShift = 5;
-		static constexpr uint16_t srcAdjustShift = 7;
-		static constexpr uint16_t DmaRepeat = 1<<9;
-		static constexpr uint16_t DmaIRQ = 1<<14;
+		enum class RepeatMode : uint16_t
+		{
+			Off = 0,
+			On = 1<<9
+		};
+
+		enum class IRQDispatch : uint16_t
+		{
+			Off = 0,
+			On = 1<<14
+		};
+
 		static constexpr uint16_t DmaEnable = 1<<15;
 
 		// Cancels any pending transfer on this channel
 		void clear()
 		{
 			control = 0; // Clear enable bit
+		}
+
+		// Note count is in the number of uint32_t chunks to copy
+		void Copy(volatile uint32_t* dst, uint32_t* src, uint32_t count)
+		{
+			// Stop any previous DMA transfers
+			clear();
+
+			// Set start and end destinations
+			srcAddress = reinterpret_cast<uint32_t>(src);
+			dstAddress = reinterpret_cast<uint32_t>(dst);
+			wordCount = count;
+
+			// Config and dispatch the copy
+			control = uint16_t(ChunkSize::Dma32Bit) | uint16_t(TimingMode::Now) | uint16_t(DmaEnable);
 		}
 	};
 

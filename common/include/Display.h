@@ -33,8 +33,19 @@ public:
 		control = control & (~ForceBlank);
 	}
 
+	void EnableHBlankAccess()
+	{
+		control = control | HBlank;
+	}
+
+	void DisableHBlankAccess()
+	{
+		control = control & (~HBlank);
+	}
+
 	// Display control bits
 	static constexpr uint16_t FrameSelect = 1<<4;
+	static constexpr uint16_t HBlank = 1<<5;
 	static constexpr uint16_t ForceBlank = 1<<7;
 	static constexpr uint16_t BG0 = 1<<8;
 	static constexpr uint16_t BG1 = 1<<9;
@@ -60,9 +71,9 @@ public:
         control = control ^ FrameSelect;
     }
 
-    volatile uint16_t* backBuffer() const
+    uint16_t* backBuffer() const
 	{
-        return reinterpret_cast<volatile uint16_t*>((control & FrameSelect) ? 0x06000000 : (0x06000000 + 0xA000));
+        return reinterpret_cast<uint16_t*>((control & FrameSelect) ? 0x06000000 : (0x06000000 + 0xA000));
     }
 
 	void vSync()

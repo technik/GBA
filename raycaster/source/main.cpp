@@ -32,12 +32,6 @@ using namespace gfx;
 
 TextSystem text;
 
-struct Sphere
-{
-	Vec3p8 pos;
-	intp8 radius;
-};
-
 void initBackgroundPalette()
 {
 	// Initialize the palette
@@ -86,7 +80,7 @@ constexpr uint8_t worldMap[kMapRows * kMapCols] = {
 };
 
 // Actually draws two pixels at once
-void verLine(volatile uint16_t* backBuffer, int x, int drawStart, int drawEnd, int worldColor)
+void verLine(uint16_t* backBuffer, int x, int drawStart, int drawEnd, int worldColor)
 {
 	int16_t dPxl = worldColor | (worldColor<<8);
 	// Draw ceiling
@@ -106,12 +100,12 @@ void verLine(volatile uint16_t* backBuffer, int x, int drawStart, int drawEnd, i
 	}
 }
 
-void DrawMinimap(Vec3p8 centerPos)
+void DrawMinimap(uint16_t* backBuffer, Vec3p8 centerPos)
 {
 	// TODO: Could probably use a sprite for this
 	// That way we could also have rotation
 
-	auto backBuffer = DisplayControl::Get().backBuffer();
+	//auto backBuffer = DisplayControl::Get().backBuffer();
 	auto startRow = Mode4Display::Width/2 * (Mode4Display::Height - kMapRows - 1 - 4);
 	auto pixelOffset = startRow + (Mode4Display::Width - kMapCols - 4) / 2;
 	auto dst = &backBuffer[pixelOffset];
@@ -148,20 +142,18 @@ void DrawMinimap(Vec3p8 centerPos)
 
 volatile uint32_t timerT = 0;
 
-EWRAM_DATA uint16_t renderTarget[Mode4Display::Width * Mode4Display::Height / 2];
+EWRAM_DATA alignas(uint32_t) uint16_t renderTarget[Mode4Display::Width * Mode4Display::Height / 2];
 
 void Render(const Camera& cam)
-{
-	auto backBuffer = DisplayControl::Get().backBuffer();
-	
+{	
 	// Reconstruct local axes for fast ray interpolation
-	float cosPhi = cos(float(cam.m_pose.phi) * 6.28f);
-	float sinPhi = sin(float(cam.m_pose.phi) * 6.28f);
-	Vec2p8 sideDir = { intp8(cosPhi), intp8(sinPhi) }; // 45deg FoV
-	Vec2p8 viewDir = { -intp8(sinPhi), intp8(cosPhi) };
+	intp8 cosPhi = cam.m_pose.cosf.cast<8>();
+	intp8 sinPhi = cam.m_pose.sinf.cast<8>();
+	Vec2p8 sideDir = { cosPhi, sinPhi }; // 45deg FoV
+	Vec2p8 viewDir = { -sinPhi, cosPhi };
 
 	// Profiling
-	Timer1().reset<Timer::e256>(); // Set high precision profiler
+	Timer1().reset<Timer::e64>(); // Set high precision profiler
 
 	for(int col = 0; col < Mode4Display::Width/2; col++)
 	{
@@ -189,13 +181,15 @@ void Render(const Camera& cam)
 		if(drawEnd > Mode4Display::Height) drawEnd = Mode4Display::Height;
 
 		//draw the pixels of the stripe as a vertical line
-      	verLine(backBuffer, col, drawStart, drawEnd, 3+side);
+      	verLine(renderTarget, col, drawStart, drawEnd, 3+side);
 	}
 
 	// Measure render time
+	DrawMinimap(renderTarget, cam.m_pose.pos);
 	timerT = Timer1().counter;
-	// DrawMinimap(cam.m_pose.pos);
 }
+
+volatile uint32_t timerT2 = 0;
 
 int main()
 {
@@ -238,6 +232,16 @@ int main()
 		// Present
 		VBlankIntrWait();
 		Display().flipFrame();
+
+		Timer1().reset<Timer::e64>(); // Set high precision profiler
+		// Copy the render target
+		// TODO: Use the dma here
+		// Use DMA channel 3 so that we can copy data from external RAM. If we split the FB into chunks, we may be able to use IWRAM and channel 0.
+		auto backBuffer = (volatile uint32_t*)DisplayControl::Get().backBuffer();
+		auto src = (uint32_t*)renderTarget;
+
+		DMA::Channel3().Copy(backBuffer, src, Mode4Display::Width * Mode4Display::Height / 4);
+		timerT2 = Timer1().counter;
 	}
 	return 0;
 }

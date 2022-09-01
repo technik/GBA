@@ -15,6 +15,8 @@ public:
 private:
 	uint32_t count();
 
-	Sprite::Object m_ShadowSprites[2] = {};
+	static inline constexpr uint32_t kNumDigits = 3;
+
+	Sprite::Object m_DigitSprites[kNumDigits] = {};
 	volatile Sprite::Object* m_sprites = nullptr;
 };
