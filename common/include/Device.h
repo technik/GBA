@@ -152,7 +152,7 @@ namespace DMA
 		}
 
 		// Note count is in the number of uint32_t chunks to copy
-		void Copy(volatile uint32_t* dst, uint32_t* src, uint32_t count)
+		void Copy(uint32_t* dst, uint32_t* src, uint32_t count)
 		{
 			// Stop any previous DMA transfers
 			clear();

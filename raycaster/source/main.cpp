@@ -181,11 +181,11 @@ void Render(const Camera& cam)
 		if(drawEnd > Mode4Display::Height) drawEnd = Mode4Display::Height;
 
 		//draw the pixels of the stripe as a vertical line
-      	verLine(renderTarget, col, drawStart, drawEnd, 3+side);
+      	verLine(DisplayControl::Get().backBuffer(), col, drawStart, drawEnd, 3+side);
 	}
 
 	// Measure render time
-	DrawMinimap(renderTarget, cam.m_pose.pos);
+	DrawMinimap(DisplayControl::Get().backBuffer(), cam.m_pose.pos);
 	timerT = Timer1().counter;
 }
 
@@ -237,10 +237,10 @@ int main()
 		// Copy the render target
 		// TODO: Use the dma here
 		// Use DMA channel 3 so that we can copy data from external RAM. If we split the FB into chunks, we may be able to use IWRAM and channel 0.
-		auto backBuffer = (volatile uint32_t*)DisplayControl::Get().backBuffer();
-		auto src = (uint32_t*)renderTarget;
+		//auto backBuffer = (uint32_t*)DisplayControl::Get().backBuffer();
+		//auto src = (uint32_t*)renderTarget;
 
-		DMA::Channel3().Copy(backBuffer, src, Mode4Display::Width * Mode4Display::Height / 4);
+		//DMA::Channel3().Copy(backBuffer, src, Mode4Display::Width * Mode4Display::Height / 4);
 		timerT2 = Timer1().counter;
 	}
 	return 0;
