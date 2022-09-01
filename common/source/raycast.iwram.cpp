@@ -15,8 +15,9 @@ intp8 rayCast(Vec3p8 rayStart, Vec2p8 rayDir, int& hitVal, int& side, const uint
 	{
 		// Because we know rayDir.x is always between 0 and 2, we can be smart and approximate the division with a LUT
 		deltaDistX = abs(1_p8 / rayDir.x());
-		//int rcpX = abs(rayDir.x().raw) << 7; // So it fits between 0 and 256
-		//deltaDistX = intp12::castFromShiftedInteger<16>(lu_div(rcpX)).cast<8>();
+		//uint rcpX = abs(rayDir.x().raw) >> 1; // Equivalent to multiplying by 128 so it fits between 0 and 256, and casting to int.
+		// 128 / (128x) = 1/x
+		//deltaDistX = intp8::castFromShiftedInteger<16>(lu_div(rcpX) * 128);
 
 		if (rayDir.x() < 0_p8)
 		{

@@ -155,9 +155,11 @@ void Render(const Camera& cam)
 	// Profiling
 	Timer1().reset<Timer::e64>(); // Set high precision profiler
 
+	intp12 widthRCP = intp12::castFromShiftedInteger<16>(lu_div(Mode4Display::Width));
+
 	for(int col = 0; col < Mode4Display::Width/2; col++)
 	{
-		intp8 ndcX = (intp8(4 * col) * intp12::castFromShiftedInteger<16>(lu_div(Mode4Display::Width))).cast<8>() - 1_p8; // screen x from -1 to 1
+		intp8 ndcX = (intp8(4 * col) * widthRCP).cast<8>() - 1_p8; // screen x from -1 to 1
 		// Compute a ray direction for this column
 		Vec2p8 rayDir = { 
 			viewDir.x() + (sideDir.x() * ndcX).cast<8>(),

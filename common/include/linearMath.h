@@ -39,7 +39,7 @@ namespace math
 
 		store_type raw;
 		
-		FORCE_INLINE constexpr Fixed() : raw(0) {}
+		FORCE_INLINE Fixed() = default;
 		template<std::integral T>
 		FORCE_INLINE constexpr explicit Fixed(T x) : raw(x<<shift) {}
 		constexpr explicit Fixed(float x) : raw(x * (1<<shift)) {}
