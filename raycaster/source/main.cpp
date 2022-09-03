@@ -24,7 +24,7 @@ extern "C"
 #include <tools/frameCounter.h>
 
 // Demo code
-#include <demo.h>
+#include <raycaster.h>
 #include <Camera.h>
 
 using namespace math;
@@ -78,27 +78,6 @@ constexpr uint8_t worldMap[kMapRows * kMapCols] = {
 	1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1,
 	1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1,
 };
-
-// Actually draws two pixels at once
-void verLine(uint16_t* backBuffer, int x, int drawStart, int drawEnd, int worldColor)
-{
-	int16_t dPxl = worldColor | (worldColor<<8);
-	// Draw ceiling
-	for(int i = 0; i < drawStart; ++i)
-	{
-		backBuffer[x + i*Mode4Display::Width/2] = 1|(1<<8); // Sky color
-	}
-	// Draw wall
-	for(int i = drawStart; i < drawEnd; ++i)
-	{
-		backBuffer[x + i*Mode4Display::Width/2] = dPxl; // Wall color
-	}
-	// Draw ground
-	for(int i = drawEnd; i < Mode4Display::Height; ++i)
-	{
-		backBuffer[x + i*Mode4Display::Width/2] = 2|(2<<8); // Ground color
-	}
-}
 
 void DrawMinimap(uint16_t* backBuffer, Vec3p8 centerPos)
 {

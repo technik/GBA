@@ -9,3 +9,6 @@ extern "C"
  {
 #include <tonc.h>
 }
+
+// IWRAM render functions
+void verLine(uint16_t* backBuffer, int x, int drawStart, int drawEnd, int worldColor);
