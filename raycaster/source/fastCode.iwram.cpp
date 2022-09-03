@@ -59,6 +59,30 @@ void yDLine(uint16_t* backBuffer, unsigned x, unsigned drawStart, unsigned drawE
 	}
 }
 
+// Draw a pixel line with a single pixel line
+void yLine(Color* backBuffer,
+	unsigned x,
+	unsigned drawStart, unsigned drawEnd,
+	Color skyColor, Color wallColor, Color groundColor)
+{
+    constexpr unsigned stride = Mode3Display::Width;
+	// Draw ceiling
+	for(int i = 0; i < drawStart; ++i)
+	{
+		backBuffer[x + i*stride] = skyColor;
+	}
+	// Draw wall
+	for(int i = drawStart; i < drawEnd; ++i)
+	{
+		backBuffer[x + i*stride] = wallColor; // Wall color
+	}
+	// Draw ground
+	for(int i = drawEnd; i < Mode4Display::Height; ++i)
+	{
+		backBuffer[x + i*stride] = groundColor; // Ground color
+	}
+}
+
 void DrawMinimapMode4(uint16_t* backBuffer, Vec3p8 centerPos)
 {
 	// TODO: Could probably use a sprite for this
@@ -139,10 +163,59 @@ void RenderMode4(const Camera& cam)
 		if(drawEnd > Mode4Display::Height) drawEnd = Mode4Display::Height;
 
 		//draw the pixels of the stripe as a vertical line
-      	yDLine(DisplayControl::Get().backBuffer(), col, drawStart, drawEnd, 3+side);
 		ndcX += widthRCP; // screen x from -1 to 1
 	}
 
 	// Measure render time
 	DrawMinimapMode4(DisplayControl::Get().backBuffer(), cam.m_pose.pos);
+}
+
+void RenderMode3(const Camera& cam)
+{	
+	auto backBuffer = Mode3Display::backBuffer();// DisplayControl::Get().backBuffer();
+	// Reconstruct local axes for fast ray interpolation
+	intp8 cosPhi = cam.m_pose.cosf.cast<8>();
+	intp8 sinPhi = cam.m_pose.sinf.cast<8>();
+	Vec2p8 sideDir = { cosPhi, sinPhi }; // 45deg FoV
+	Vec2p8 viewDir = { -sinPhi, cosPhi };
+
+	// TODO: We can leverage the fact that we're now multiplying by col only and transform the in-loop multiplication into an addition.
+	// On top of that, sideDir.x() * ndcX can really be extracted and transformed into two separate additions too.
+	// This should remove two two muls and to casts per loop.
+	constexpr intp8 widthRCP = intp8(2.f/Mode3Display::Width);
+
+	intp8 ndcX = -1_p8;
+	for(int col = 0; col < Mode3Display::Width; col++)
+	{
+		// Compute a ray direction for this column
+		Vec2p8 rayDir = { 
+			viewDir.x() + (sideDir.x() * ndcX).cast<8>(),
+			viewDir.y() + (sideDir.y() * ndcX).cast<8>()
+		};
+
+		int cellVal;
+		int side;
+		const intp8 hitDistance = rayCast(cam.m_pose.pos, rayDir, cellVal, side, worldMap, kMapCols);
+		//Calculate height of line to draw on screen
+		int lineHeight = Mode3Display::Height;
+		if(hitDistance > 0_p8) // This could really be > 1, as it will saturate to full screen anyway for distances < 1
+		{
+			lineHeight = (intp8(Mode3Display::Height ) / hitDistance).floor();
+		}
+
+		//calculate lowest and highest pixel to fill in current stripe
+		int drawStart = -lineHeight / 2 + Mode3Display::Height / 2;
+		if(drawStart < 0)drawStart = 0;
+		int drawEnd = lineHeight / 2 + Mode3Display::Height / 2;
+		if(drawEnd > Mode3Display::Height) drawEnd = Mode3Display::Height;
+
+		//draw the pixels of the stripe as a vertical line
+		yLine(backBuffer,
+			col, drawStart, drawEnd,
+			BasicColor::SkyBlue, side ? BasicColor::DarkGreen : BasicColor::Green, BasicColor::MidGrey);
+		ndcX += widthRCP; // screen x from -1 to 1
+	}
+
+	// Measure render time
+	//DrawMinimapMode4(DisplayControl::Get().backBuffer(), cam.m_pose.pos);
 }

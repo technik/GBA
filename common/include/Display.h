@@ -123,10 +123,10 @@ public:
 		disp.SetMode<3,DisplayControl::BG2>();
 	}
 
-	volatile Color* backBuffer()
+	static Color* backBuffer()
 	{
 		auto& disp = DisplayControl::Get();
-		return reinterpret_cast<volatile Color*>(disp.backBuffer());
+		return reinterpret_cast<Color*>(0x06000000);
 	}
 };
 
@@ -171,9 +171,9 @@ public:
 		disp.SetMode<5,DisplayControl::BG2>();
 	}
 
-	volatile Color* backBuffer()
+	static Color* backBuffer()
 	{
 		auto& disp = DisplayControl::Get();
-		return reinterpret_cast<volatile Color*>(disp.backBuffer());
+		return reinterpret_cast<Color*>(disp.backBuffer());
 	}
 };

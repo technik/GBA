@@ -19,3 +19,4 @@ static constexpr int kMapCols = 16;
 void yDLine(uint16_t* backBuffer, unsigned x, unsigned drawStart, unsigned drawEnd, uint16_t worldColor);
 void DrawMinimapMode4(uint16_t* backBuffer, math::Vec3p8 centerPos);
 void RenderMode4(const Camera& cam);
+void RenderMode3(const Camera& cam);

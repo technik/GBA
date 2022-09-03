@@ -62,8 +62,8 @@ volatile uint32_t timerT2 = 0;
 int main()
 {
 	// Full resolution, paletized color mode.
-	Mode4Display mode4;
-	mode4.Init();
+	Mode3Display mode3;
+	mode3.Init();
 	Display().StartBlank();
 	
 	// --- Init systems ---
@@ -95,13 +95,13 @@ int main()
 		playerController.m_pose.pos.y() = min(intp8(kMapRows) - 1.125_p8, playerController.m_pose.pos.y());
 
 		// -- Render --
-		RenderMode4(camera);
+		RenderMode3(camera);
 		frameCounter.render(text);
 
 		timerT2 = Timer1().counter;
 		// Present
 		VBlankIntrWait();
-		Display().flipFrame();
+		//Display().flipFrame();
 
 		// Copy the render target
 		// TODO: Use the dma here
