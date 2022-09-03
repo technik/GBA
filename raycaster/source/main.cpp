@@ -95,7 +95,7 @@ int main()
 		playerController.m_pose.pos.y() = min(intp8(kMapRows) - 1.125_p8, playerController.m_pose.pos.y());
 
 		// -- Render --
-		Render(camera);
+		RenderMode4(camera);
 		frameCounter.render(text);
 
 		timerT2 = Timer1().counter;

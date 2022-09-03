@@ -38,7 +38,7 @@ constexpr uint8_t worldMap[kMapRows * kMapCols] = {
 };
 
 // Actually draws two pixels at once
-void verLine(uint16_t* backBuffer, unsigned x, unsigned drawStart, unsigned drawEnd, uint16_t worldColor)
+void yDLine(uint16_t* backBuffer, unsigned x, unsigned drawStart, unsigned drawEnd, uint16_t worldColor)
 {
 	int16_t dPxl = worldColor | (worldColor<<8);
     constexpr unsigned stride = Mode4Display::Width/2;
@@ -59,7 +59,7 @@ void verLine(uint16_t* backBuffer, unsigned x, unsigned drawStart, unsigned draw
 	}
 }
 
-void DrawMinimap(uint16_t* backBuffer, Vec3p8 centerPos)
+void DrawMinimapMode4(uint16_t* backBuffer, Vec3p8 centerPos)
 {
 	// TODO: Could probably use a sprite for this
 	// That way we could also have rotation
@@ -100,7 +100,7 @@ void DrawMinimap(uint16_t* backBuffer, Vec3p8 centerPos)
 }
 
 volatile uint32_t timerT = 0;
-void Render(const Camera& cam)
+void RenderMode4(const Camera& cam)
 {	
 	// Reconstruct local axes for fast ray interpolation
 	intp8 cosPhi = cam.m_pose.cosf.cast<8>();
@@ -139,10 +139,10 @@ void Render(const Camera& cam)
 		if(drawEnd > Mode4Display::Height) drawEnd = Mode4Display::Height;
 
 		//draw the pixels of the stripe as a vertical line
-      	verLine(DisplayControl::Get().backBuffer(), col, drawStart, drawEnd, 3+side);
+      	yDLine(DisplayControl::Get().backBuffer(), col, drawStart, drawEnd, 3+side);
 		ndcX += widthRCP; // screen x from -1 to 1
 	}
 
 	// Measure render time
-	DrawMinimap(DisplayControl::Get().backBuffer(), cam.m_pose.pos);
+	DrawMinimapMode4(DisplayControl::Get().backBuffer(), cam.m_pose.pos);
 }
