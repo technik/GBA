@@ -72,7 +72,8 @@
 		"xloctime": "cpp",
 		"xmemory": "cpp",
 		"xstring": "cpp",
-		"xtree": "cpp"
+		"xtree": "cpp",
+		"random": "cpp"
 	},
 	"compiler-explorer.url": "http://localhost:10240/", // url of the compiler explorer you want to use.
 	"compiler-explorer.compiler": "devkitARM-g++", // Compiler code - See help below.

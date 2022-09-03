@@ -101,7 +101,6 @@ int main()
 		timerT2 = Timer1().counter;
 		// Present
 		VBlankIntrWait();
-		//Display().flipFrame();
 
 		// Copy the render target
 		// TODO: Use the dma here

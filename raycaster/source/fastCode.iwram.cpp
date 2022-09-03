@@ -170,6 +170,35 @@ void RenderMode4(const Camera& cam)
 	DrawMinimapMode4(DisplayControl::Get().backBuffer(), cam.m_pose.pos);
 }
 
+void DrawMinimapMode3(Color* backBuffer, Vec3p8 centerPos)
+{
+	// TODO: Could probably use a sprite for this
+	// That way we could also have rotation
+
+	//auto backBuffer = DisplayControl::Get().backBuffer();
+	auto startRow = Mode3Display::Width * (Mode3Display::Height - kMapRows - 1 - 4);
+	auto pixelOffset = startRow + (Mode3Display::Width - kMapCols - 4);
+	auto dst = &backBuffer[pixelOffset];
+
+	// Minimap center
+	int tileX = centerPos.x().floor();
+	int tileY = centerPos.y().floor();
+
+	for(int y = 0; y < kMapRows; y++)
+	{
+		for(int x = 0; x < kMapCols; x++)
+		{
+			auto clr = worldMap[x+kMapCols*y] ? BasicColor::Green : BasicColor::Black;
+
+			// Write
+			dst[(x + Mode4Display::Width*(kMapRows-y))] = clr;
+		}
+	}
+
+	// Draw the character
+	dst[(tileX + Mode3Display::Width*(kMapRows-tileY))] = BasicColor::Yellow;
+}
+
 void RenderMode3(const Camera& cam)
 {	
 	auto backBuffer = Mode3Display::backBuffer();// DisplayControl::Get().backBuffer();
@@ -217,5 +246,5 @@ void RenderMode3(const Camera& cam)
 	}
 
 	// Measure render time
-	//DrawMinimapMode4(DisplayControl::Get().backBuffer(), cam.m_pose.pos);
+	DrawMinimapMode3(backBuffer, cam.m_pose.pos);
 }

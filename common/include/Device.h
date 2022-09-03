@@ -152,7 +152,7 @@ namespace DMA
 		}
 
 		// Note count is in the number of uint32_t chunks to copy
-		void Copy(uint32_t* dst, uint32_t* src, uint32_t count)
+		void Copy(uint32_t* dst, const uint32_t* src, uint32_t count)
 		{
 			// Stop any previous DMA transfers
 			clear();
@@ -164,6 +164,21 @@ namespace DMA
 
 			// Config and dispatch the copy
 			control = uint16_t(ChunkSize::Dma32Bit) | uint16_t(TimingMode::Now) | uint16_t(DmaEnable);
+		}
+
+		// Note count is in the number of uint32_t chunks to copy
+		void Copy(uint16_t* dst, const uint16_t* src, uint32_t count)
+		{
+			// Stop any previous DMA transfers
+			clear();
+
+			// Set start and end destinations
+			srcAddress = reinterpret_cast<uint32_t>(src);
+			dstAddress = reinterpret_cast<uint32_t>(dst);
+			wordCount = count;
+
+			// Config and dispatch the copy
+			control = uint16_t(ChunkSize::Dma16Bit) | uint16_t(TimingMode::Now) | uint16_t(DmaEnable);
 		}
 	};
 
