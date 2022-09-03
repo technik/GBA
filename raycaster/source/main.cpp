@@ -191,8 +191,8 @@ int main()
 	// -- Init game state ---
 	auto camera = Camera(ScreenWidth, ScreenHeight, Vec3p8(2.5_p8, 2.5_p8, 0_p8));
 	auto playerController = CharacterController(camera.m_pose);
-	playerController.horSpeed = 0.125_p8;
-	playerController.angSpeed = 0.02_p16;
+	playerController.horSpeed = 0.06125_p8;
+	playerController.angSpeed = 0.01_p16;
 
 	// Unlock the display and start rendering
 	Display().EndBlank();

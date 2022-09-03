@@ -11,4 +11,4 @@ extern "C"
 }
 
 // IWRAM render functions
-void verLine(uint16_t* backBuffer, int x, int drawStart, int drawEnd, int worldColor);
+void verLine(uint16_t* backBuffer, unsigned x, unsigned drawStart, unsigned drawEnd, uint16_t worldColor);
