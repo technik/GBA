@@ -123,7 +123,8 @@ public:
 		disp.SetMode<3,DisplayControl::BG2>();
 	}
 
-	static Color* backBuffer()
+	// There is no backbuffer in Mode3!
+	static Color* frontBuffer()
 	{
 		auto& disp = DisplayControl::Get();
 		return reinterpret_cast<Color*>(0x06000000);

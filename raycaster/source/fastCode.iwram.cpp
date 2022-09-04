@@ -201,7 +201,7 @@ void DrawMinimapMode3(Color* backBuffer, Vec3p8 centerPos)
 
 void RenderMode3(const Camera& cam)
 {	
-	auto backBuffer = Mode3Display::backBuffer();// DisplayControl::Get().backBuffer();
+	auto backBuffer = Mode3Display::frontBuffer();// DisplayControl::Get().backBuffer();
 	// Reconstruct local axes for fast ray interpolation
 	intp8 cosPhi = cam.m_pose.cosf.cast<8>();
 	intp8 sinPhi = cam.m_pose.sinf.cast<8>();
