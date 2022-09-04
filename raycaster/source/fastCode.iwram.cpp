@@ -38,7 +38,7 @@ constexpr uint8_t worldMap[kMapRows * kMapCols] = {
 };
 
 // Actually draws two pixels at once
-void yDLine(uint16_t* backBuffer, unsigned x, unsigned drawStart, unsigned drawEnd, uint16_t worldColor)
+void Mode4Renderer::yDLine(uint16_t* backBuffer, unsigned x, unsigned drawStart, unsigned drawEnd, uint16_t worldColor)
 {
 	int16_t dPxl = worldColor | (worldColor<<8);
     constexpr unsigned stride = Mode4Display::Width/2;
@@ -83,7 +83,7 @@ void yLine(Color* backBuffer,
 	}
 }
 
-void DrawMinimapMode4(uint16_t* backBuffer, Vec3p8 centerPos)
+void Mode4Renderer::DrawMinimap(uint16_t* backBuffer, Vec3p8 centerPos)
 {
 	// TODO: Could probably use a sprite for this
 	// That way we could also have rotation
@@ -124,7 +124,7 @@ void DrawMinimapMode4(uint16_t* backBuffer, Vec3p8 centerPos)
 }
 
 volatile uint32_t timerT = 0;
-void RenderMode4(const Camera& cam)
+void Mode4Renderer::RenderWorld(const Camera& cam)
 {	
 	// Reconstruct local axes for fast ray interpolation
 	intp8 cosPhi = cam.m_pose.cosf.cast<8>();
@@ -135,7 +135,8 @@ void RenderMode4(const Camera& cam)
 	// TODO: We can leverage the fact that we're now multiplying by col only and transform the in-loop multiplication into an addition.
 	// On top of that, sideDir.x() * ndcX can really be extracted and transformed into two separate additions too.
 	// This should remove two two muls and to casts per loop.
-	constexpr intp8 widthRCP = intp8(4.f/Mode4Display::Width);
+	constexpr intp8 widthRCP = intp8(4.f/(Mode4Display::Width-1));
+	auto backbuffer = DisplayControl::Get().backBuffer();
 
 	intp8 ndcX = -1_p8;
 	for(int col = 0; col < Mode4Display::Width/2; col++)
@@ -163,11 +164,13 @@ void RenderMode4(const Camera& cam)
 		if(drawEnd > Mode4Display::Height) drawEnd = Mode4Display::Height;
 
 		//draw the pixels of the stripe as a vertical line
+		yDLine(backbuffer, col, drawStart, drawEnd, 3 + side);
+
 		ndcX += widthRCP; // screen x from -1 to 1
 	}
 
 	// Measure render time
-	DrawMinimapMode4(DisplayControl::Get().backBuffer(), cam.m_pose.pos);
+	DrawMinimap(backbuffer, cam.m_pose.pos);
 }
 
 void DrawMinimapMode3(Color* backBuffer, Vec3p8 centerPos)

@@ -32,8 +32,12 @@ using namespace gfx;
 
 TextSystem text;
 
-void initBackgroundPalette()
+// No need to place this method in fast memory
+void Mode4Renderer::Init()
 {
+	Mode4Display displayMode;
+	displayMode.Init();
+
 	// Initialize the palette
 	auto paletteNdx = BackgroundPalette::Allocator::alloc(4);
 	BackgroundPalette::color(paletteNdx++).raw = BasicColor::SkyBlue.raw;
@@ -62,8 +66,6 @@ volatile uint32_t timerT2 = 0;
 int main()
 {
 	// Full resolution, paletized color mode.
-	Mode3Display mode3;
-	mode3.Init();
 	Display().StartBlank();
 	
 	// --- Init systems ---
@@ -71,7 +73,7 @@ int main()
 	FrameCounter frameCounter(text);
 
 	// Configure graphics
-	initBackgroundPalette();
+	Mode4Renderer::Init();
 
 	// -- Init game state ---
 	auto camera = Camera(ScreenWidth, ScreenHeight, Vec3p8(2.5_p8, 2.5_p8, 0_p8));
@@ -95,12 +97,13 @@ int main()
 		playerController.m_pose.pos.y() = min(intp8(kMapRows) - 1.125_p8, playerController.m_pose.pos.y());
 
 		// -- Render --
-		RenderMode3(camera);
+		Mode4Renderer::RenderWorld(camera);
 		frameCounter.render(text);
 
 		timerT2 = Timer1().counter;
 		// Present
 		VBlankIntrWait();
+		Display().flipFrame();
 
 		// Copy the render target
 		// TODO: Use the dma here
