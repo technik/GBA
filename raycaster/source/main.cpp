@@ -64,7 +64,7 @@ void InitSystems()
 class MiniMap
 {
 public:
-	void Init()
+	MiniMap()
 	{
 		// Initialize the palette
 		m_paletteStart = SpritePalette::Allocator::alloc(2);
@@ -74,6 +74,13 @@ public:
 		// Init tiles
 		auto& tileBank = gfx::TileBank::GetBank(gfx::TileBank::HighSpriteBank);
 		m_tileNdx = tileBank.allocDTiles(1);
+
+		// Init sprite
+		m_Sprite = Sprite::ObjectAllocator::alloc(1);
+		m_Sprite->Configure(Sprite::ObjectMode::Normal, Sprite::GfxMode::Normal, Sprite::ColorMode::e16bits, Sprite::Shape::square16x16);
+		m_Sprite->SetNonAffineTransform(false, true, Sprite::Shape::square16x16);
+		m_Sprite->setPos(240-24, 160-24);
+		m_Sprite->setTiles(DTile::HighSpriteBankIndex(m_tileNdx));
 
 		RenderSprite();
 	}
@@ -87,14 +94,20 @@ private:
 	void RenderSprite()
 	{
 		auto& tileBank = gfx::TileBank::GetBank(gfx::TileBank::HighSpriteBank);
-		auto* renderPos = reinterpret_cast<uint32_t*>(&tileBank.GetDTile(m_tileNdx));
+		auto* renderPos = reinterpret_cast<uint16_t*>(&tileBank.GetDTile(m_tileNdx));
 
 		// Fast copy map data into VRAM
-		DMA::Channel0().Copy(renderPos, (uint32_t*)g_worldMap, kMapCols*kMapRows/sizeof(uint32_t));
+		for(int i = 0; i < kMapCols*kMapRows/2; i++)
+		{
+			uint16_t clrA = g_worldMap[2*i+0] + m_paletteStart;
+			uint16_t clrB = g_worldMap[2*i+1] + m_paletteStart;
+			renderPos[i] = (clrA << 8) | clrB;
+		}
 	}
 
 	uint32_t m_paletteStart;
 	uint32_t m_tileNdx;
+	Sprite::Object* m_Sprite;
 };
 
 volatile uint32_t timerT2 = 0;
@@ -103,7 +116,7 @@ int main()
 {
 	// Full resolution, paletized color mode.
 	Display().StartBlank();
-	
+
 	// Configure graphics
 	Mode4Renderer::Init();
 	
@@ -117,8 +130,11 @@ int main()
 	playerController.horSpeed = 0.06125_p8;
 	playerController.angSpeed = 0.01_p16;
 
+	MiniMap minimap;
+
 	// Unlock the display and start rendering
 	Display().EndBlank();
+	bool vBlank = true;
 
 	// main loop
 	while(1)
@@ -137,8 +153,13 @@ int main()
 		frameCounter.render(text);
 
 		timerT2 = Timer1().counter;
+
 		// Present
-		VBlankIntrWait();
+		if(Keypad::Pressed(Keypad::R))
+			vBlank = !vBlank;
+		if(vBlank)
+			VBlankIntrWait();
+			
 		Display().flipFrame();
 
 		// Copy the render target

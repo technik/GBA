@@ -94,7 +94,7 @@ struct Sprite
 				((uint16_t(size)>>2)<<14);
 		}
 
-		inline void setTiles(uint32_t firstTile, uint32_t subPalette, uint32_t priority = 0) volatile
+		inline void setTiles(uint32_t firstTile, uint32_t subPalette = 0, uint32_t priority = 0) volatile
 		{
 			attribute[2] = 
 				(firstTile&0x3ff) | // Bits 0-9, tile number (0-1023)
@@ -148,9 +148,9 @@ struct Sprite
 		return reinterpret_cast<Block*>(OAMAddress);
 	}
 
-	static volatile Transform* OAM_Transforms()
+	static Transform* OAM_Transforms()
 	{
-		return reinterpret_cast<volatile Transform*>(OAMAddress);
+		return reinterpret_cast<Transform*>(OAMAddress);
 	}
 
 	static Object* OAM_Objects()
@@ -166,7 +166,7 @@ struct Sprite
 		}
 
 		// Allocate Sprite Objects in OAM memory
-		static volatile Object* alloc(uint32_t n)
+		static Object* alloc(uint32_t n)
 		{
 			if(sNext+n > kCapacity)
 			{
@@ -174,7 +174,7 @@ struct Sprite
 			}
 			auto pos = sNext;
 			sNext += n;
-			return &reinterpret_cast<volatile Object*>(OAMAddress)[pos];
+			return &reinterpret_cast<Object*>(OAMAddress)[pos];
 		}
 
 		static inline uint32_t sNext = 0;
