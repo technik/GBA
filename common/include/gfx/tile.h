@@ -104,8 +104,8 @@ namespace gfx
 		// Returns the DTile index
 		uint32_t allocDTiles(uint32_t size);
 
-		volatile STile& GetSTile(uint32_t index);
-		volatile DTile& GetDTile(uint32_t index);
+		STile& GetSTile(uint32_t index);
+		DTile& GetDTile(uint32_t index);
 
 		static TileBank& GetBank(uint32_t bankIndex);
 

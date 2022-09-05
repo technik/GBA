@@ -72,3 +72,7 @@ With minimap
  Mode 3 full res starts at 10994 * 64 cycles/frame, with VBlank enabled
  Note: Sometimes the render hasn't finished drawing the minimap while the display reaches that part of the screen.
  	Rendering to a separate display would be required for consistent results.
+
+ Move raydir to incremental 10964
+
+ Back to Mode4 rendering: 5158 * 64

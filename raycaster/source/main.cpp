@@ -61,6 +61,42 @@ void InitSystems()
 	irq_add(II_VBLANK, NULL);
 }
 
+class MiniMap
+{
+public:
+	void Init()
+	{
+		// Initialize the palette
+		m_paletteStart = SpritePalette::Allocator::alloc(2);
+		SpritePalette::color(m_paletteStart+0).raw = BasicColor::Black.raw;
+		SpritePalette::color(m_paletteStart+1).raw = BasicColor::Green.raw;
+
+		// Init tiles
+		auto& tileBank = gfx::TileBank::GetBank(gfx::TileBank::HighSpriteBank);
+		m_tileNdx = tileBank.allocDTiles(1);
+
+		RenderSprite();
+	}
+
+	void UpdatePos(unsigned x, unsigned y)
+	{
+		//
+	}
+
+private:
+	void RenderSprite()
+	{
+		auto& tileBank = gfx::TileBank::GetBank(gfx::TileBank::HighSpriteBank);
+		auto* renderPos = reinterpret_cast<uint32_t*>(&tileBank.GetDTile(m_tileNdx));
+
+		// Fast copy map data into VRAM
+		DMA::Channel0().Copy(renderPos, (uint32_t*)g_worldMap, kMapCols*kMapRows/sizeof(uint32_t));
+	}
+
+	uint32_t m_paletteStart;
+	uint32_t m_tileNdx;
+};
+
 volatile uint32_t timerT2 = 0;
 
 int main()
@@ -68,12 +104,12 @@ int main()
 	// Full resolution, paletized color mode.
 	Display().StartBlank();
 	
+	// Configure graphics
+	Mode4Renderer::Init();
+	
 	// --- Init systems ---
 	InitSystems();
 	FrameCounter frameCounter(text);
-
-	// Configure graphics
-	Mode4Renderer::Init();
 
 	// -- Init game state ---
 	auto camera = Camera(ScreenWidth, ScreenHeight, Vec3p8(2.5_p8, 2.5_p8, 0_p8));

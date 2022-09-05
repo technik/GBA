@@ -18,7 +18,7 @@ extern "C" {
 
 using namespace math;
 
-constexpr uint8_t worldMap[kMapRows * kMapCols] = {
+extern uint8_t g_worldMap[kMapRows * kMapCols] = {
 	1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1,
 	1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
 	1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1,
@@ -83,46 +83,6 @@ void yLine(Color* backBuffer,
 	}
 }
 
-void Mode4Renderer::DrawMinimap(uint16_t* backBuffer, Vec3p8 centerPos)
-{
-	// TODO: Could probably use a sprite for this
-	// That way we could also have rotation
-
-	//auto backBuffer = DisplayControl::Get().backBuffer();
-	auto startRow = Mode4Display::Width/2 * (Mode4Display::Height - kMapRows - 1 - 4);
-	auto pixelOffset = startRow + (Mode4Display::Width - kMapCols - 4) / 2;
-	auto dst = &backBuffer[pixelOffset];
-
-	// Minimap center
-	int tileX = centerPos.x().floor();
-	int tileY = centerPos.y().floor();
-
-	for(int y = 0; y < kMapRows; y++)
-	{
-		for(int x = 0; x < kMapCols; x++)
-		{
-			uint16_t clr = worldMap[x+kMapCols*y] ? 3 : 0;
-			++x;
-			clr |= (worldMap[x+kMapCols*y] ? 3 : 0) << 8;
-
-			// Write
-			dst[(x + Mode4Display::Width*(kMapRows-y))/2] = clr;
-		}
-	}
-
-	// Draw the character
-	auto base = dst[(tileX + Mode4Display::Width*(kMapRows-tileY))/2];
-	if(tileX & 1)
-	{
-		base = (base & 0x0f) | (5<<8);
-	}
-	else
-	{
-		base = (base & 0xf0) | 5;
-	}
-	dst[(tileX + Mode4Display::Width*(kMapRows-tileY))/2] = base;
-}
-
 volatile uint32_t timerT = 0;
 void Mode4Renderer::RenderWorld(const Camera& cam)
 {	
@@ -149,7 +109,7 @@ void Mode4Renderer::RenderWorld(const Camera& cam)
 
 		int cellVal;
 		int side;
-		const intp8 hitDistance = rayCast(cam.m_pose.pos, rayDir, cellVal, side, worldMap, kMapCols);
+		const intp8 hitDistance = rayCast(cam.m_pose.pos, rayDir, cellVal, side, g_worldMap, kMapCols);
 		//Calculate height of line to draw on screen
 		int lineHeight = Mode4Display::Height;
 		if(hitDistance > 0_p8) // This could really be > 1, as it will saturate to full screen anyway for distances < 1
@@ -168,9 +128,6 @@ void Mode4Renderer::RenderWorld(const Camera& cam)
 
 		ndcX += widthRCP; // screen x from -1 to 1
 	}
-
-	// Measure render time
-	DrawMinimap(backbuffer, cam.m_pose.pos);
 }
 
 void DrawMinimapMode3(Color* backBuffer, Vec3p8 centerPos)
@@ -191,7 +148,7 @@ void DrawMinimapMode3(Color* backBuffer, Vec3p8 centerPos)
 	{
 		for(int x = 0; x < kMapCols; x++)
 		{
-			auto clr = worldMap[x+kMapCols*y] ? BasicColor::Green : BasicColor::Black;
+			auto clr = g_worldMap[x+kMapCols*y] ? BasicColor::Green : BasicColor::Black;
 
 			// Write
 			dst[(x + Mode4Display::Width*(kMapRows-y))] = clr;
@@ -227,7 +184,7 @@ void RenderMode3(const Camera& cam)
 
 		int cellVal;
 		int side;
-		const intp8 hitDistance = rayCast(cam.m_pose.pos, rayDir, cellVal, side, worldMap, kMapCols);
+		const intp8 hitDistance = rayCast(cam.m_pose.pos, rayDir, cellVal, side, g_worldMap, kMapCols);
 		//Calculate height of line to draw on screen
 		int lineHeight = Mode3Display::Height;
 		if(hitDistance > 0_p8) // This could really be > 1, as it will saturate to full screen anyway for distances < 1

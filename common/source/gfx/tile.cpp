@@ -23,6 +23,8 @@ namespace gfx
 	}
 
 	// Allocate small tiles where each dot is only 4 bits.
+	// This type of STile splits the color palette into 16 smaller
+	// dedicated palettes.
 	// Returns the STile index
 	uint32_t TileBank::allocSTiles(uint32_t size)
 	{
@@ -35,7 +37,8 @@ namespace gfx
 		return pos;
 	}
 
-	// Allocate small tiles where each dot is only 4 bits.
+	// Allocate small tiles where each dot is 8 bits.
+	// This type of tile uses a regular palette
 	// Returns the DTile index
 	uint32_t TileBank::allocDTiles(uint32_t size)
 	{
@@ -49,14 +52,14 @@ namespace gfx
 		return pos0;
 	}
 
-	volatile STile& TileBank::GetSTile(uint32_t index)
+	STile& TileBank::GetSTile(uint32_t index)
 	{
-		return reinterpret_cast<volatile STile*>(mBaseAddress)[index];
+		return reinterpret_cast<STile*>(mBaseAddress)[index];
 	}
 
-	volatile DTile& TileBank::GetDTile(uint32_t index)
+	DTile& TileBank::GetDTile(uint32_t index)
 	{
-		return reinterpret_cast<volatile DTile*>(mBaseAddress)[index];
+		return reinterpret_cast<DTile*>(mBaseAddress)[index];
 	}
 
 	TileBank& TileBank::GetBank(uint32_t bankIndex)
