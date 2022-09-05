@@ -7,22 +7,22 @@ struct Sprite
 	enum class ObjectMode : uint16_t
 	{
 		Normal = 0,
-		Affine = 1,
-		Disabled = 2,
-		Affine2x = 3
+		Affine = 1<<8,
+		Disabled = 2<<8,
+		Affine2x = 3<<8
 	};
 
 	enum class GfxMode : uint16_t
 	{
 		Normal = 0,
-		AlphaBlend = 1,
-		Window = 2,
+		AlphaBlend = 1<<10,
+		Window = 2<<10,
 	};
 
 	enum class ColorMode : uint16_t
 	{
-		e4bits,
-		e16bits
+		Palette16 = 0,
+		Palette256 = (1<<13)
 	};
 
 	// Actual shape goes in the bits 0:1.
@@ -71,9 +71,9 @@ struct Sprite
 		{
 			attribute[0] =
 				(attribute[0] & 0x00ff) | // preserve y pos
-				(((uint16_t)objectMode) << 8) |
-				(((uint16_t)gfxMode) << 10) |
-				(((uint16_t)colorMode) << 13) |
+				uint16_t(objectMode) |
+				uint16_t(gfxMode) |
+				uint16_t(colorMode) |
 				(((uint16_t)shape) << 14); // Lowest two bits store the shape
 		}
 

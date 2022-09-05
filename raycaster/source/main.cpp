@@ -77,7 +77,7 @@ public:
 
 		// Init sprite
 		m_Sprite = Sprite::ObjectAllocator::alloc(1);
-		m_Sprite->Configure(Sprite::ObjectMode::Normal, Sprite::GfxMode::Normal, Sprite::ColorMode::e16bits, Sprite::Shape::square16x16);
+		m_Sprite->Configure(Sprite::ObjectMode::Normal, Sprite::GfxMode::Normal, Sprite::ColorMode::Palette256, Sprite::Shape::square16x16);
 		m_Sprite->SetNonAffineTransform(false, true, Sprite::Shape::square16x16);
 		m_Sprite->setPos(240-24, 160-24);
 		m_Sprite->setTiles(DTile::HighSpriteBankIndex(m_tileNdx));
@@ -97,11 +97,19 @@ private:
 		auto* renderPos = reinterpret_cast<uint16_t*>(&tileBank.GetDTile(m_tileNdx));
 
 		// Fast copy map data into VRAM
-		for(int i = 0; i < kMapCols*kMapRows/2; i++)
+		for(int tile = 0; tile < 4; ++tile)
 		{
-			uint16_t clrA = g_worldMap[2*i+0] + m_paletteStart;
-			uint16_t clrB = g_worldMap[2*i+1] + m_paletteStart;
-			renderPos[i] = (clrA << 8) | clrB;
+			for(int row = 0; row < 8; row++)
+			{
+				for(int col = 0; col < 4; ++col)
+				{
+					auto srcRow = row+8*(tile/2);
+					auto srcCol = 2*col+8*(tile&1);
+					uint16_t clrA = g_worldMap[srcRow*16+srcCol+0] + m_paletteStart;
+					uint16_t clrB = g_worldMap[srcRow*16+srcCol+1] + m_paletteStart;
+					renderPos[col+4*row+32*tile] = (clrB << 8) | clrA;
+				}
+			}
 		}
 	}
 
@@ -159,7 +167,7 @@ int main()
 			vBlank = !vBlank;
 		if(vBlank)
 			VBlankIntrWait();
-			
+
 		Display().flipFrame();
 
 		// Copy the render target

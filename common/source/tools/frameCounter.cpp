@@ -13,7 +13,7 @@ FrameCounter::FrameCounter(TextSystem& text)
 	for(uint32_t i = 0; i < kNumDigits; ++i)
 	{
 		auto& obj = m_DigitSprites[i];
-		obj.Configure(Sprite::ObjectMode::Normal, Sprite::GfxMode::Normal, Sprite::ColorMode::e16bits, Sprite::Shape::square8x8);
+		obj.Configure(Sprite::ObjectMode::Normal, Sprite::GfxMode::Normal, Sprite::ColorMode::Palette256, Sprite::Shape::square8x8);
 		obj.SetNonAffineTransform(false, false, Sprite::Shape::square8x8);
 		obj.setPos(8*i, 0);
 	}
