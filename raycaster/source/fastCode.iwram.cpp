@@ -40,7 +40,6 @@ extern uint8_t g_worldMap[kMapRows * kMapCols] = {
 // Actually draws two pixels at once
 void Mode4Renderer::yDLine(uint16_t* backBuffer, unsigned x, unsigned drawStart, unsigned drawEnd, uint16_t worldColor)
 {
-	int16_t dPxl = worldColor | (worldColor<<8);
     constexpr unsigned stride = Mode4Display::Width/2;
 	// Draw ceiling
 	for(int i = 0; i < drawStart; ++i)
@@ -50,7 +49,7 @@ void Mode4Renderer::yDLine(uint16_t* backBuffer, unsigned x, unsigned drawStart,
 	// Draw wall
 	for(int i = drawStart; i < drawEnd; ++i)
 	{
-		backBuffer[x + i*stride] = dPxl; // Wall color
+		backBuffer[x + i*stride] = worldColor; // Wall color
 	}
 	// Draw ground
 	for(int i = drawEnd; i < Mode4Display::Height; ++i)
@@ -98,6 +97,11 @@ void Mode4Renderer::RenderWorld(const Camera& cam)
 	constexpr intp8 widthRCP = intp8(4.f/(Mode4Display::Width-1));
 	auto backbuffer = DisplayControl::Get().backBuffer();
 
+	const uint16_t colorOffset = sPaletteStart | (sPaletteStart<<8);
+	const int16_t wallDColorSeam = (4 | (4<<8)) + colorOffset;
+	const int16_t wallDColorDark = (5 | (5<<8)) + colorOffset;
+	const int16_t wallDColorLight =(6 | (6<<8)) + colorOffset;
+
 	intp8 ndcX = -1_p8;
 	for(int col = 0; col < Mode4Display::Width/2; col++)
 	{
@@ -123,8 +127,14 @@ void Mode4Renderer::RenderWorld(const Camera& cam)
 		int drawEnd = lineHeight / 2 + Mode4Display::Height / 2;
 		if(drawEnd > Mode4Display::Height) drawEnd = Mode4Display::Height;
 
+		// Wall textures
+		Vec3p8 hitPoint = cam.m_pose.pos + Vec3p8{ (hitDistance * rayDir.x()).cast<8>(), (hitDistance * rayDir.y()).cast<8>() };
+		int texX = ((side ? hitPoint.x() : hitPoint.y()).raw >> 4) & 0xf;
+
+		auto texClr = side ? wallDColorDark : wallDColorLight;
+
 		//draw the pixels of the stripe as a vertical line
-		yDLine(backbuffer, col, drawStart, drawEnd, 3 + side);
+		yDLine(backbuffer, col, drawStart, drawEnd, texX ? texClr : wallDColorSeam);
 
 		ndcX += widthRCP; // screen x from -1 to 1
 	}

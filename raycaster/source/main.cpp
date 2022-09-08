@@ -39,14 +39,17 @@ void Mode4Renderer::Init()
 	displayMode.Init();
 
 	// Initialize the palette
-	auto paletteNdx = BackgroundPalette::Allocator::alloc(4);
-	BackgroundPalette::color(paletteNdx++).raw = BasicColor::SkyBlue.raw;
-	BackgroundPalette::color(paletteNdx++).raw = BasicColor::MidGrey.raw;
-	// Wall color
-	BackgroundPalette::color(paletteNdx++).raw = BasicColor::Green.raw;
-	BackgroundPalette::color(paletteNdx++).raw = BasicColor::DarkGreen.raw;
+	sPaletteStart = BackgroundPalette::Allocator::alloc(8);
+	BackgroundPalette::color(sPaletteStart+0).raw = BasicColor::SkyBlue.raw;
+	BackgroundPalette::color(sPaletteStart+1).raw = BasicColor::MidGrey.raw;
+	// Wall colors
+	BackgroundPalette::color(sPaletteStart+2).raw = BasicColor::Green.raw;
+	BackgroundPalette::color(sPaletteStart+3).raw = BasicColor::DarkGreen.raw;
+	BackgroundPalette::color(sPaletteStart+4).raw = BasicColor::Black.raw;
+	BackgroundPalette::color(sPaletteStart+5).raw = BasicColor::DarkGrey.raw;
+	BackgroundPalette::color(sPaletteStart+6).raw = BasicColor::LightGrey.raw;
 	// Player color
-	BackgroundPalette::color(paletteNdx++).raw = BasicColor::Yellow.raw;
+	BackgroundPalette::color(sPaletteStart+7).raw = BasicColor::Yellow.raw;
 }
 
 void InitSystems()

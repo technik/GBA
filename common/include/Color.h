@@ -37,6 +37,7 @@ namespace BasicColor
 	static inline constexpr Color Yellow = Color(0x1f,0x1f,0x00);
 	static inline constexpr Color Orange = Color(0x1f,0x0f,0x00);
 	static inline constexpr Color Pink = Color(0x1f,0x0f,0x0f);
+	static inline constexpr Color DarkGrey = Color(0x07,0x07,0x07);
 	static inline constexpr Color MidGrey = Color(0x0f,0x0f,0x0f);
 	static inline constexpr Color LightGrey = Color(0x17,0x17,0x17);
 }

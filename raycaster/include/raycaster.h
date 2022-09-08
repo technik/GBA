@@ -24,6 +24,7 @@ public:
     static void RenderWorld(const Camera& cam);
 private:
     static void yDLine(uint16_t* backBuffer, unsigned x, unsigned drawStart, unsigned drawEnd, uint16_t worldColor);
+    static inline uint32_t sPaletteStart;
 };
 
 // IWRAM render functions

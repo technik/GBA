@@ -76,3 +76,7 @@ With minimap
  Move raydir to incremental 10964
 
  Back to Mode4 rendering: 5158 * 64
+
+ Make minimap a sprite: 5059 * 64
+
+ Constant fill colors: 5054 * 64 = 19.29ms
