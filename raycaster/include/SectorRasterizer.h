@@ -12,12 +12,17 @@ extern "C"
 #include <tonc.h>
 }
 
-class Mode3SectorRasterizer
+class SectorRasterizer
 {
 public:
     static void Init();
     static void RenderWorld(const Camera& cam);
 
+    static inline uint16_t fillClr = BasicColor::SkyBlue.raw;
+    static inline uint16_t fillClr2 = BasicColor::Red.raw;
+
 private:
     static void RenderWall();
+
+    using DisplayMode = Mode5Display;
 };

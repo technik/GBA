@@ -80,3 +80,7 @@ With minimap
  Make minimap a sprite: 5059 * 64
 
  Constant fill colors: 5054 * 64 = 19.29ms
+
+ Vertical textures 5101 * 64
+
+ Incremental rayDir 5100

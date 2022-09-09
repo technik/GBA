@@ -92,7 +92,7 @@ namespace math {
 	}
 
 	template<class T>
-	inline Vec2<T> operator+=(Vec2<T>& a, const Vec2<T>& b)
+	inline Vec2<T>& operator+=(Vec2<T>& a, const Vec2<T>& b)
 	{
 		return a = {a.x() + b.x(), a.y() + b.y()};
 	}
@@ -104,7 +104,7 @@ namespace math {
 	}
 
 	template<class T>
-	inline Vec2<T> operator-=(Vec2<T>& a, const Vec2<T>& b)
+	inline Vec2<T>& operator-=(Vec2<T>& a, const Vec2<T>& b)
 	{
 		return a = {a.x() - b.x(), a.y() - b.y()};
 	}

@@ -82,7 +82,6 @@ void yLine(Color* backBuffer,
 	}
 }
 
-volatile uint32_t timerT = 0;
 void Mode4Renderer::RenderWorld(const Camera& cam)
 {	
 	// Reconstruct local axes for fast ray interpolation
@@ -102,13 +101,15 @@ void Mode4Renderer::RenderWorld(const Camera& cam)
 	const int16_t wallDColorDark = (5 | (5<<8)) + colorOffset;
 	const int16_t wallDColorLight =(6 | (6<<8)) + colorOffset;
 
-	intp8 ndcX = -1_p8;
+	Vec2p8 rayDir0 = viewDir - sideDir;
+	Vec2p12 dRay = { (sideDir.x() * widthRCP).cast<12>(), (sideDir.y() * widthRCP).cast<12>() };
+
 	for(int col = 0; col < Mode4Display::Width/2; col++)
 	{
 		// Compute a ray direction for this column
 		Vec2p8 rayDir = { 
-			viewDir.x() + (sideDir.x() * ndcX).cast<8>(),
-			viewDir.y() + (sideDir.y() * ndcX).cast<8>()
+			rayDir0.x() + (col * dRay.x()).cast<8>(),
+			rayDir0.y() + (col * dRay.y()).cast<8>()
 		};
 
 		int cellVal;
@@ -135,8 +136,6 @@ void Mode4Renderer::RenderWorld(const Camera& cam)
 
 		//draw the pixels of the stripe as a vertical line
 		yDLine(backbuffer, col, drawStart, drawEnd, texX ? texClr : wallDColorSeam);
-
-		ndcX += widthRCP; // screen x from -1 to 1
 	}
 }
 
@@ -183,15 +182,13 @@ void RenderMode3(const Camera& cam)
 	// This should remove two two muls and to casts per loop.
 	constexpr intp8 widthRCP = intp8(2.f/Mode3Display::Width);
 
-	intp8 ndcX = -1_p8;
+	//intp8 ndcX = -1_p8;
+
+	Vec2p8 rayDir = viewDir - sideDir;
+	Vec2p8 dRay = { (sideDir.x() * widthRCP).cast<8>(), (sideDir.y() * widthRCP).cast<8>() };
+
 	for(int col = 0; col < Mode3Display::Width; col++)
 	{
-		// Compute a ray direction for this column
-		Vec2p8 rayDir = { 
-			viewDir.x() + (sideDir.x() * ndcX).cast<8>(),
-			viewDir.y() + (sideDir.y() * ndcX).cast<8>()
-		};
-
 		int cellVal;
 		int side;
 		const intp8 hitDistance = rayCast(cam.m_pose.pos, rayDir, cellVal, side, g_worldMap, kMapCols);
@@ -212,7 +209,8 @@ void RenderMode3(const Camera& cam)
 		yLine(backBuffer,
 			col, drawStart, drawEnd,
 			BasicColor::SkyBlue, side ? BasicColor::DarkGreen : BasicColor::Green, BasicColor::MidGrey);
-		ndcX += widthRCP; // screen x from -1 to 1
+
+		rayDir += dRay;
 	}
 
 	// Measure render time

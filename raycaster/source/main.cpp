@@ -25,6 +25,7 @@ extern "C"
 
 // Demo code
 #include <raycaster.h>
+#include <SectorRasterizer.h>
 #include <Camera.h>
 
 using namespace math;
@@ -123,13 +124,20 @@ private:
 
 volatile uint32_t timerT2 = 0;
 
+// Renderer selection
+#if 1
+using Renderer = SectorRasterizer;
+#else
+using Renderer = Mode4Renderer;
+#endif // Renderer selection
+
 int main()
 {
 	// Full resolution, paletized color mode.
 	Display().StartBlank();
 
 	// Configure graphics
-	Mode4Renderer::Init();
+	Renderer::Init();
 	
 	// --- Init systems ---
 	InitSystems();
@@ -160,7 +168,7 @@ int main()
 		playerController.m_pose.pos.y() = min(intp8(kMapRows) - 1.125_p8, playerController.m_pose.pos.y());
 
 		// -- Render --
-		Mode4Renderer::RenderWorld(camera);
+		Renderer::RenderWorld(camera);
 		frameCounter.render(text);
 
 		timerT2 = Timer1().counter;

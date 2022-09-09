@@ -19,8 +19,11 @@ extern "C" {
 using namespace math;
 using namespace gfx;
 
-static volatile uint32_t timerT = 0;
-void Mode3SectorRasterizer::RenderWorld(const Camera& cam)
-{	
-	//	
+
+
+void SectorRasterizer::RenderWorld(const Camera& cam)
+{
+	uint16_t* backbuffer = DisplayControl::Get().backBuffer();
+
+	DMA::Channel0().Fill(backbuffer, &fillClr, 3*DisplayMode::Area/4);
 }

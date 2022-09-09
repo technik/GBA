@@ -102,7 +102,8 @@ namespace DMA
 		{
 			Inc = 0 << dstAdjustShift,
 			Dec = 1 << dstAdjustShift,
-			Fixed = 2 << dstAdjustShift
+			Fixed = 2 << dstAdjustShift,
+			Reload = 3<< dstAdjustShift
 		};
 
 		static constexpr uint16_t srcAdjustShift = 7;
@@ -110,8 +111,7 @@ namespace DMA
 		{
 			Inc = 0<<srcAdjustShift,
 			Dec = 1<<srcAdjustShift,
-			Fixed = 2<<srcAdjustShift,
-			Reload = 3<<srcAdjustShift
+			Fixed = 2<<srcAdjustShift
 		};
 
 		enum class ChunkSize : uint16_t
@@ -163,7 +163,7 @@ namespace DMA
 			wordCount = count;
 
 			// Config and dispatch the copy
-			control = uint16_t(ChunkSize::Dma16Bit) | uint16_t(SrcAddrAdjust::Fixed) | uint16_t(TimingMode::Now) | uint16_t(DmaEnable);
+			control = uint16_t(ChunkSize::Dma16Bit) | uint16_t(SrcAddrAdjust::Fixed) | uint16_t(TimingMode::Now) | DmaEnable;
 		}
 
 		// Note count is in the number of uint32_t chunks to fill
@@ -178,7 +178,7 @@ namespace DMA
 			wordCount = count;
 
 			// Config and dispatch the copy
-			control = uint16_t(ChunkSize::Dma32Bit) | uint16_t(SrcAddrAdjust::Fixed) | uint16_t(TimingMode::Now) | uint16_t(DmaEnable);
+			control = uint16_t(ChunkSize::Dma32Bit) | uint16_t(SrcAddrAdjust::Fixed) | uint16_t(TimingMode::Now) | DmaEnable;
 		}
 
 		// Note count is in the number of uint32_t chunks to copy
@@ -193,7 +193,7 @@ namespace DMA
 			wordCount = count;
 
 			// Config and dispatch the copy
-			control = uint16_t(ChunkSize::Dma32Bit) | uint16_t(TimingMode::Now) | uint16_t(DmaEnable);
+			control = uint16_t(ChunkSize::Dma32Bit) | uint16_t(TimingMode::Now) | DmaEnable;
 		}
 
 		// Note count is in the number of uint16_t chunks to copy
@@ -208,7 +208,7 @@ namespace DMA
 			wordCount = count;
 
 			// Config and dispatch the copy
-			control = uint16_t(ChunkSize::Dma16Bit) | uint16_t(TimingMode::Now) | uint16_t(DmaEnable);
+			control = uint16_t(ChunkSize::Dma16Bit) | uint16_t(TimingMode::Now) | DmaEnable;
 		}
 	};
 

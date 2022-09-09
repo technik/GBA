@@ -23,6 +23,8 @@ public:
 		bg2RotScale.d = (128<<8)/ScreenHeight; // =(128/160.0)<<8
 	}
 
+	auto& BG2RotScale() { return bg2RotScale; }
+
 	void StartBlank()
 	{
 		control = control | ForceBlank;
@@ -160,6 +162,8 @@ class Mode5Display
 public:
 	static constexpr uint32_t Width = 160;
 	static constexpr uint32_t Height = 128;
+	static constexpr uint32_t Area = Width*Height;
+	static constexpr uint32_t BufferSize = Width*Height * 2;
 
 	void flip()
 	{
@@ -170,6 +174,9 @@ public:
 	{
 		auto& disp = DisplayControl::Get();
 		disp.SetMode<5,DisplayControl::BG2>();
+		
+		disp.BG2RotScale().a = (Width<<8)/ScreenWidth; // =(160/240.0)<<8
+		disp.BG2RotScale().d = (Height<<8)/ScreenHeight; // =(128/160.0)<<8
 	}
 
 	static Color* backBuffer()
