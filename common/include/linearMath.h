@@ -374,9 +374,45 @@ namespace math
 	}
 
 	template<class StoreA, class StoreB, size_t shift>
+	FORCE_INLINE constexpr bool operator<= (Fixed<StoreA, shift> a, Fixed<StoreB, shift> b)
+	{
+		return a.raw <= b.raw;
+	}
+
+	template<class StoreA, class StoreB, size_t shift>
 	FORCE_INLINE constexpr bool operator> (Fixed<StoreA, shift> a, Fixed<StoreB, shift> b)
 	{
 		return a.raw > b.raw;
+	}
+
+	template<class StoreA, class StoreB, size_t shift>
+	FORCE_INLINE constexpr bool operator>= (Fixed<StoreA, shift> a, Fixed<StoreB, shift> b)
+	{
+		return a.raw >= b.raw;
+	}
+
+	template<class StoreA, size_t shift>
+	FORCE_INLINE constexpr bool operator< (Fixed<StoreA, shift> a, int b)
+	{
+		return a.raw < (b<<shift);
+	}
+
+	template<class StoreA, size_t shift>
+	FORCE_INLINE constexpr bool operator<= (Fixed<StoreA, shift> a, int b)
+	{
+		return a.raw <= (b<<shift);
+	}
+
+	template<class StoreA, size_t shift>
+	FORCE_INLINE constexpr bool operator> (Fixed<StoreA, shift> a, int b)
+	{
+		return a.raw > (b<<shift);
+	}
+
+	template<class StoreA, size_t shift>
+	FORCE_INLINE constexpr bool operator>= (Fixed<StoreA, shift> a, int b)
+	{
+		return a.raw >= (b<<shift);
 	}
 
 	template<class Store, size_t shift>

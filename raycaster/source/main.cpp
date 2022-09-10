@@ -125,7 +125,8 @@ private:
 volatile uint32_t timerT2 = 0;
 
 // Renderer selection
-#if 1
+#define SECTOR_RASTER 1
+#if SECTOR_RASTER
 using Renderer = SectorRasterizer;
 #else
 using Renderer = Mode4Renderer;
@@ -149,7 +150,9 @@ int main()
 	playerController.horSpeed = 0.06125_p8;
 	playerController.angSpeed = 0.01_p16;
 
+#if !SECTOR_RASTER
 	MiniMap minimap;
+#endif
 
 	// Unlock the display and start rendering
 	Display().EndBlank();
@@ -162,10 +165,13 @@ int main()
 		// Next frame logic
 		Keypad::Update();
 		playerController.update();
+
+#if !SECTOR_RASTER
 		playerController.m_pose.pos.x() = max(1.125_p8, playerController.m_pose.pos.x());
 		playerController.m_pose.pos.y() = max(1.125_p8, playerController.m_pose.pos.y());
 		playerController.m_pose.pos.x() = min(intp8(kMapCols) - 1.125_p8, playerController.m_pose.pos.x());
 		playerController.m_pose.pos.y() = min(intp8(kMapRows) - 1.125_p8, playerController.m_pose.pos.y());
+#endif
 
 		// -- Render --
 		Renderer::RenderWorld(camera);

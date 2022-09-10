@@ -165,6 +165,11 @@ public:
 	static constexpr uint32_t Area = Width*Height;
 	static constexpr uint32_t BufferSize = Width*Height * 2;
 
+	static inline uint32_t pixel(uint32_t x, uint32_t y)
+	{
+		return x + Width * y;
+	}
+
 	void flip()
 	{
 		DisplayControl::Get().flipFrame();
