@@ -88,25 +88,27 @@ namespace math {
 	template<class T>
 	constexpr inline Vec2<T> operator+(const Vec2<T>& a, const Vec2<T>& b)
 	{
-		return {a.x() + b.x(), a.y() + b.y()};
+		return Vec2<T>(a.x() + b.x(), a.y() + b.y());
 	}
 
 	template<class T>
 	inline Vec2<T>& operator+=(Vec2<T>& a, const Vec2<T>& b)
 	{
-		return a = {a.x() + b.x(), a.y() + b.y()};
+		a = Vec2<T>(a.x() + b.x(), a.y() + b.y());
+		return a;
 	}
 
 	template<class T>
 	constexpr inline Vec2<T> operator-(const Vec2<T>& a, const Vec2<T>& b)
 	{
-		return {a.x() - b.x(), a.y() - b.y()};
+		return Vec2<T>(a.x() - b.x(), a.y() - b.y());
 	}
 
 	template<class T>
 	inline Vec2<T>& operator-=(Vec2<T>& a, const Vec2<T>& b)
 	{
-		return a = {a.x() - b.x(), a.y() - b.y()};
+		a = Vec2<T>(a.x() - b.x(), a.y() - b.y());
+		return a;
 	}
 
 	template<class T>
@@ -116,9 +118,9 @@ namespace math {
 	}
 
 	template<class T>
-	constexpr inline auto cross(const Vec2<T>& a, const Vec2<T>&b)
+	constexpr inline Vec2<T> cross(const Vec2<T>& a, const Vec2<T>&b)
 	{
-		return (a.x()*b.y() - a.y()*b.x());
+		return Vec2<T>(a.x()*b.y() - a.y()*b.x());
 	}
 
 	template<class T, class K>

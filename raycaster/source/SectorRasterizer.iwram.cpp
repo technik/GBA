@@ -27,10 +27,10 @@ void SectorRasterizer::RenderWorld(const Camera& cam)
 	uint16_t* backbuffer = DisplayControl::Get().backBuffer();
 
 	// Clean the background
-	for(int i = 0; i < DisplayMode::Height/2; ++i)
-	{
-		DMA::Channel0().Fill(&backbuffer[2*i*DisplayMode::Width], &fillClr, DisplayMode::Width*2);
-	}
+	//for(int i = 0; i < DisplayMode::Height/2; ++i)
+	//{
+	//	DMA::Channel0().Fill(&backbuffer[2*i*DisplayMode::Width], &fillClr, DisplayMode::Width*2);
+	//}
 
 	// Draw a wall
 	Vec3p8 ssA = cam.projectWorldPos(pointA);
@@ -50,9 +50,9 @@ void SectorRasterizer::RenderWorld(const Camera& cam)
 	}
 
 	int ssX = ssA.x().roundToInt();
-	auto h0 = DisplayMode::Height/2 * ssA.z();
-	auto h1 = DisplayMode::Height/2 * ssB.z();
-	auto dy = (h1-h0) / x1-x0;
+	intp8 h0 = int(DisplayMode::Height/2) * ssA.z();
+	intp8 h1 = int(DisplayMode::Height/2) * ssB.z();
+	intp8 dy = (h1-h0) / x1-x0;
 
 	for(int x = x0; x < x1; ++x)
 	{
