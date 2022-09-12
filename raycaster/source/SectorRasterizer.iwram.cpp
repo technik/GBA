@@ -22,8 +22,8 @@ using namespace gfx;
 Vec2p8 vertices[] = {
 	{ 1_p8, 6_p8 },
 	{ 4_p8, 6_p8 },
-	{ 5_p8, 9_p8 },
-	{ 3_p8, 7_p8 },
+	{ 5_p8, 0_p8 },
+	{ 3_p8, 0_p8 },
 	{ 1_p8, 6_p8 },
 };
 
@@ -111,7 +111,7 @@ void SectorRasterizer::RenderWall(const Camera& cam, const Vec2p8& A, const Vec2
 
 	// No intersection with the view frustum
 	int32_t x0 = ssA.x().floor();
-	int32_t x1 = ssB.x().floor();
+	int32_t x1 = ssB.x().floor() + 1;
 	if((x0 >= int32_t(DisplayMode::Width)) || (x1 < 0) || x0 >= x1)
 	{
 		return;
