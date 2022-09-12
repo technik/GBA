@@ -23,7 +23,8 @@ Vec2p8 vertices[] = {
 	{ 1_p8, 6_p8 },
 	{ 4_p8, 6_p8 },
 	{ 5_p8, 9_p8 },
-	{ 3_p8, 7_p8 }
+	{ 3_p8, 7_p8 },
+	{ 1_p8, 6_p8 },
 };
 
 Vec2p8 worldToViewSpace(const Pose& camPose, const Vec2p8& worldPos)
@@ -44,7 +45,7 @@ Vec2p8 worldToViewSpace(const Pose& camPose, const Vec2p8& worldPos)
 bool clipWall(Vec2p8& v0, Vec2p8& v1)
 {
 	// Clip backfaces
-	if(v0.x() > v1.x())
+	if(v0.x() >= v1.x())
 		return false;
 	
 	// Clip behind the view. TODO: Support a non-zero near clip
@@ -58,19 +59,22 @@ bool clipWall(Vec2p8& v0, Vec2p8& v1)
 	if(v0.y() == v1.y()) // Nothing to clip here, the plane is parallel to the y=0 plane, so it can't intersect it.
 		return true;
 
-	Vec2p8 dWall = v1 - v0;
-	intp8 y0 = max(0_p8, v0.y());
-	intp8 y1 = max(0_p8, v1.y());
-
+	intp8 dX = v1.x() - v0.x();
+	intp8 yRef = v0.y();
 	intp12 denom = (v1.y() - v0.y()).cast<12>();
+	intp12 num = -(dX * yRef).cast<12>();
 
-	intp12 num0 = (dWall.x() * (y0 - v0.y())).cast<12>();
-	intp12 num1 = (dWall.x() * (y1 - v1.y())).cast<12>();
-
-	v0.x() = v0.x() + (num0 / denom).cast<8>();
-	v1.x() = v1.x() + (num1 / denom).cast<8>();
-	v0.y() = y0;
-	v1.y() = y1;
+	if(v0.y() < 0)
+	{
+		v0.x() = v0.x() + (num / denom).cast<8>();
+		v0.y() = 0_p8;
+	}
+	
+	if(v1.y() < 0)
+	{
+		v1.x() = v1.x() + (num / denom).cast<8>();
+		v1.y() = 0_p8;
+	}
 
 	return true;
 }
