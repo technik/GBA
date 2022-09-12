@@ -41,9 +41,15 @@ namespace math
 		
 		FORCE_INLINE Fixed() = default;
 		template<std::integral T>
-		FORCE_INLINE constexpr explicit Fixed(T x) : raw(x<<shift) {}
+		FORCE_INLINE constexpr explicit Fixed(T x)
+		{
+			raw = Store(x<<shift);
+		}
 		constexpr explicit Fixed(float x) : raw(x * (1<<shift)) {}
-		FORCE_INLINE constexpr explicit Fixed(const math::Fixed<Store,Shift>& x) : raw(x.raw) {}
+		FORCE_INLINE constexpr Fixed(const math::Fixed<Store,Shift>& _other)
+		{
+			raw = _other.raw;
+		}
 
 		FORCE_INLINE constexpr store_type floor() const { return raw >> shift; }
 
@@ -198,8 +204,8 @@ namespace math
 
 	template<class StoreA, class StoreB, size_t shift>
 	FORCE_INLINE constexpr auto operator+(
-		Fixed<StoreA, shift> a,
-		Fixed<StoreB, shift> b)
+		const Fixed<StoreA, shift>& a,
+		const Fixed<StoreB, shift>& b)
 	{
 		using sum_type = decltype(a.raw + b.raw);
 		Fixed<sum_type, shift> result;
@@ -209,7 +215,7 @@ namespace math
 
 	template<class Store, size_t shift>
 	FORCE_INLINE constexpr auto operator+(
-		Fixed<Store, shift> a,
+		const Fixed<Store, shift>& a,
 		std::integral auto b)
 	{
 		Fixed<Store, shift> result;
@@ -220,7 +226,7 @@ namespace math
 	template<class Store, size_t shift>
 	FORCE_INLINE constexpr auto operator+(
 		std::integral auto a,
-		Fixed<Store, shift> b)
+		const Fixed<Store, shift>& b)
 	{
 		Fixed<Store, shift> result;
 		result.raw = (a<<shift) + b.raw;
@@ -229,8 +235,8 @@ namespace math
 
 	template<class StoreA, class StoreB, size_t shift>
 	FORCE_INLINE constexpr auto operator-(
-		Fixed<StoreA, shift> a,
-		Fixed<StoreB, shift> b)
+		const Fixed<StoreA, shift>& a,
+		const Fixed<StoreB, shift>& b)
 	{
 		using sub_type = decltype(a.raw - b.raw);
 		Fixed<sub_type, shift> result;
@@ -240,7 +246,7 @@ namespace math
 
 	template<std::integral Store, size_t shift>
 	FORCE_INLINE constexpr auto operator-(
-		Fixed<Store, shift> a)
+		const Fixed<Store, shift>& a)
 	{
 		static_assert(std::is_signed_v<Store>, "Can't flip the sign on an unsigned type");
 
@@ -251,7 +257,7 @@ namespace math
 
 	template<class Store, size_t shift>
 	FORCE_INLINE constexpr auto operator-(
-		Fixed<Store, shift> a,
+		const Fixed<Store, shift>& a,
 		std::integral auto b)
 	{
 		Fixed<Store, shift> result;
@@ -262,7 +268,7 @@ namespace math
 	template<class Store, size_t shift>
 	FORCE_INLINE constexpr auto operator-(
 		std::integral auto a,
-		Fixed<Store, shift> b)
+		const Fixed<Store, shift>& b)
 	{
 		Fixed<Store, shift> result;
 		result.raw = (a<<shift) - b.raw;
@@ -271,7 +277,7 @@ namespace math
 
 	template<std::integral Store, size_t shift>
 	FORCE_INLINE constexpr auto abs(
-		Fixed<Store, shift> a)
+		const Fixed<Store, shift>& a)
 	{
 		Fixed<Store, shift> result;
 		result.raw = std::abs(a.raw);
@@ -282,8 +288,8 @@ namespace math
 		class StoreA, size_t shiftA,
 		class StoreB, size_t shiftB>
 	FORCE_INLINE constexpr auto operator*(
-		Fixed<StoreA, shiftA> a,
-		Fixed<StoreB, shiftB> b)
+		const Fixed<StoreA, shiftA>& a,
+		const Fixed<StoreB, shiftB>& b)
 	{
 		using product_type = decltype(a.raw*b.raw);
 		Fixed<product_type, shiftA+shiftB> result;
@@ -295,7 +301,7 @@ namespace math
 		class StoreA, size_t shiftA,
 		std::integral T>
 	FORCE_INLINE constexpr auto operator*(
-		Fixed<StoreA, shiftA> a,
+		const Fixed<StoreA, shiftA>& a,
 		T b)
 	{
 		using product_type = decltype(a.raw*b);
@@ -309,7 +315,7 @@ namespace math
         std::integral T>
 	FORCE_INLINE constexpr auto operator*(
             T b,
-            Fixed<StoreA, shiftA> a)
+            const Fixed<StoreA, shiftA>& a)
     {
         using product_type = decltype(a.raw* b);
         Fixed<product_type, shiftA> result;
@@ -322,8 +328,8 @@ namespace math
 		class StoreB,
         size_t shift>
 	FORCE_INLINE constexpr auto operator / (
-		Fixed<StoreA, shift> a,
-		Fixed<StoreB, shift> b)
+		const Fixed<StoreA, shift>& a,
+		const Fixed<StoreB, shift>& b)
 	{
 		using div_type = decltype(a.raw / b.raw);
 		Fixed<div_type, shift> result;

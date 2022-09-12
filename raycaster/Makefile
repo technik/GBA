@@ -69,7 +69,7 @@ IARCH   := -mthumb-interwork -marm -mlong-calls
 
 # --- Main flags ---
 
-CFLAGS	:= -mcpu=arm7tdmi -mtune=arm7tdmi $(ARCH) -DGBA
+CFLAGS	:= -mcpu=arm7tdmi -mtune=arm7tdmi $(ARCH) -DGBA -O2
 CFLAGS	+= -Wall
 CFLAGS	+= $(INCLUDE)
 CFLAGS	+= -fno-strict-aliasing -g
@@ -77,7 +77,7 @@ CFLAGS	+= -fno-strict-aliasing -g
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=c++20
 
 ASFLAGS	:= $(ARCH)
-LDFLAGS := $(ARCH) -Wl,-Map,$(PROJ).map
+LDFLAGS := $(ARCH) -Wl,-Map,$(PROJ).map -Wl,--print-memory-usage
 
 # --- switched additions ----------------------------------------------
 

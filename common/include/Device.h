@@ -152,13 +152,13 @@ namespace DMA
 		}
 
 		// Note count is in the number of uint16_t chunks to fill
-		void Fill(uint16_t* dst, const uint16_t* src, uint32_t count)
+		void Fill(uint16_t* dst, const volatile uint16_t src, uint32_t count)
 		{
 			// Stop any previous DMA transfers
 			clear();
 
 			// Set start and end destinations
-			srcAddress = reinterpret_cast<uint32_t>(src);
+			srcAddress = reinterpret_cast<uint32_t>(&src);
 			dstAddress = reinterpret_cast<uint32_t>(dst);
 			wordCount = count;
 

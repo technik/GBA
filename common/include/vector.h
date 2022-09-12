@@ -9,68 +9,113 @@
 
 namespace math {
 
-	template<class T, size_t N>
-	struct Vector final
+	template<class T>
+	struct Vec2 final
 	{
-		T m[N];
+		T m_x;
+		T m_y;
 
 		// Constructors
-		Vector() = default;
-		constexpr explicit Vector(T _x)
+		Vec2() = default;
+		constexpr explicit Vec2(T _x) : m_x(_x), m_y(_x)
 		{
-			for(size_t i = 0; i < N; ++i)
-				m[i] = _x;
 		}
-		constexpr Vector(T _x, T _y) : m{_x,_y} {}
-		constexpr Vector(T _x, T _y, T _z) : m{_x,_y,_z} {}
+
+		constexpr Vec2(T _x, T _y) : m_x(_x), m_y(_y)
+		{
+		}
 
 		// Assignment and copy construction
-		constexpr Vector(const Vector<T,N>& other)
+		constexpr Vec2(const Vec2<T>& other) : m_x(other.m_x), m_y(other.m_y)
 		{
-			for(size_t i = 0; i < N; ++i)
-				m[i] = other.m[i];
 		}
 
-		auto& operator=(const Vector<T,N>& other)
+		auto& operator=(const Vec2<T>& other)
 		{
-			for(size_t i = 0; i < N; ++i)
-				m[i] = other.m[i];
+			m_x = other.m_x;
+			m_y = other.m_y;
 			return *this;
 		}
 		
-		auto& operator=(const Vector<T,N>& other) volatile
+		auto& operator=(const Vec2<T>& other) volatile
 		{
-			for(size_t i = 0; i < N; ++i)
-				m[i] = other.m[i];
+			m_x = other.m_x;
+			m_y = other.m_y;
 			return *this;
 		}
 
 		// Accessors
-		FORCE_INLINE  auto x() const { return m[0]; }
-		FORCE_INLINE  auto y() const { static_assert(N>1); return m[1]; }
-		FORCE_INLINE  auto z() const { static_assert(N>2); return m[2]; }
+		FORCE_INLINE  auto x() const { return m_x; }
+		FORCE_INLINE  auto y() const { return m_y; }
 		
-		FORCE_INLINE  auto& x() { return m[0]; }
-		FORCE_INLINE  auto& y() { static_assert(N>1); return m[1]; }
-		FORCE_INLINE  auto& z() { static_assert(N>2); return m[2]; }
-		FORCE_INLINE  volatile auto& x() volatile { return m[0]; }
-		FORCE_INLINE  volatile auto& y() volatile { static_assert(N>1); return m[1]; }
-		FORCE_INLINE  volatile auto& z() volatile { static_assert(N>2); return m[2]; }
+		FORCE_INLINE  auto& x() { return m_x; }
+		FORCE_INLINE  auto& y() { return m_y; }
 	};
 
 	template<class T>
-	using Vec2 = Vector<T,2>;
-	template<class T>
-	using Vec3 = Vector<T,3>;
+	struct Vec3 final
+	{
+		T m_x;
+		T m_y;
+		T m_z;
 
-	using Vec2f = Vector<float,2>;
-	using Vec3f = Vector<float,3>;
+		// Constructors
+		Vec3() = default;
+		constexpr explicit Vec3(T _x)
+		{
+			m_x = _x;
+			m_y = _x;
+			m_z = _x;
+		}
+		constexpr Vec3(T _x, T _y, T _z)
+		{
+			m_x = _x;
+			m_y = _y;
+			m_z = _z;
+		}
 
-	using Vec2i = Vector<int32_t,2>;
-	using Vec3i = Vector<int32_t,3>;
+		// Assignment and copy construction
+		constexpr Vec3(const Vec3<T>& other)
+		{
+			m_x = other.m_x;
+			m_y = other.m_y;
+			m_z = other.m_z;
+		}
 
-	using Vec2u = Vector<uint32_t,2>;
-	using Vec3u = Vector<uint32_t,3>;
+		auto& operator=(const Vec3<T>& other)
+		{
+			m_x = other.m_x;
+			m_y = other.m_y;
+			m_z = other.m_z;
+			return *this;
+		}
+		
+		auto& operator=(const Vec3<T>& other) volatile
+		{
+			m_x = other.m_x;
+			m_y = other.m_y;
+			m_z = other.m_z;
+			return *this;
+		}
+
+		// Accessors
+		const T& x() const { return m_x; }
+		const T& y() const { return m_y; }
+		const T& z() const { return m_z; }
+		
+		T& x() { return m_x; }
+		T& y() { return m_y; }
+		T& z() { return m_z; }
+	};
+
+	using Vec2f = Vec2<float>;
+	using Vec3f = Vec3<float>;
+
+	using Vec2i = Vec2<int32_t>;
+	using Vec3i = Vec3<int32_t>;
+
+	using Vec2u = Vec2<uint32_t>;
+	using Vec3u = Vec3<uint32_t>;
 
 	using Vec2p8 = Vec2<intp8>;
 	using Vec3p8 = Vec3<intp8>;
@@ -118,9 +163,9 @@ namespace math {
 	}
 
 	template<class T>
-	constexpr inline Vec2<T> cross(const Vec2<T>& a, const Vec2<T>&b)
+	constexpr inline auto cross(const Vec2<T>& a, const Vec2<T>&b)
 	{
-		return Vec2<T>(a.x()*b.y() - a.y()*b.x());
+		return a.x()*b.y() - a.y()*b.x();
 	}
 
 	template<class T, class K>

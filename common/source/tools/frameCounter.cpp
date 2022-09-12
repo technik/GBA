@@ -25,12 +25,12 @@ void FrameCounter::render(TextSystem& text)
 {
 	// Separate digits
 	auto fps = count();
-	auto fps100 = fps/100;
+	uint8_t fps100 = uint8_t(fps/100);
 	fps -= 100*fps100;
-	auto fps10 = fps/10;
+	uint8_t fps10 = (fps/10);
 	fps -= fps10 * 10;
 
-	uint8_t counter[kNumDigits] = {fps100, fps10, fps};
+	uint8_t counter[kNumDigits] = {fps100, fps10, uint8_t(fps)};
 
 	// Draw frame rate indicator
 	text.writeNumbers(counter, m_DigitSprites, kNumDigits);

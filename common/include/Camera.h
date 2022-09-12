@@ -38,20 +38,23 @@ struct Camera
 	}
 
 	// Returns x in screen space, depth as y and invDepth as z
-	math::Vec3p8 projectWorldPos(math::Vec2p8 worldPos) const
+	math::Vec3p8 projectWorldPos2D(const math::Vec2p8& worldPos) const
 	{
 		// Transform position to camera space
-		math::Vec2p8 relPos = worldPos - math::Vec2p8(m_pose.pos.x(), m_pose.pos.y());
-		math::Vec2p8 viewSpace;
-		viewSpace.x() = (relPos.x() * m_pose.cosf + relPos.y() * m_pose.sinf).cast<8>();
-		viewSpace.y() = (relPos.y() * m_pose.cosf - relPos.x() * m_pose.sinf).cast<8>();
+		auto camX = m_pose.pos.x();
+		auto camY = m_pose.pos.y();
+		math::Vec2p8 relPos;
+		relPos.x() = worldPos.x() - camX;
+		relPos.y() = worldPos.y() - camY;
+		math::Vec2p12 viewSpace;
+		viewSpace.x() = (relPos.x() * m_pose.cosf + relPos.y() * m_pose.sinf).cast<12>();
+		viewSpace.y() = (relPos.y() * m_pose.cosf - relPos.x() * m_pose.sinf).cast<12>();
 		// Project x onto the screen
-		// invDepth is actually tg(fov_y/2) / depth
-		math::intp8 invDepth = viewSpace.y().raw ? math::intp8(2) / viewSpace.y() : math::intp8(0);
+		math::intp12 invDepth = viewSpace.y().raw ? math::intp12(1) / viewSpace.y() : math::intp12(0);
 		math::Vec3p8 result;
-		result.x() = (viewSpace.x() * invDepth).cast<8>() * m_halfClipHeight + m_halfClipWidth;
-		result.y() = viewSpace.y();
-		result.z() = invDepth;
+		result.x() = (viewSpace.x() * invDepth + 1).cast<8>() * m_halfClipWidth;
+		result.y() = viewSpace.y().cast<8>();
+		result.z() = invDepth.cast<8>();
 		return result;
 	}
 

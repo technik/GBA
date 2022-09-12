@@ -34,7 +34,7 @@ void PostCameraState(
 void m7_hbl_c()
 {
 	auto vCount = IO::VCOUNT::Value();
-	if(vCount >= 160 | vCount < 80)
+	if(vCount >= 160 || vCount < 80)
 		return;
 
 	setBg2AffineTx(vCount+1);
@@ -44,7 +44,7 @@ void setBg2AffineTx(uint16_t vCount)
 {
 #ifdef GBA
 	constexpr int32_t scanlineOffset = ScreenHeight/2;
-	constexpr int32_t scanlineRange = ScreenHeight-scanlineOffset;
+	//constexpr int32_t scanlineRange = ScreenHeight-scanlineOffset;
 	// Using tg(y) = 0.5, vertical field of view ~= 53.13 deg.
 	// d = (z * VRes/2) / ((vCount-VRes/2)*tgy)
 	// d = (z * VRes/2) / ((vCount-VRes/2)*0.5)

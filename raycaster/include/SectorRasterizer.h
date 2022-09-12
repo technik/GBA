@@ -15,6 +15,8 @@ extern "C"
 class SectorRasterizer
 {
 public:
+    using DisplayMode = Mode5Display;
+
     static void Init();
     static void RenderWorld(const Camera& cam);
 
@@ -23,6 +25,4 @@ public:
 
 private:
     static void RenderWall();
-
-    using DisplayMode = Mode5Display;
 };

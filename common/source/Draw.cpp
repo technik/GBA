@@ -31,9 +31,9 @@ void rasterTriangle(uint16_t* dst, Vec2i scissor, uint16_t color, const math::Ve
 		{
 			p.x() = intp8(x) + 0.5_p8;
 			
-			if(cross(p-v[0],e0).raw > 0)
-				if(cross(p-v[1],e1).raw > 0)
-					if(cross(p-v[2],e2).raw > 0)
+			if(cross(p-v[0],e0) > 0)
+				if(cross(p-v[1],e1) > 0)
+					if(cross(p-v[2],e2) > 0)
 						dst[x+y*scissor.x()] = color;
 		}
 	}

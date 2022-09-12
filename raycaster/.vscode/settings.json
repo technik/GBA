@@ -73,7 +73,14 @@
 		"xmemory": "cpp",
 		"xstring": "cpp",
 		"xtree": "cpp",
-		"random": "cpp"
+		"random": "cpp",
+		"deque": "cpp",
+		"functional": "cpp",
+		"numeric": "cpp",
+		"queue": "cpp",
+		"semaphore": "cpp",
+		"memory_resource": "cpp",
+		"string_view": "cpp"
 	},
 	"compiler-explorer.url": "http://localhost:10240/", // url of the compiler explorer you want to use.
 	"compiler-explorer.compiler": "devkitARM-g++", // Compiler code - See help below.

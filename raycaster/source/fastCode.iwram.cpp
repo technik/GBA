@@ -18,7 +18,7 @@ extern "C" {
 
 using namespace math;
 
-extern uint8_t g_worldMap[kMapRows * kMapCols] = {
+uint8_t g_worldMap[kMapRows * kMapCols] = {
 	1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1,
 	1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
 	1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1,
@@ -42,17 +42,17 @@ void Mode4Renderer::yDLine(uint16_t* backBuffer, unsigned x, unsigned drawStart,
 {
     constexpr unsigned stride = Mode4Display::Width/2;
 	// Draw ceiling
-	for(int i = 0; i < drawStart; ++i)
+	for(unsigned i = 0; i < drawStart; ++i)
 	{
 		backBuffer[x + i*stride] = 1|(1<<8); // Sky color
 	}
 	// Draw wall
-	for(int i = drawStart; i < drawEnd; ++i)
+	for(unsigned i = drawStart; i < drawEnd; ++i)
 	{
 		backBuffer[x + i*stride] = worldColor; // Wall color
 	}
 	// Draw ground
-	for(int i = drawEnd; i < Mode4Display::Height; ++i)
+	for(unsigned i = drawEnd; i < Mode4Display::Height; ++i)
 	{
 		backBuffer[x + i*stride] = 2|(2<<8); // Ground color
 	}
@@ -129,7 +129,7 @@ void Mode4Renderer::RenderWorld(const Camera& cam)
 		if(drawEnd > Mode4Display::Height) drawEnd = Mode4Display::Height;
 
 		// Wall textures
-		Vec3p8 hitPoint = cam.m_pose.pos + Vec3p8{ (hitDistance * rayDir.x()).cast<8>(), (hitDistance * rayDir.y()).cast<8>() };
+		Vec2p8 hitPoint = Vec2p8(cam.m_pose.pos.x(), cam.m_pose.pos.y()) + Vec2p8((hitDistance * rayDir.x()).cast<8>(), (hitDistance * rayDir.y()).cast<8>());
 		int texX = ((side ? hitPoint.x() : hitPoint.y()).raw >> 4) & 0xf;
 
 		auto texClr = side ? wallDColorDark : wallDColorLight;
