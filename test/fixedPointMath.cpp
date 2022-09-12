@@ -36,10 +36,6 @@ void testLinearMath()
 
 bool clipWall(Vec2p8& v0, Vec2p8& v1)
 {
-	// Clip backfaces
-	if (v0.x() >= v1.x())
-		return false;
-
 	// Clip behind the view. TODO: Support a non-zero near clip
 	if (v0.y() <= 0 && v1.y() <= 0)
 		return false;
@@ -73,14 +69,25 @@ bool clipWall(Vec2p8& v0, Vec2p8& v1)
 
 void testClip()
 {
-	Vec2p8 A;
-	A.m_x.raw = 1780;
-	A.m_y.raw = -86;
-	Vec2p8 B;
-	B.m_x.raw = 1133;
-	B.m_y.raw = 239;
+	// Fully in front
+	Vec2p8 A = Vec2p8(-1_p8, 1_p8);
+	Vec2p8 B = Vec2p8(1_p8, 1_p8);
+	assert(clipWall(A, B));
 
+	// Fully behind
+	A = Vec2p8(-1_p8, -1_p8);
+	B = Vec2p8(1_p8, -1_p8);
 	assert(!clipWall(A, B));
+
+	// Right side
+	A = Vec2p8(1_p8, 1_p8);
+	B = Vec2p8(1_p8, -1_p8);
+	assert(clipWall(A, B));
+
+	// Left side
+	A = Vec2p8(-1_p8, -1_p8);
+	B = Vec2p8(-1_p8, 1_p8);
+	assert(clipWall(A, B));
 }
 
 int main()

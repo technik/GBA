@@ -45,7 +45,7 @@ namespace math
 		{
 			raw = Store(x<<shift);
 		}
-		constexpr explicit Fixed(float x) : raw(x * (1<<shift)) {}
+		constexpr explicit Fixed(float x) : raw(Store(x * (1<<shift))) {}
 		FORCE_INLINE constexpr Fixed(const math::Fixed<Store,Shift>& _other)
 		{
 			raw = _other.raw;
@@ -438,13 +438,13 @@ namespace math
 	using intp16 = Fixed<int32_t,16>;
 	using intp24 = Fixed<int32_t,24>;
 
-	consteval intp8 operator""_p8(long double x) { return intp8(float(x)); }
-	consteval intp8 operator""_p8(unsigned long long x) { return intp8(long(x)); }
-	consteval intp12 operator""_p12(long double x) { return intp12(float(x)); }
-	consteval intp12 operator""_p12(unsigned long long x) { return intp12(long(x)); }
-	consteval intp16 operator""_p16(long double x) { return intp16(float(x)); }
-	consteval intp16 operator""_p16(unsigned long long x) { return intp16(long(x)); }
-	consteval intp24 operator""_p24(long double x) { return intp24(float(x)); }
-	consteval intp24 operator""_p24(unsigned long long x) { return intp24(long(x)); }
+	CONSTEVAL intp8 operator""_p8(long double x) { return intp8(float(x)); }
+	CONSTEVAL intp8 operator""_p8(unsigned long long x) { return intp8(long(x)); }
+	CONSTEVAL intp12 operator""_p12(long double x) { return intp12(float(x)); }
+	CONSTEVAL intp12 operator""_p12(unsigned long long x) { return intp12(long(x)); }
+	CONSTEVAL intp16 operator""_p16(long double x) { return intp16(float(x)); }
+	CONSTEVAL intp16 operator""_p16(unsigned long long x) { return intp16(long(x)); }
+	CONSTEVAL intp24 operator""_p24(long double x) { return intp24(float(x)); }
+	CONSTEVAL intp24 operator""_p24(unsigned long long x) { return intp24(long(x)); }
 
 } // namespace math

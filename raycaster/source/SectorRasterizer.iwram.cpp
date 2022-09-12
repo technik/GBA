@@ -44,19 +44,15 @@ Vec2p8 worldToViewSpace(const Pose& camPose, const Vec2p8& worldPos)
 // Returns whether the wall is visible.
 bool clipWall(Vec2p8& v0, Vec2p8& v1)
 {
-	// Clip backfaces
-	if(v0.x() >= v1.x())
-		return false;
-	
 	// Clip behind the view. TODO: Support a non-zero near clip
-	if(v0.y() <= 0 && v1.y() <= 0)
+	if (v0.y() <= 0 && v1.y() <= 0)
 		return false;
 
 	// Early out for no clipping
-	if(v0.y() > 0 && v1.y() > 0)
+	if (v0.y() > 0 && v1.y() > 0)
 		return true;
 
-	if(v0.y() == v1.y()) // Nothing to clip here, the plane is parallel to the y=0 plane, so it can't intersect it.
+	if (v0.y() == v1.y()) // Nothing to clip here, the plane is parallel to the y=0 plane, so it can't intersect it.
 		return true;
 
 	intp8 dX = v1.x() - v0.x();
@@ -64,13 +60,13 @@ bool clipWall(Vec2p8& v0, Vec2p8& v1)
 	intp12 denom = (v1.y() - v0.y()).cast<12>();
 	intp12 num = -(dX * yRef).cast<12>();
 
-	if(v0.y() < 0)
+	if (v0.y() < 0)
 	{
 		v0.x() = v0.x() + (num / denom).cast<8>();
 		v0.y() = 0_p8;
 	}
-	
-	if(v1.y() < 0)
+
+	if (v1.y() < 0)
 	{
 		v1.x() = v1.x() + (num / denom).cast<8>();
 		v1.y() = 0_p8;
