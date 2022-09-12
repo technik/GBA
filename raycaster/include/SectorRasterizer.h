@@ -6,6 +6,7 @@
 #include <Display.h>
 #include <Camera.h>
 #include <vector.h>
+#include <Color.h>
 
 extern "C"
  {
@@ -24,5 +25,5 @@ public:
     static inline uint16_t fillClr2 = BasicColor::Red.raw;
 
 private:
-    static void RenderWall();
+    static void RenderWall(const Camera& cam, const math::Vec2p8& A, const math::Vec2p8& B, Color clr);
 };

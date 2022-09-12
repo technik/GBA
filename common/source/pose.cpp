@@ -29,11 +29,17 @@ void FPSController::update()
 void CharacterController::update()
 {
 	Vec3p8 dir = {};
-	// left/right : strafe
-	//dir.x() = horSpeed * (Keypad::Held(Keypad::RIGHT) - Keypad::Held(Keypad::LEFT));
+	// left/right : strafe/rotate
+	if(Keypad::Held(Keypad::L))
+	{
+		dir.x() = horSpeed * (Keypad::Held(Keypad::RIGHT) - Keypad::Held(Keypad::LEFT));
+	}
+	else
+	{
+		m_pose.phi += (angSpeed*(Keypad::Held(Keypad::LEFT) - Keypad::Held(Keypad::RIGHT))).cast<16>();
+	}
 	// up/down : forward/back
 	dir.y() = horSpeed * (Keypad::Held(Keypad::UP) - Keypad::Held(Keypad::DOWN));
-	m_pose.phi += (angSpeed*(Keypad::Held(Keypad::LEFT) - Keypad::Held(Keypad::RIGHT))).cast<16>();
 
 	Vec2p8 disp;
 	disp.x() = (dir.x() * m_pose.cosf - dir.y() * m_pose.sinf).cast<8>();
