@@ -19,12 +19,19 @@ extern "C" {
 using namespace math;
 using namespace gfx;
 
+//Vec2p8 vertices[] = {
+//	{ 1_p8, 6_p8 },
+//	{ 4_p8, 6_p8 },
+//	{ 5_p8, 0_p8 },
+//	{ 3_p8, 0_p8 },
+//	{ 1_p8, 6_p8 },
+//};
+
 Vec2p8 vertices[] = {
-	{ 1_p8, 6_p8 },
-	{ 4_p8, 6_p8 },
-	{ 5_p8, 0_p8 },
-	{ 3_p8, 0_p8 },
-	{ 1_p8, 6_p8 },
+	{ -10_p8, 10_p8 },
+	{  10_p8, 10_p8 },
+	{  10_p8,-10_p8 },
+	{ -10_p8,-10_p8 }
 };
 
 Vec2p8 worldToViewSpace(const Pose& camPose, const Vec2p8& worldPos)
@@ -38,6 +45,17 @@ Vec2p8 worldToViewSpace(const Pose& camPose, const Vec2p8& worldPos)
 	viewSpace.y() = (relPos.y() * camPose.cosf - relPos.x() * camPose.sinf).cast<8>();
 
 	return viewSpace;
+}
+
+// Returns x in screen space, invDepth as y
+Vec2p8 viewToClipSpace(const Vec2p8& viewSpace, int halfScreenWidth)
+{
+	// Project x onto the screen
+	intp12 invDepth = viewSpace.y().raw ? (1_p12 / viewSpace.y().cast<12>()) : 0_p12;
+	Vec2p8 result;
+	result.x() = (viewSpace.x() * invDepth + 1).cast<8>() * halfScreenWidth;
+	result.y() = invDepth.cast<8>();
+	return result;
 }
 
 // Clips a wall that's already in view space.
@@ -88,7 +106,7 @@ void SectorRasterizer::RenderWorld(const Camera& cam)
 	RenderWall(cam, vertices[0], vertices[1], BasicColor::Green);
 	RenderWall(cam, vertices[1], vertices[2], BasicColor::DarkGreen);
 	RenderWall(cam, vertices[2], vertices[3], BasicColor::LightGrey);
-	RenderWall(cam, vertices[3], vertices[4], BasicColor::Yellow);
+	RenderWall(cam, vertices[3], vertices[0], BasicColor::Yellow);
 }
 
 void SectorRasterizer::RenderWall(const Camera& cam, const Vec2p8& A, const Vec2p8& B, Color wallClr)
@@ -102,8 +120,8 @@ void SectorRasterizer::RenderWall(const Camera& cam, const Vec2p8& A, const Vec2
 		return; // Early out on clipped walls
 
 	// Draw a wall
-	Vec3p8 ssA = cam.projectWorldPos2D(A);
-	Vec3p8 ssB = cam.projectWorldPos2D(B);
+	Vec2p8 ssA = viewToClipSpace(vsA, DisplayMode::Width/2);
+	Vec2p8 ssB = viewToClipSpace(vsB, DisplayMode::Width/2);
 
 	// No intersection with the view frustum
 	int32_t x0 = ssA.x().floor();
@@ -113,8 +131,8 @@ void SectorRasterizer::RenderWall(const Camera& cam, const Vec2p8& A, const Vec2
 		return;
 	}
 
-	intp8 h0 = int32_t(DisplayMode::Height/2) * ssA.z();
-	intp8 h1 = int32_t(DisplayMode::Height/2) * ssB.z();
+	intp8 h0 = int32_t(DisplayMode::Height/2) * ssA.y();
+	intp8 h1 = int32_t(DisplayMode::Height/2) * ssB.y();
 	intp8 m = (h0-h1) / (x1-x0);
 	
 	x1 = std::min<int32_t>(x1, DisplayMode::Width-1);

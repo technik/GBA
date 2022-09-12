@@ -69,9 +69,17 @@ bool clipWall(Vec2p8& v0, Vec2p8& v1)
 
 void testClip()
 {
+	Vec2p8 A;
+	A.m_x.raw = -3684;
+	A.m_y.raw = -591;
+	Vec2p8 B;
+	B.m_x.raw = 232;
+	B.m_y.raw = 2705;
+	assert(clipWall(A, B));
+
 	// Fully in front
-	Vec2p8 A = Vec2p8(-1_p8, 1_p8);
-	Vec2p8 B = Vec2p8(1_p8, 1_p8);
+	A = Vec2p8(-1_p8, 1_p8);
+	B = Vec2p8(1_p8, 1_p8);
 	assert(clipWall(A, B));
 
 	// Fully behind
