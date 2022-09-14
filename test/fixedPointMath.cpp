@@ -40,28 +40,57 @@ bool clipWall(Vec2p8& v0, Vec2p8& v1)
 	if (v0.y() <= 0 && v1.y() <= 0)
 		return false;
 
-	// Early out for no clipping
-	if (v0.y() > 0 && v1.y() > 0)
-		return true;
-
-	if (v0.y() == v1.y()) // Nothing to clip here, the plane is parallel to the y=0 plane, so it can't intersect it.
-		return true;
-
-	intp8 dX = v1.x() - v0.x();
-	intp8 yRef = v0.y();
-	intp12 denom = (v1.y() - v0.y()).cast<12>();
-	intp12 num = -(dX * yRef).cast<12>();
-
-	if (v0.y() < 0)
+	// Clip against the y=0 line
+	if ((v0.y() < 0 || v1.y() < 0) && !(v0.y() == v1.y())) // Skip walls fully positive or parallel to y=0
 	{
-		v0.x() = v0.x() + (num / denom).cast<8>();
-		v0.y() = 0_p8;
+		intp8 dX = v1.x() - v0.x();
+		intp8 yRef = v0.y();
+		intp12 denom = (v1.y() - v0.y()).cast<12>();
+		intp12 num = -(dX * yRef).cast<12>();
+
+		if (v0.y() < 0)
+		{
+			v0.x() = v0.x() + (num / denom).cast<8>();
+			v0.y() = 0_p8;
+		}
+
+		if (v1.y() < 0)
+		{
+			v1.x() = v1.x() + (num / denom).cast<8>();
+			v1.y() = 0_p8;
+		}
 	}
 
-	if (v1.y() < 0)
+	// Clip back facing walls
+	if (v0.x() * v1.y() > v1.x() * v0.y())
+		return false;
+
+	// Clip against the frustum sides
+	// Assuming tg(fov_x/2) = 0.5
+	intp8 dx = v1.x() - v0.x();
+	intp8 dy = v1.y() - v0.y();
+	if(dx == 0_p8)
 	{
-		v1.x() = v1.x() + (num / denom).cast<8>();
-		v1.y() = 0_p8;
+		intp8 yMin = 2 * abs(v0.x());
+		v0.y() = max(v0.y(), yMin);
+		v1.y() = max(v1.y(), yMin);
+	}
+	else
+	{
+		intp8 xMin = -v0.y() / 2;
+		if (v0.x() < xMin)
+		{
+			auto d = ((xMin - v0.x()) * dy) / dx.cast<16>();
+			v0.y() = v0.y() + d.cast<8>();
+			v0.x() = xMin;
+		}
+		intp8 xMax = v1.y() / 2;
+		if (v1.x() > xMax)
+		{
+			auto d = ((xMax - v0.x()) * dy) / dx.cast<16>();
+			v1.y() = v1.y() + d.cast<8>();
+			v1.x() = xMax;
+		}
 	}
 
 	return true;
@@ -81,21 +110,33 @@ void testClip()
 	A = Vec2p8(-1_p8, 1_p8);
 	B = Vec2p8(1_p8, 1_p8);
 	assert(clipWall(A, B));
+	A = Vec2p8(-1_p8, 1_p8);
+	B = Vec2p8(1_p8, 1_p8);
+	assert(!clipWall(B, A)); // Backface
 
 	// Fully behind
 	A = Vec2p8(-1_p8, -1_p8);
 	B = Vec2p8(1_p8, -1_p8);
 	assert(!clipWall(A, B));
+	A = Vec2p8(-1_p8, -1_p8);
+	B = Vec2p8(1_p8, -1_p8);
+	assert(!clipWall(B, A)); // Backface
 
 	// Right side
 	A = Vec2p8(1_p8, 1_p8);
 	B = Vec2p8(1_p8, -1_p8);
 	assert(clipWall(A, B));
+	A = Vec2p8(1_p8, 1_p8);
+	B = Vec2p8(1_p8, -1_p8);
+	assert(!clipWall(B, A)); // Backface
 
 	// Left side
 	A = Vec2p8(-1_p8, -1_p8);
 	B = Vec2p8(-1_p8, 1_p8);
 	assert(clipWall(A, B));
+	A = Vec2p8(-1_p8, -1_p8);
+	B = Vec2p8(-1_p8, 1_p8);
+	assert(!clipWall(B, A)); // Backface
 }
 
 int main()
