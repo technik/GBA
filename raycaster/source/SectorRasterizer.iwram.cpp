@@ -34,23 +34,26 @@ Vec2p8 vertices[] = {
 // TODO: Optimize this with a LUT to avoid the BIOS call
 intp16 fastAtan2(intp8 x, intp8 y)
 {
-	// Determines the final atan's sign
-	int sign = sgn(x.raw*y.raw);
-	// Map to the first quadrant
-	int x1 = abs(x.raw);
-	int y1 = y.raw;
-	// Map angle to the [0,Pi/4] range.
-	int atan16;
-	if(x1>=y1)
+	// Map angle to the first quadrant
+	intp8 x1 = abs(x);
+	intp8 y1 = abs(y);
+
+	// Note: ArcTan takes a .14 fixed argument. To get the best precision, we perform the division shifts manually
+	intp16 atan16;
+	if (x1 >= abs(y1)) // Lower half of Q1, upper half of Q4
 	{
-		atan16 = ArcTan((x1<<14)/y1);
-	} else
-	{
-		atan16 = (1<<12) - ArcTan((y1<<8)/x1);
+		// .14f = ( .8f << 14 ) / .8f
+		int ratio = ((y.raw << 14) / x1.raw); // Note we used y with sign to get both the tangent of the first and second quadrants correctly
+		atan16 = intp16::castFromShiftedInteger<16>(ArcTan(ratio));
 	}
-	return (x.raw >= 0) ?
-		intp16::castFromShiftedInteger<16>(atan16) : 
-		0.5_p16 - intp16::castFromShiftedInteger<16>(atan16);
+	else // Upper half of Q1, lower half of Q4
+	{
+		// .14f = ( .8f << 14 ) / .8f
+		int ratio = ((x1.raw << 14) / y1.raw);
+		atan16 = 0.25_p16 - intp16::castFromShiftedInteger<16>(ArcTan(ratio));
+		atan16 = y > 0 ? atan16 : -atan16;
+	}
+	return (x.raw >= 0) ? atan16 : 0.5_p16 - atan16;
 }
 
 Vec2p8 worldToViewSpace(const Pose& camPose, const Vec2p8& worldPos)

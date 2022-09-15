@@ -34,7 +34,9 @@ inline int min(int a, int b)
 
 inline int16_t ArcTan(int16_t x)
 {
-	return int16_t(8192 * (4 * atan(float(x) / (1 << 14))/ (std::numbers::pi)));
+	float arg = float(x) / (1 << 14);
+	float rev = atan(arg) / (2 * std::numbers::pi);
+	return int16_t(8192 * 8 * rev);
 }
 
 //! Look-up a sine value (2&#960; = 0x10000)

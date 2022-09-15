@@ -9,24 +9,26 @@ using namespace math;
 // TODO: Optimize this with a LUT to avoid the BIOS call
 intp16 fastAtan2(intp8 x, intp8 y)
 {
-	// Determines the final atan's sign
-	int sign = sgn(x.raw * y.raw);
-	// Map to the first quadrant
-	int x1 = abs(x.raw);
-	int y1 = y.raw;
-	// Map angle to the [0,Pi/4] range.
-	int atan16;
-	if (x1 >= y1)
+	// Map angle to the first quadrant
+	intp8 x1 = abs(x);
+	intp8 y1 = abs(y);
+
+	// Note: ArcTan takes a .14 fixed argument. To get the best precision, we perform the division shifts manually
+	intp16 atan16;
+	if (x1 >= abs(y1)) // Lower half of Q1, upper half of Q4
 	{
-		atan16 = ArcTan((x1 << 14) / y1);
+		// .14f = ( .8f << 14 ) / .8f
+		int ratio = ((y.raw << 14) / x1.raw); // Note we used y with sign to get both the tangent of the first and second quadrants correctly
+		atan16 = intp16::castFromShiftedInteger<16>(ArcTan(ratio));
 	}
-	else
+	else // Upper half of Q1, lower half of Q4
 	{
-		atan16 = (1 << 12) - ArcTan((y1 << 8) / x1);
+		// .14f = ( .8f << 14 ) / .8f
+		int ratio = ((x1.raw << 14) / y1.raw);
+		atan16 = 0.25_p16 - intp16::castFromShiftedInteger<16>(ArcTan(ratio));
+		atan16 = y > 0 ? atan16 : -atan16;
 	}
-	return (x.raw >= 0) ?
-		intp16::castFromShiftedInteger<16>(atan16) :
-		0.5_p16 - intp16::castFromShiftedInteger<16>(atan16);
+	return (x.raw >= 0) ? atan16 : 0.5_p16 - atan16;
 }
 
 void testLinearMath()
@@ -91,8 +93,8 @@ bool clipWall(Vec2p8& v0, Vec2p8& v1)
 		return false;
 
 	// Compute endpoint angles
-	intp16 angle0 = fastAtan2(v0.x(), v0.y());
-	intp16 angle1 = fastAtan2(v1.x(), v1.y());
+	intp16 angle0 = fastAtan2(v0.m_x, v0.m_y);
+	intp16 angle1 = fastAtan2(v1.m_x, v1.m_y);
 
 	// Clip angles to the visible view frustum
 	// Shifting by a quarter revolution gives us the angle to "y", the view direction
@@ -147,12 +149,7 @@ bool clipWall(Vec2p8& v0, Vec2p8& v1)
 void testClip()
 {
 	Vec2p8 A;
-	A.m_x.raw = -3684;
-	A.m_y.raw = -591;
 	Vec2p8 B;
-	B.m_x.raw = 232;
-	B.m_y.raw = 2705;
-	assert(clipWall(A, B));
 
 	// Fully in front
 	A = Vec2p8(-1_p8, 1_p8);
@@ -171,19 +168,19 @@ void testClip()
 	assert(!clipWall(B, A)); // Backface
 
 	// Right side
-	A = Vec2p8(1_p8, 1_p8);
-	B = Vec2p8(1_p8, -1_p8);
+	A = Vec2p8(1_p8, 4_p8);
+	B = Vec2p8(1_p8, -4_p8);
 	assert(clipWall(A, B));
-	A = Vec2p8(1_p8, 1_p8);
-	B = Vec2p8(1_p8, -1_p8);
+	A = Vec2p8(1_p8, 4_p8);
+	B = Vec2p8(1_p8, -4_p8);
 	assert(!clipWall(B, A)); // Backface
 
 	// Left side
-	A = Vec2p8(-1_p8, -1_p8);
-	B = Vec2p8(-1_p8, 1_p8);
+	A = Vec2p8(-1_p8, -4_p8);
+	B = Vec2p8(-1_p8, 4_p8);
 	assert(clipWall(A, B));
-	A = Vec2p8(-1_p8, -1_p8);
-	B = Vec2p8(-1_p8, 1_p8);
+	A = Vec2p8(-1_p8, -4_p8);
+	B = Vec2p8(-1_p8, 4_p8);
 	assert(!clipWall(B, A)); // Backface
 }
 
