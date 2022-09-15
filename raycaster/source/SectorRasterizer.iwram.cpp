@@ -25,10 +25,10 @@ using namespace gfx;
 //};
 
 Vec2p8 vertices[] = {
-	{ -10_p8, 10_p8 },
-	{  10_p8, 10_p8 },
-	{  10_p8,-10_p8 },
-	{ -10_p8,-10_p8 }
+	{ -2_p8, 2_p8 },
+	{  2_p8, 2_p8 },
+	{  2_p8,-2_p8 },
+	{ -2_p8,-2_p8 }
 };
 
 // TODO: Optimize this with a LUT to avoid the BIOS call
@@ -140,6 +140,10 @@ bool clipWall(Vec2p8& v0, Vec2p8& v1)
 
 	if (angle0 <= angle1)
 		return false;
+
+	// Shift to improve numerical precision
+	angle0.raw += 1 << 6;
+	angle1.raw += 1 << 6;
 
 	// Reconstruct clipped vertices
 	auto cos0 = intp12::castFromShiftedInteger<12>(lu_cos(angle0.raw));
