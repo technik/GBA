@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef _WIN32
+#include "imageUtils.h"
+#endif // _WIN32
+
 #include <cstdint>
 #include "vector.h"
 #include "Device.h"
@@ -65,12 +69,16 @@ public:
 
 	void enableSprites()
 	{
+#ifndef _WIN32
 		control = control | (1<<12) | (1<<6);
+#endif
 	}
 
     void flipFrame()
     {
+#ifndef _WIN32
         control = control ^ FrameSelect;
+#endif
     }
 
     uint16_t* backBuffer() const
@@ -80,10 +88,12 @@ public:
 
 	void vSync()
 	{
+#ifndef _WIN32
 		while(vCount > ScreenHeight)
 		{}
 		while(vCount <= ScreenHeight)
 		{}
+#endif
 	}
 
 private:
@@ -171,21 +181,35 @@ public:
 
 	void flip()
 	{
+#ifndef _WIN32
 		DisplayControl::Get().flipFrame();
+#endif
 	}
 
 	void Init()
 	{
+#ifdef _WIN32
+		s_backBuffer.resize(Width, Height);
+#else
 		auto& disp = DisplayControl::Get();
 		disp.SetMode<5,DisplayControl::BG2>();
 		
 		disp.BG2RotScale().a = (Width<<8)/ScreenWidth; // =(160/240.0)<<8
 		disp.BG2RotScale().d = (Height<<8)/ScreenHeight; // =(128/160.0)<<8
+#endif
 	}
 
 	static Color* backBuffer()
 	{
+#ifdef _WIN32
+		return reinterpret_cast<Color*>(&s_backBuffer.at(0, 0));
+#else
 		auto& disp = DisplayControl::Get();
 		return reinterpret_cast<Color*>(disp.backBuffer());
+#endif
 	}
+
+#ifdef _WIN32
+	static inline Image16bit s_backBuffer;
+#endif // _WIN32
 };

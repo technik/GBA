@@ -1,9 +1,6 @@
 //
 // Sector rasterizer code that doesn't need to fit in IWRAM
 //
-extern "C" {
-	#include <tonc.h>
-}
 
 #include <Camera.h>
 #include <raycaster.h>

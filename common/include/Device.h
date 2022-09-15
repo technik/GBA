@@ -148,12 +148,20 @@ namespace DMA
 		// Cancels any pending transfer on this channel
 		void clear()
 		{
+#ifndef _WIN32
 			control = 0; // Clear enable bit
+#endif // _WIN32
 		}
 
 		// Note count is in the number of uint16_t chunks to fill
 		void Fill(uint16_t* dst, const volatile uint16_t src, uint32_t count)
 		{
+#ifdef _WIN32
+			for (int i = 0; i < count; ++i)
+			{
+				dst[i] = src;
+			}
+#else
 			// Stop any previous DMA transfers
 			clear();
 
@@ -164,6 +172,7 @@ namespace DMA
 
 			// Config and dispatch the copy
 			control = uint16_t(ChunkSize::Dma16Bit) | uint16_t(SrcAddrAdjust::Fixed) | uint16_t(TimingMode::Now) | DmaEnable;
+#endif
 		}
 
 		// Note count is in the number of uint32_t chunks to fill

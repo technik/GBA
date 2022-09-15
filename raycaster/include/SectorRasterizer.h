@@ -8,10 +8,11 @@
 #include <vector.h>
 #include <Color.h>
 
-extern "C"
- {
+#ifdef GBA
+extern "C" {
 #include <tonc.h>
 }
+#endif // GBA
 
 class SectorRasterizer
 {

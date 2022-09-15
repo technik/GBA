@@ -40,7 +40,7 @@ struct Color16b
     }
 };
 
-auto img_deleter = [](Color4f* ptr)
+inline auto img_deleter = [](Color4f* ptr)
 {
     stbi_image_free(reinterpret_cast<uint8_t*>(ptr));
 };
@@ -221,7 +221,7 @@ struct PaletteImage8
     bool empty() const { return area() == 0; }
 };
 
-void buildPalette(const RawImage& srcImage, std::vector<uint16_t>& palette)
+inline void buildPalette(const RawImage& srcImage, std::vector<uint16_t>& palette)
 {
     int numPixels = srcImage.area();
 
@@ -239,7 +239,7 @@ void buildPalette(const RawImage& srcImage, std::vector<uint16_t>& palette)
     }
 }
 
-void buildTiles(const RawImage& srcImage, const std::vector<uint16_t>& palette, std::vector<uint8_t>& outTiles)
+inline void buildTiles(const RawImage& srcImage, const std::vector<uint16_t>& palette, std::vector<uint8_t>& outTiles)
 {
     for (int j = 0; j < srcImage.height; j += 8)
     {

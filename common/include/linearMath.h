@@ -7,6 +7,58 @@
 
 #include <base.h>
 
+#ifdef _WIN32
+#include <numbers>
+
+// Mock GBA lib functions
+inline int sgn(int x)
+{
+	return (x >= 0) ? +1 : -1;
+}
+
+inline int sgn3(int x)
+{
+	return (x >> 31) - (-x >> 31);
+}
+
+inline int max(int a, int b)
+{
+	return (a > b) ? (a) : (b);
+}
+
+//! Get the minimum of \a a and \a b
+inline int min(int a, int b)
+{
+	return (a < b) ? (a) : (b);
+}
+
+inline int16_t ArcTan(int16_t x)
+{
+	return int16_t(8192 * atan(float(x) / (1 << 14)));
+}
+
+//! Look-up a sine value (2&#960; = 0x10000)
+/*! \param theta Angle in [0,FFFFh] range
+*	 \return .12f sine value
+*/
+inline int32_t lu_sin(uint32_t theta)
+{
+	float t = float(theta) / 0xffff * std::numbers::pi;
+	return int(sin(t) * (1<<12));
+}
+
+//! Look-up a cosine value (2&#960; = 0x10000)
+/*! \param theta Angle in [0,FFFFh] range
+*	 \return .12f cosine value
+*/
+inline int32_t lu_cos(uint32_t theta)
+{
+	float t = float(theta) / 0xffff * std::numbers::pi;
+	return int(cos(t) * (1 << 12));
+}
+
+#endif // _WIN32
+
 namespace math
 {
 	template<class T>

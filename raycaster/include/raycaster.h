@@ -7,10 +7,11 @@
 #include <Camera.h>
 #include <vector.h>
 
-extern "C"
- {
+#ifdef GBA
+extern "C" {
 #include <tonc.h>
 }
+#endif // GBA
 
 static constexpr int kMapRows = 16;
 static constexpr int kMapCols = 16;

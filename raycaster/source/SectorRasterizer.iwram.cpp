@@ -2,9 +2,6 @@
 // Performance critical code that need to be in IWRAM to keep 
 // Sector rasterizer performance
 //
-extern "C" {
-	#include <tonc.h>
-}
 
 #include <Camera.h>
 #include <raycaster.h>
@@ -146,7 +143,7 @@ bool clipWall(Vec2p8& v0, Vec2p8& v1)
 
 void SectorRasterizer::RenderWorld(const Camera& cam)
 {
-	uint16_t* backbuffer = DisplayControl::Get().backBuffer();
+	uint16_t* backbuffer = (uint16_t*)DisplayMode::backBuffer();
 
 	// Clean the background
 	DMA::Channel0().Fill(&backbuffer[0*DisplayMode::Area/4], fillClr, DisplayMode::Area/4);
@@ -162,7 +159,7 @@ void SectorRasterizer::RenderWorld(const Camera& cam)
 
 void SectorRasterizer::RenderWall(const Camera& cam, const Vec2p8& A, const Vec2p8& B, Color wallClr)
 {
-	uint16_t* backbuffer = DisplayControl::Get().backBuffer();
+	uint16_t* backbuffer = (uint16_t*)DisplayMode::backBuffer();
 
 	auto vsA = worldToViewSpace(cam.m_pose, A);
 	auto vsB = worldToViewSpace(cam.m_pose, B);

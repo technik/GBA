@@ -1,5 +1,10 @@
 #include <raycast.h>
+
+#ifdef GBA
+extern "C" {
 #include <tonc_math.h>
+}
+#endif
 
 using namespace math;
 
