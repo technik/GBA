@@ -38,7 +38,7 @@ intp16 fastAtan2(intp8 x, intp8 y)
 	int sign = sgn(x.raw*y.raw);
 	// Map to the first quadrant
 	int x1 = abs(x.raw);
-	int y1 = abs(y.raw);
+	int y1 = y.raw;
 	// Map angle to the [0,Pi/4] range.
 	int atan16;
 	if(x1>=y1)
@@ -48,7 +48,9 @@ intp16 fastAtan2(intp8 x, intp8 y)
 	{
 		atan16 = (1<<12) - ArcTan((y1<<8)/x1);
 	}
-	return intp16::castFromShiftedInteger<16>(sign > 0 ? atan16 : -atan16);
+	return (x.raw >= 0) ?
+		intp16::castFromShiftedInteger<16>(atan16) : 
+		0.5_p16 - intp16::castFromShiftedInteger<16>(atan16);
 }
 
 Vec2p8 worldToViewSpace(const Pose& camPose, const Vec2p8& worldPos)
@@ -116,9 +118,28 @@ bool clipWall(Vec2p8& v0, Vec2p8& v1)
 
 	// Clip angles to the visible view frustum
 	// Shifting by a quarter revolution gives us the angle to "y", the view direction
-	constexpr intp16 clipAngle = 0.5235987755982989_p16;
-	angle0 = min(angle0, 0.25_p16+clipAngle);
-	angle1 = max(angle1, 0.25_p16-clipAngle);
+	constexpr intp16 clipAngle = 0.07379180882521663_p16; // atan(0.5) = fov/2
+	constexpr intp16 leftClip = 0.25_p16 + clipAngle;
+	constexpr intp16 rightClip = 0.25_p16 - clipAngle;
+	if (angle1 > leftClip) // Past the left side of the screen
+	{
+		return false;
+	}
+	else
+	{
+		angle1 = max(rightClip, angle1);
+	}
+	if (angle0 < rightClip) // Past the right side of the screen
+	{
+		return false;
+	}
+	else
+	{
+		angle0 = min(leftClip, angle0);
+	}
+
+	if (angle0 <= angle1)
+		return false;
 
 	// Reconstruct clipped vertices
 	auto cos0 = intp12::castFromShiftedInteger<12>(lu_cos(angle0.raw));
@@ -127,8 +148,8 @@ bool clipWall(Vec2p8& v0, Vec2p8& v1)
 	auto sin1 = intp12::castFromShiftedInteger<12>(lu_sin(angle1.raw));
 	
 	intp8 dX = v1.x() - v0.x();
-	intp8 dY = v1.x() - v0.x();
-	intp12 num = (v0.x() * dY -v0.y() * dX).cast<12>();
+	intp8 dY = v1.y() - v0.y();
+	intp12 num = -(v0.x() * dY - v0.y() * dX).cast<12>();
 
 	intp12 h0 = num / (cos0 * dY - sin0 * dX).cast<12>();
 	intp12 h1 = num / (cos1 * dY - sin1 * dX).cast<12>();

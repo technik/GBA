@@ -34,7 +34,7 @@ inline int min(int a, int b)
 
 inline int16_t ArcTan(int16_t x)
 {
-	return int16_t(8192 * atan(float(x) / (1 << 14)));
+	return int16_t(8192 * (4 * atan(float(x) / (1 << 14))/ (std::numbers::pi)));
 }
 
 //! Look-up a sine value (2&#960; = 0x10000)
@@ -43,7 +43,7 @@ inline int16_t ArcTan(int16_t x)
 */
 inline int32_t lu_sin(uint32_t theta)
 {
-	float t = float(theta) / 0xffff * std::numbers::pi;
+	float t = float(theta) / 0xffff * (2*std::numbers::pi);
 	return int(sin(t) * (1<<12));
 }
 
@@ -53,7 +53,7 @@ inline int32_t lu_sin(uint32_t theta)
 */
 inline int32_t lu_cos(uint32_t theta)
 {
-	float t = float(theta) / 0xffff * std::numbers::pi;
+	float t = float(theta) / 0xffff * (2 * std::numbers::pi);
 	return int(cos(t) * (1 << 12));
 }
 
