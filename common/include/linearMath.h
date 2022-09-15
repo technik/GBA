@@ -43,8 +43,9 @@ inline int16_t ArcTan(int16_t x)
 */
 inline int32_t lu_sin(uint32_t theta)
 {
-	float t = float(theta) / 0xffff * (2*std::numbers::pi);
-	return int(sin(t) * (1<<12));
+	int16_t t = (theta>>7)&0x1ff; // Emulate the LUT loss of precision
+	float radians = float(t) / (1<<9) * (2 * std::numbers::pi); // Transform to radians
+	return std::floor(sin(radians) * (1<<12));
 }
 
 //! Look-up a cosine value (2&#960; = 0x10000)
@@ -53,8 +54,7 @@ inline int32_t lu_sin(uint32_t theta)
 */
 inline int32_t lu_cos(uint32_t theta)
 {
-	float t = float(theta) / 0xffff * (2 * std::numbers::pi);
-	return int(cos(t) * (1 << 12));
+	return lu_sin(theta + (1 << 14));
 }
 
 #endif // _WIN32

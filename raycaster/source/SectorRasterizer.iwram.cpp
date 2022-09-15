@@ -146,13 +146,13 @@ bool clipWall(Vec2p8& v0, Vec2p8& v1)
 	auto sin0 = intp12::castFromShiftedInteger<12>(lu_sin(angle0.raw));
 	auto cos1 = intp12::castFromShiftedInteger<12>(lu_cos(angle1.raw));
 	auto sin1 = intp12::castFromShiftedInteger<12>(lu_sin(angle1.raw));
-	
+		
 	intp8 dX = v1.x() - v0.x();
 	intp8 dY = v1.y() - v0.y();
-	intp12 num = -(v0.x() * dY - v0.y() * dX).cast<12>();
+	intp8 num = (v0.x() * dY - v0.y() * dX).cast<8>();
 
-	intp12 h0 = num / (cos0 * dY - sin0 * dX).cast<12>();
-	intp12 h1 = num / (cos1 * dY - sin1 * dX).cast<12>();
+	intp8 h0 = num / (cos0 * dY - sin0 * dX).cast<8>();
+	intp8 h1 = num / (cos1 * dY - sin1 * dX).cast<8>();
 
 	v0.x() = (cos0 * h0).cast<8>();
 	v0.y() = (sin0 * h0).cast<8>();
