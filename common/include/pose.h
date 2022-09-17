@@ -21,14 +21,8 @@ struct Pose
 
 	void update()
 	{
-#ifdef GBA
 		cosf = math::intp12::castFromShiftedInteger<12>(lu_cos(phi.raw));
 		sinf = math::intp12::castFromShiftedInteger<12>(lu_sin(phi.raw));
-#else
-		float phiFloat = float(phi.raw) * 2 * std::numbers::pi_v<float>;
-		cosf = math::intp12((float)cos(phiFloat));
-		sinf = math::intp12((float)sin(phiFloat));
-#endif
 	}
 };
 

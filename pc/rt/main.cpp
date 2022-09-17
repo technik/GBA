@@ -25,6 +25,12 @@ int main()
     // Create a camera
     Camera cam(Mode5Display::Width, Mode5Display::Height, Vec3p8(0_p8, 0_p8, 0_p8));
 
+    // Debug test pose
+    cam.m_pose.phi.raw = 39300;
+    cam.m_pose.pos.m_x.raw = -34;
+    cam.m_pose.pos.m_y.raw = -163;
+    cam.m_pose.update();
+
     // Render
     SectorRasterizer::Init();
 
