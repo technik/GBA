@@ -35,13 +35,17 @@ GroupSources(pc pc)
 include_directories(common/include)
 include_directories(pc/include)
 include_directories(raycaster/include)
-add_executable(pcRT pc/rt/main.cpp ${COMMON_FILES} raycaster/source/SectorRasterizer.iwram.cpp raycaster/source/SectorRasterizer.cpp)
+include_directories(raycaster/assets)
+add_executable(pcRT pc/rt/main.cpp ${COMMON_FILES} raycaster/source/SectorRasterizer.iwram.cpp raycaster/source/SectorRasterizer.cpp raycaster/assets/mercury.wad.cpp)
 
 add_executable(lutGenerator tools/lutGenerator/main.cpp)
 set_target_properties(lutGenerator PROPERTIES FOLDER tools)
 
 add_executable(pngToCpp tools/pngToCpp/main.cpp ${COMMON_FILES})
 set_target_properties(pngToCpp PROPERTIES FOLDER tools)
+
+add_executable(wadToCpp tools/wadToCpp/main.cpp ${COMMON_FILES})
+set_target_properties(wadToCpp PROPERTIES FOLDER tools)
 
 ### Tests
 enable_testing()

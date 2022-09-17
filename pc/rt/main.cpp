@@ -10,6 +10,9 @@
 
 #include <../../raycaster/include/SectorRasterizer.h>
 
+// Embedded assets
+#include <mercury.wad.h>
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -17,10 +20,24 @@
 
 using namespace math;
 
+bool loadWAD(const uint32_t* wadData)
+{
+    // Verify WAD format
+    const char* defString = reinterpret_cast<const char*>(wadData);
+    assert(!strncmp(defString, "PWAD", 4));
+    if (strncmp(defString, "PWAD", 4) != 0)
+        return false;
+
+    return true;
+}
+
 int main()
 {
     Mode5Display displayMode; 
     displayMode.Init();
+
+    // Load a WAD map
+    loadWAD(mercury_WAD);
 
     // Create a camera
     Camera cam(Mode5Display::Width, Mode5Display::Height, Vec3p8(0_p8, 0_p8, 0_p8));
