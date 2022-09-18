@@ -57,7 +57,8 @@ bool loadWAD(LevelData& dstLevel, const uint32_t* wadData)
     }
 
     int numVertices = verticesLump.dataSize / sizeof(WAD::Vertex);
-    memcpy(dstLevel.vertices, &byteData[verticesLump.dataOffset], verticesLump.dataSize);
+	DMA::Channel0().Copy((uint32_t*)dstLevel.vertices, (uint32_t*)&byteData[verticesLump.dataOffset], numVertices);
+    //memcpy(dstLevel.vertices, &byteData[verticesLump.dataOffset], verticesLump.dataSize);
 
     // TODO: Scale down vertices to a more reasonable size than the default one in the editor
 
