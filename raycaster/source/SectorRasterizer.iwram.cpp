@@ -236,12 +236,12 @@ bool clipWall(Vec2p8& v0, Vec2p8& v1)
 	return true;
 }
 
-void clear(uint16_t* buffer, uint16_t clr, int area)
+void clear(uint16_t* buffer, uint16_t topClr, uint16_t bottomClr, int area)
 {
-	DMA::Channel0().Fill(&buffer[0 * area / 4], clr, area / 4);
-	DMA::Channel0().Fill(&buffer[1 * area / 4], clr, area / 4);
-	DMA::Channel0().Fill(&buffer[2 * area / 4], clr, area / 4);
-	DMA::Channel0().Fill(&buffer[3 * area / 4], clr, area / 4);
+	DMA::Channel0().Fill(&buffer[0 * area / 4], topClr, area / 4);
+	DMA::Channel0().Fill(&buffer[1 * area / 4], topClr, area / 4);
+	DMA::Channel0().Fill(&buffer[2 * area / 4], bottomClr, area / 4);
+	DMA::Channel0().Fill(&buffer[3 * area / 4], bottomClr, area / 4);
 }
 
 void SectorRasterizer::RenderSubsector(const LevelData& level, uint16_t ssIndex, const Camera& cam)
@@ -313,7 +313,7 @@ void SectorRasterizer::RenderWorld(LevelData& level, const Camera& cam)
 	uint16_t* backbuffer = (uint16_t*)DisplayMode::backBuffer();
 
 	// Clear the background
-	clear(backbuffer, fillClr, DisplayMode::Area);
+	clear(backbuffer, BasicColor::SkyBlue.raw, BasicColor::DarkGreen.raw, DisplayMode::Area);
 
 	// Traverse the BSP (in a random order for now)
 	// Always start at the last node
@@ -346,8 +346,8 @@ void SectorRasterizer::RenderWall(const Camera& cam, const Vec2p8& A, const Vec2
 		return;
 	}
 
-	intp8 h0 = (int32_t(DisplayMode::Width/2) * csA.y()).cast<8>();
-	intp8 h1 = (int32_t(DisplayMode::Width/2) * csB.y()).cast<8>();
+	intp8 h0 = (int32_t(DisplayMode::Width/8) * csA.y()).cast<8>();
+	intp8 h1 = (int32_t(DisplayMode::Width/8) * csB.y()).cast<8>();
 	intp8 m = (h0-h1) / (x1-x0);
 	
 	x1 = std::min<int32_t>(x1, DisplayMode::Width-1);
