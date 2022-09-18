@@ -176,18 +176,25 @@ namespace DMA
 		}
 
 		// Note count is in the number of uint32_t chunks to fill
-		void Fill(uint32_t* dst, const uint32_t* src, uint32_t count)
+		void Fill(uint32_t* dst, const volatile uint32_t src, uint32_t count)
 		{
+#ifdef _WIN32
+			for (int i = 0; i < count; ++i)
+			{
+				dst[i] = src;
+			}
+#else
 			// Stop any previous DMA transfers
 			clear();
 
 			// Set start and end destinations
-			srcAddress = reinterpret_cast<uint32_t>(src);
+			srcAddress = reinterpret_cast<uint32_t>(&src);
 			dstAddress = reinterpret_cast<uint32_t>(dst);
 			wordCount = count;
 
 			// Config and dispatch the copy
 			control = uint16_t(ChunkSize::Dma32Bit) | uint16_t(SrcAddrAdjust::Fixed) | uint16_t(TimingMode::Now) | DmaEnable;
+#endif
 		}
 
 		// Note count is in the number of uint32_t chunks to copy

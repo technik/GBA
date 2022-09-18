@@ -53,9 +53,6 @@ void appendBuffer(std::ostream& cpp, std::ostream& header, const std::string& va
     assert(byteCount % 4 == 0);
     auto dwordCount = byteCount / 4;
 
-    extern const uint32_t fontTileDataSize;
-    extern const uint32_t fontTileData[];
-
     header << "constexpr uint32_t " << variableName << "Size = " << dwordCount << ";\n";
     header << "extern const uint32_t " << variableName << "[];\n\n";
 
@@ -75,7 +72,6 @@ void serializeWAD(const std::vector<uint8_t>& rawData, const std::string& inputF
     auto fileWithoutExtension = inputFile.stem().string();
     auto variableName = fileWithoutExtension + "_WAD";
 
-
     appendBuffer(outCppFile, outHeader, variableName, rawData.data(), rawData.size());
     outCppFile << "\n";
 }
@@ -89,7 +85,9 @@ std::vector<uint8_t> loadRawWAD(std::string_view fileName)
     wadFile.seekg(std::ios_base::beg);
     size -= wadFile.tellg();
 
-    rawData.resize(size);
+    uint32_t alignedSize = 4 * ((size + 3) / 4);
+    assert(alignedSize >= size);
+    rawData.resize(alignedSize, 0);
 
     wadFile.read((char*)rawData.data(), size);
 

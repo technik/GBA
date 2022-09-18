@@ -16,6 +16,7 @@
 using namespace math;
 using namespace gfx;
 
+/*
 //Vec2p8 vertices[] = {
 //	{ 1_p8, 6_p8 },
 //	{ 4_p8, 6_p8 },
@@ -70,13 +71,7 @@ Color edgeClr[] = {
 	BasicColor::Green,
 };
 
-struct SSector
-{
-	int vertex0;
-	int numEdges;
-};
-
-SSector g_sectors[] = {
+SubSector g_sectors[] = {
 	{ 0, 1 },
 	{ 1, 3 },
 	{ 4, 1 },
@@ -87,6 +82,20 @@ SSector g_sectors[] = {
 	{11, 1 },
 	{12, 1 },
 	{14, 4 },
+};*/
+
+Color edgeClr[] = {
+	BasicColor::Red,
+	BasicColor::Orange,
+	BasicColor::Yellow,
+	BasicColor::Green,
+	BasicColor::Blue,
+	BasicColor::Pink,
+	BasicColor::White,
+	BasicColor::LightGrey,
+	BasicColor::MidGrey,
+	BasicColor::DarkGrey,
+	BasicColor::DarkGreen
 };
 
 // TODO: Optimize this with a LUT to avoid the BIOS call
@@ -227,23 +236,74 @@ bool clipWall(Vec2p8& v0, Vec2p8& v1)
 	return true;
 }
 
-void SectorRasterizer::RenderWorld(const Camera& cam)
+void clear(uint16_t* buffer, uint16_t clr, int area)
+{
+	DMA::Channel0().Fill(&buffer[0 * area / 4], clr, area / 4);
+	DMA::Channel0().Fill(&buffer[1 * area / 4], clr, area / 4);
+	DMA::Channel0().Fill(&buffer[2 * area / 4], clr, area / 4);
+	DMA::Channel0().Fill(&buffer[3 * area / 4], clr, area / 4);
+}
+
+void SectorRasterizer::RenderSubsector(const LevelData& level, uint16_t ssIndex, const Camera& cam)
+{
+	constexpr uint16_t FlagTwoSided = 0x04;
+	const WAD::SubSector& subsector = level.subsectors[ssIndex];
+	for (int i = subsector.firstSegment; i < subsector.firstSegment + subsector.segmentCount; ++i)
+	{
+		auto& segment = level.segments[i];
+		auto& lineDef = level.linedefs[segment.linedefNum];
+		if (lineDef.flags & FlagTwoSided)
+			continue; // For now, fully skip portals, as we only support full height walls.
+
+		auto& sector = level.sectors[lineDef.SectorTag];
+		auto& v0 = level.vertices[segment.startVertex];
+		auto& v1 = level.vertices[segment.endVertex];
+
+		auto clrNdx = segment.linedefNum % 8;
+		Vec2p8 A = { intp8::castFromShiftedInteger<8>(v0.x.raw), intp8::castFromShiftedInteger<8>(v0.y.raw) };
+		Vec2p8 B = { intp8::castFromShiftedInteger<8>(v1.x.raw), intp8::castFromShiftedInteger<8>(v1.y.raw) };
+		RenderWall(cam, A, B, edgeClr[clrNdx]);
+	}
+}
+
+void SectorRasterizer::RenderWorld(LevelData& level, const Camera& cam)
 {
 	uint16_t* backbuffer = (uint16_t*)DisplayMode::backBuffer();
 
-	// Clean the background
-	DMA::Channel0().Fill(&backbuffer[0*DisplayMode::Area/4], fillClr, DisplayMode::Area/4);
-	DMA::Channel0().Fill(&backbuffer[1*DisplayMode::Area/4], fillClr, DisplayMode::Area/4);
-	DMA::Channel0().Fill(&backbuffer[2*DisplayMode::Area/4], fillClr, DisplayMode::Area/4);
-	DMA::Channel0().Fill(&backbuffer[3*DisplayMode::Area/4], fillClr, DisplayMode::Area/4);
+	// Clear the background
+	clear(backbuffer, fillClr, DisplayMode::Area);
 
-	for(int sectorNdx = 0; sectorNdx < 10; ++sectorNdx)
+	// Traverse the BSP (in a random order for now)
+	// Always start at the last node
+	std::vector<int16_t> stack;
+	stack.push_back(level.numNodes - 1);
+
+	constexpr uint16_t NodeMask = (1 << 15);
+
+	while (!stack.empty())
 	{
-		auto& sector = g_sectors[sectorNdx];
-		auto lastVtx = sector.vertex0 + sector.numEdges;
-		for(int edge = sector.vertex0; edge < lastVtx; ++edge)
+		auto& node = level.nodes[stack.back()];
+		stack.pop_back();
+
+		// right child
+		if (node.rightChild & NodeMask) // Leaf
 		{
-			RenderWall(cam, vertices[edge], vertices[edge+1], edgeClr[edge]);
+			// Render
+			RenderSubsector(level, node.rightChild & ~NodeMask, cam);
+		}
+		else
+		{
+			stack.push_back(node.rightChild);
+		}
+
+		if (node.leftChild & NodeMask) // Leaf
+		{
+			// Render
+			RenderSubsector(level, node.leftChild & ~NodeMask, cam);
+		}
+		else
+		{
+			stack.push_back(node.leftChild);
 		}
 	}
 }
