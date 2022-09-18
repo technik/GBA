@@ -266,6 +266,48 @@ void SectorRasterizer::RenderSubsector(const LevelData& level, uint16_t ssIndex,
 	}
 }
 
+int32_t side(const WAD::Node& node, const Vec3p8& pos)
+{
+	int32_t relX = pos.m_x.raw - node.x.raw;
+	int32_t relY = pos.m_y.raw - node.y.raw;
+
+	// We just care about the sign, so ignore the shifts
+	int32_t cross = relX * node.dy.raw - relY * node.dx.raw;
+	return cross > 0 ? 0 : 1;
+}
+
+bool insideAABB(const WAD::AABB& aabb, const Vec3p8& pos)
+{
+	return (pos.m_x.raw >= aabb.left.raw)
+		&& (pos.m_x.raw <= aabb.right.raw)
+		&& (pos.m_y.raw <= aabb.top.raw)
+		&& (pos.m_y.raw >= aabb.bottom.raw);
+}
+
+void SectorRasterizer::RenderBSPNode(const LevelData& level, uint16_t nodeIndex, const Camera& cam)
+{
+	constexpr uint16_t NodeMask = (1 << 15);
+	auto& node = level.nodes[nodeIndex];
+
+	if (nodeIndex & NodeMask) // Leaf
+	{
+		// Render
+		RenderSubsector(level, nodeIndex & ~NodeMask, cam);
+		return;
+	}
+	else // Branch
+	{
+		// Traverse back to front
+		int frontChild = side(node, cam.m_pose.pos);
+
+		// Render the node I'm not in first
+		RenderBSPNode(level, node.child[frontChild ^ 1], cam);
+
+		// Then the node I'm in
+		RenderBSPNode(level, node.child[frontChild], cam);
+	}
+}
+
 void SectorRasterizer::RenderWorld(LevelData& level, const Camera& cam)
 {
 	uint16_t* backbuffer = (uint16_t*)DisplayMode::backBuffer();
@@ -275,37 +317,7 @@ void SectorRasterizer::RenderWorld(LevelData& level, const Camera& cam)
 
 	// Traverse the BSP (in a random order for now)
 	// Always start at the last node
-	std::vector<int16_t> stack;
-	stack.push_back(level.numNodes - 1);
-
-	constexpr uint16_t NodeMask = (1 << 15);
-
-	while (!stack.empty())
-	{
-		auto& node = level.nodes[stack.back()];
-		stack.pop_back();
-
-		// right child
-		if (node.rightChild & NodeMask) // Leaf
-		{
-			// Render
-			RenderSubsector(level, node.rightChild & ~NodeMask, cam);
-		}
-		else
-		{
-			stack.push_back(node.rightChild);
-		}
-
-		if (node.leftChild & NodeMask) // Leaf
-		{
-			// Render
-			RenderSubsector(level, node.leftChild & ~NodeMask, cam);
-		}
-		else
-		{
-			stack.push_back(node.leftChild);
-		}
-	}
+	RenderBSPNode(level, level.numNodes - 1, cam);
 }
 
 void SectorRasterizer::RenderWall(const Camera& cam, const Vec2p8& A, const Vec2p8& B, Color wallClr)

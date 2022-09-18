@@ -28,6 +28,9 @@ extern "C"
 #include <SectorRasterizer.h>
 #include <Camera.h>
 
+// Levels
+#include <test.wad.h>
+
 using namespace math;
 using namespace gfx;
 
@@ -158,6 +161,10 @@ int main()
 	MiniMap minimap;
 #endif
 
+    // Load a WAD map
+    LevelData level;
+    loadWAD(level, test_WAD);
+
 	// Unlock the display and start rendering
 	Display().EndBlank();
 	bool vBlank = true;
@@ -178,7 +185,7 @@ int main()
 #endif
 
 		// -- Render --
-		Renderer::RenderWorld(camera);
+		Renderer::RenderWorld(level, camera);
 		frameCounter.render(text);
 
 		timerT2 = Timer1().counter;

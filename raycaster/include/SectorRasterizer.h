@@ -72,8 +72,8 @@ namespace WAD
     {
         math::int8p8 x, y;
         math::int8p8 dx, dy;
-        AABB rightBB, leftBB;
-        uint16_t rightChild, leftChild;
+        AABB aabb[2];
+        uint16_t child[2];
     };
 
     struct Sector
@@ -90,12 +90,12 @@ namespace WAD
 
 struct LevelData
 {
-    static constexpr int32_t MAX_VERTICES = 1024;
-    static constexpr int32_t MAX_LINEDEFS = 1024;
-    static constexpr int32_t MAX_NODES = 512;
-    static constexpr int32_t MAX_SECTORS = 128;
-    static constexpr int32_t MAX_SUBSECTORS = 1024;
-    static constexpr int32_t MAX_SEGMENTS = 1024;
+    static constexpr int32_t MAX_VERTICES = 64;
+    static constexpr int32_t MAX_LINEDEFS = 64;
+    static constexpr int32_t MAX_NODES = 32;
+    static constexpr int32_t MAX_SECTORS = 32;
+    static constexpr int32_t MAX_SUBSECTORS = 64;
+    static constexpr int32_t MAX_SEGMENTS = 64;
 
     int32_t numNodes = 0;
 
@@ -106,6 +106,11 @@ struct LevelData
     WAD::Sector sectors[MAX_SECTORS];
     WAD::SubSector subsectors[MAX_SUBSECTORS];
 };
+
+// Util
+static constexpr size_t LevelDataSize = sizeof(LevelData);
+
+bool loadWAD(LevelData& dstLevel, const uint32_t* wadData);
 
 class SectorRasterizer
 {
@@ -120,5 +125,6 @@ public:
 
 private:
     static void RenderSubsector(const LevelData& level, uint16_t ssIndex, const Camera& cam);
+    static void RenderBSPNode(const LevelData& level, uint16_t nodeIndex, const Camera& cam);
     static void RenderWall(const Camera& cam, const math::Vec2p8& A, const math::Vec2p8& B, Color clr);
 };
