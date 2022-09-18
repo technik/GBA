@@ -90,21 +90,14 @@ namespace WAD
 
 struct LevelData
 {
-    static constexpr int32_t MAX_VERTICES = 64;
-    static constexpr int32_t MAX_LINEDEFS = 64;
-    static constexpr int32_t MAX_NODES = 32;
-    static constexpr int32_t MAX_SECTORS = 32;
-    static constexpr int32_t MAX_SUBSECTORS = 64;
-    static constexpr int32_t MAX_SEGMENTS = 64;
-
     int32_t numNodes = 0;
 
-    WAD::Vertex vertices[MAX_VERTICES];
-    WAD::LineDef linedefs[MAX_LINEDEFS];
-    WAD::Node nodes[MAX_NODES];
-    WAD::Seg segments[MAX_SEGMENTS];
-    WAD::Sector sectors[MAX_SECTORS];
-    WAD::SubSector subsectors[MAX_SUBSECTORS];
+    const WAD::Vertex* vertices;
+    const WAD::LineDef* linedefs;
+    const WAD::Node* nodes;
+    const WAD::Seg* segments;
+    const WAD::Sector* sectors;
+    const WAD::SubSector* subsectors;
 };
 
 // Util
