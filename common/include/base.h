@@ -11,3 +11,9 @@
 #else
 #define CONSTEVAL consteval
 #endif
+
+#ifdef _WIN32
+#define IWRAM_CODE
+#define EWRAM_CODE
+#define IWRAM_DATA
+#endif

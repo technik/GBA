@@ -208,7 +208,7 @@ namespace DMA
 #else
 			// Stop any previous DMA transfers
 			clear();
-#pragma
+
 			// Set start and end destinations
 			srcAddress = reinterpret_cast<uint32_t>(src);
 			dstAddress = reinterpret_cast<uint32_t>(dst);

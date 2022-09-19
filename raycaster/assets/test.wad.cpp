@@ -1,6 +1,12 @@
+#ifndef _WIN32
+#include <tonc.h>
+#else
+#include <base.h>
+#endif
+
 #include "C:\repos\GBA\raycaster\assets\test.wad.h"
 
-extern const uint32_t test_WAD[415] = {
+extern const IWRAM_DATA uint32_t test_WAD[415] = {
 1145132880, 11, 1481, 65536, 1, 0, 131071, 65538,
 0, 4294901761, 196610, 1, 131072, 262143, 65540, 0,
 4294901763, 1048580, 1, 262144, 393215, 65542, 0, 4294901765,

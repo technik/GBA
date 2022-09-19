@@ -40,13 +40,13 @@ bool loadWAD(LevelData& dstLevel, const uint32_t* wadData)
     // Lump directories
     //auto& mapName = directory[0];
     //auto& things = directory[1];
-    //auto& lineDefsLump = directory[2];
+    auto& lineDefsLump = directory[2];
     //auto& sideDefsLump = directory[3];
     auto& verticesLump = directory[4];
-    //auto& segLumps = directory[5];
-    //auto& ssectorLumps = directory[6];
-    //auto& nodeLumps = directory[7];
-    //auto& sectorLumps = directory[8];
+    auto& segLumps = directory[5];
+    auto& ssectorLumps = directory[6];
+    auto& nodeLumps = directory[7];
+    auto& sectorLumps = directory[8];
     //auto& reject = directory[9];
     //auto& blockMap = directory[10];
 
@@ -54,7 +54,7 @@ bool loadWAD(LevelData& dstLevel, const uint32_t* wadData)
     dstLevel.vertices = reinterpret_cast<const WAD::Vertex*>(&byteData[verticesLump.dataOffset]);
 
     // Load line defs
-    /*dstLevel.linedefs = (const WAD::LineDef*)(&byteData[lineDefsLump.dataOffset]);
+    dstLevel.linedefs = (const WAD::LineDef*)(&byteData[lineDefsLump.dataOffset]);
 
     // Load nodes
     dstLevel.numNodes = nodeLumps.dataSize / sizeof(WAD::Node);
@@ -68,6 +68,6 @@ bool loadWAD(LevelData& dstLevel, const uint32_t* wadData)
 
     // Load sectors
     dstLevel.sectors = (const WAD::Sector*)&byteData[sectorLumps.dataOffset];
-*/
+
     return true;
 }

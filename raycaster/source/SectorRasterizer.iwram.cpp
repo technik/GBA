@@ -16,74 +16,6 @@
 using namespace math;
 using namespace gfx;
 
-/*
-//Vec2p8 vertices[] = {
-//	{ 1_p8, 6_p8 },
-//	{ 4_p8, 6_p8 },
-//	{ 5_p8, 0_p8 },
-//	{ 3_p8, 0_p8 },
-//	{ 1_p8, 6_p8 },
-//};
-
-Vec2p8 vertices[] = {
-	{ -3_p8, 3_p8 },
-	{ -2_p8, 3_p8 },
-	{ -1_p8, 2_p8 },
-	{  1_p8, 2_p8 },
-	{  2_p8, 3_p8 },
-	{  3_p8, 3_p8 },
-	{  3_p8,-3_p8 },
-	{  2_p8,-3_p8 },
-	{  1_p8,-2_p8 },
-	{  0_p8,-3_p8 },
-	{ -1_p8,-2_p8 },
-	{ -2_p8,-3_p8 },
-	{ -3_p8,-3_p8 },
-	{ -3_p8, 3_p8 },
-	{ -2.5_p8, 1_p8 },
-	{ -2_p8, 0.5_p8 },
-	{ -1.5_p8, 1_p8 },
-	{ -2_p8, 1.5_p8 },
-	{ -2_p8, 1.5_p8 },
-	{ -2_p8, 1.5_p8 },
-	{ -2_p8, 1.5_p8 }
-};
-
-Color edgeClr[] = {
-	BasicColor::Green,
-	BasicColor::White,
-	BasicColor::MidGrey,
-	BasicColor::White,
-	BasicColor::Green,
-	BasicColor::LightGrey,
-	BasicColor::Blue,
-	BasicColor::Green,
-	BasicColor::DarkGreen,
-	BasicColor::Green,
-	BasicColor::DarkGreen,
-	BasicColor::Blue,
-	BasicColor::MidGrey,
-	BasicColor::Red,
-	BasicColor::Red,
-	BasicColor::Red,
-	BasicColor::Red,
-	BasicColor::Green,
-	BasicColor::Green,
-};
-
-SubSector g_sectors[] = {
-	{ 0, 1 },
-	{ 1, 3 },
-	{ 4, 1 },
-	{ 5, 1 },
-	{ 6, 1 },
-	{ 7, 2 },
-	{ 9, 2 },
-	{11, 1 },
-	{12, 1 },
-	{14, 4 },
-};*/
-
 Color edgeClr[] = {
 	BasicColor::Red,
 	BasicColor::Orange,
@@ -255,7 +187,7 @@ void SectorRasterizer::RenderSubsector(const LevelData& level, uint16_t ssIndex,
 		if (lineDef.flags & FlagTwoSided)
 			continue; // For now, fully skip portals, as we only support full height walls.
 
-		auto& sector = level.sectors[lineDef.SectorTag];
+		//auto& sector = level.sectors[lineDef.SectorTag];
 		auto& v0 = level.vertices[segment.startVertex];
 		auto& v1 = level.vertices[segment.endVertex];
 

@@ -1,9 +1,3 @@
-#
-# Template for projects using grit.
-# 
-# Making gfx into a library in a separate makefile and using that here.
-#
-
 # ---------------------------------------------------------------------
 # SETUP
 # ---------------------------------------------------------------------
@@ -51,8 +45,8 @@ LIBDIRS		:= $(DEVKITPRO)/libtonc
 # --- switches ---
 
 bMB		:= 0	# Multiboot build
-bTEMPS	:= 0	# Save gcc temporaries (.i and .s files)
-bDEBUG2	:= 0	# Generate debug info (bDEBUG2? Not a full DEBUG flag. Yet)
+bTEMPS	:= 1	# Save gcc temporaries (.i and .s files)
+bDEBUG2	:= 1	# Generate debug info (bDEBUG2? Not a full DEBUG flag. Yet)
 
 
 # ---------------------------------------------------------------------
@@ -69,10 +63,10 @@ IARCH   := -mthumb-interwork -marm -mlong-calls
 
 # --- Main flags ---
 
-CFLAGS	:= -mcpu=arm7tdmi -mtune=arm7tdmi $(ARCH) -DGBA -O2
-CFLAGS	+= -Wall
+CFLAGS	:= -mcpu=arm7tdmi -mtune=arm7tdmi -Wno-volatile
+CFLAGS	+= -Wall -DGBA -O2
 CFLAGS	+= $(INCLUDE)
-CFLAGS	+= -fno-strict-aliasing -g
+CFLAGS	+= -g -fno-strict-aliasing
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=c++20
 
@@ -132,6 +126,8 @@ ifeq ($(strip $(CPPFILES)),)
 else
 	export LD	:= $(CXX)
 endif
+
+export ASMFILES := $(CFILES:.c=.asm) $(CPPFILES:.cpp=.asm)
 
 # --- Define object file list ---
 export OFILES	:=									\
