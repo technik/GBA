@@ -78,7 +78,7 @@ namespace WAD
     // Parsed WAD
     struct LevelData
     {
-        int32_t numNodes = 0;
+        uint32_t numNodes = 0;
 
         const WAD::Vertex* vertices;
         const WAD::LineDef* linedefs;

@@ -14,6 +14,8 @@
 
 #include <gfx/palette.h>
 
+#include <test.wad.h>
+
 using namespace math;
 using namespace gfx;
 
@@ -31,58 +33,26 @@ Color edgeClr[] = {
 	BasicColor::DarkGreen
 };
 
-IWRAM_CODE bool loadWAD(LevelData& dstLevel, const uint32_t* wadData)
+IWRAM_CODE bool loadWAD(WAD::LevelData& dstLevel)
 {
-    const uint8_t* byteData = reinterpret_cast<const uint8_t*>(wadData);
-    // Verify WAD format
-    const char* defString = reinterpret_cast<const char*>(wadData);
-    //assert(!strncmp(defString, "PWAD", 4));
-    if (strncmp(defString, "PWAD", 4) != 0)
-        return false;
-
-    auto wadHeader = reinterpret_cast<const WAD::Header*>(wadData);
-
-    auto directory = reinterpret_cast<const WAD::Lump*>(&byteData[wadHeader->dirOffset]);
-
-	WAD::Lump localDir[9];
-	// Get a local copy of the directory to avoid alignment issues
-	auto dirSize = sizeof(WAD::Lump) * 9;
-	for(int i = 0; i < dirSize; ++i)
-	{
-		((uint8_t*)localDir)[i] = byteData[wadHeader->dirOffset + i];
-	}
-
-    // Lump directories
-    //auto& mapName = directory[0];
-    //auto& things = directory[1];
-    auto& lineDefsLump = localDir[2];
-    //auto& sideDefsLump = directory[3];
-    auto& verticesLump = localDir[4];
-    auto& segLumps = localDir[5];
-    auto& ssectorLumps = localDir[6];
-    auto& nodeLumps = localDir[7];
-    auto& sectorLumps = localDir[8];
-    //auto& reject = directory[9];
-    //auto& blockMap = directory[10];
-
     // Load vertex data
-    dstLevel.vertices = reinterpret_cast<const WAD::Vertex*>(&byteData[verticesLump.dataOffset]);
+    dstLevel.vertices = (const WAD::Vertex*)test_WADVertices;
 
     // Load line defs
-    dstLevel.linedefs = (const WAD::LineDef*)(&byteData[lineDefsLump.dataOffset]);
+    dstLevel.linedefs = (const WAD::LineDef*)test_WADLineDefs;
 
     // Load nodes
-    dstLevel.numNodes = nodeLumps.dataSize / sizeof(WAD::Node);
-    dstLevel.nodes = (const WAD::Node*)(&byteData[nodeLumps.dataOffset]);
+    dstLevel.numNodes = (test_WADNodesSize*4) / sizeof(WAD::Node);
+    dstLevel.nodes = (const WAD::Node*)test_WADNodes;
 
     // Load subsectors
-    dstLevel.subsectors = (const WAD::SubSector*)&byteData[ssectorLumps.dataOffset];
+    dstLevel.subsectors = (const WAD::SubSector*)test_WADSubsectors;
 
     // Load segments
-    dstLevel.segments = (const WAD::Seg*)(&byteData[segLumps.dataOffset]);
+    dstLevel.segments = (const WAD::Seg*)test_WADSegments;
 
     // Load sectors
-    dstLevel.sectors = (const WAD::Sector*)&byteData[sectorLumps.dataOffset];
+    dstLevel.sectors = (const WAD::Sector*)test_WADSectors;
 
     return true;
 }
@@ -233,7 +203,7 @@ void clear(uint16_t* buffer, uint16_t topClr, uint16_t bottomClr, int area)
 	DMA::Channel0().Fill(&buffer[3 * area / 4], bottomClr, area / 4);
 }
 
-void SectorRasterizer::RenderSubsector(const LevelData& level, uint16_t ssIndex, const Camera& cam)
+void SectorRasterizer::RenderSubsector(const WAD::LevelData& level, uint16_t ssIndex, const Camera& cam)
 {
 	constexpr uint16_t FlagTwoSided = 0x04;
 	const WAD::SubSector& subsector = level.subsectors[ssIndex];
@@ -273,7 +243,7 @@ bool insideAABB(const WAD::AABB& aabb, const Vec3p8& pos)
 		&& (pos.m_y.raw >= aabb.bottom.raw);
 }
 
-void SectorRasterizer::RenderBSPNode(const LevelData& level, uint16_t nodeIndex, const Camera& cam)
+void SectorRasterizer::RenderBSPNode(const WAD::LevelData& level, uint16_t nodeIndex, const Camera& cam)
 {
 	constexpr uint16_t NodeMask = (1 << 15);
 	auto& node = level.nodes[nodeIndex];
@@ -297,7 +267,7 @@ void SectorRasterizer::RenderBSPNode(const LevelData& level, uint16_t nodeIndex,
 	}
 }
 
-void SectorRasterizer::RenderWorld(LevelData& level, const Camera& cam)
+void SectorRasterizer::RenderWorld(WAD::LevelData& level, const Camera& cam)
 {
 	uint16_t* backbuffer = (uint16_t*)DisplayMode::backBuffer();
 
@@ -306,7 +276,8 @@ void SectorRasterizer::RenderWorld(LevelData& level, const Camera& cam)
 
 	// Traverse the BSP (in a random order for now)
 	// Always start at the last node
-	RenderBSPNode(level, level.numNodes - 1, cam);
+	uint16_t rootNode = uint16_t(level.numNodes) - uint16_t(1);
+	RenderBSPNode(level, rootNode, cam);
 }
 
 void SectorRasterizer::RenderWall(const Camera& cam, const Vec2p8& A, const Vec2p8& B, Color wallClr)

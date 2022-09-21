@@ -27,8 +27,8 @@ int main()
     displayMode.Init();
 
     // Load a WAD map
-    LevelData level;
-    loadWAD(level, test_WAD);
+    WAD::LevelData level;
+    loadWAD(level);
     //loadWAD(mercury_WAD);
 
     // Create a camera

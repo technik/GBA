@@ -162,8 +162,8 @@ int main()
 #endif
 
     // Load a WAD map
-    LevelData level;
-    loadWAD(level, test_WAD);
+    WAD::LevelData level;
+    loadWAD(level);
 
 	// Unlock the display and start rendering
 	Display().EndBlank();
