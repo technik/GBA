@@ -1,5 +1,8 @@
 #pragma once
 
+#ifdef GBA
+#include <tonc.h>
+#endif
 #ifdef _WIN32
 #define FORCE_INLINE
 #elif defined(GBA)
