@@ -103,7 +103,7 @@ struct LevelData
 // Util
 static constexpr size_t LevelDataSize = sizeof(LevelData);
 
-bool loadWAD(LevelData& dstLevel, const uint32_t* wadData);
+IWRAM_CODE bool loadWAD(LevelData& dstLevel, const uint32_t* wadData);
 
 class SectorRasterizer
 {

@@ -4,6 +4,7 @@
 //
 
 #include <Camera.h>
+#include <cstring>
 #include <raycaster.h>
 
 #include <Color.h>
@@ -29,6 +30,62 @@ Color edgeClr[] = {
 	BasicColor::DarkGrey,
 	BasicColor::DarkGreen
 };
+
+IWRAM_CODE bool loadWAD(LevelData& dstLevel, const uint32_t* wadData)
+{
+    const uint8_t* byteData = reinterpret_cast<const uint8_t*>(wadData);
+    // Verify WAD format
+    const char* defString = reinterpret_cast<const char*>(wadData);
+    //assert(!strncmp(defString, "PWAD", 4));
+    if (strncmp(defString, "PWAD", 4) != 0)
+        return false;
+
+    auto wadHeader = reinterpret_cast<const WAD::Header*>(wadData);
+
+    auto directory = reinterpret_cast<const WAD::Lump*>(&byteData[wadHeader->dirOffset]);
+
+	WAD::Lump localDir[9];
+	// Get a local copy of the directory to avoid alignment issues
+	auto dirSize = sizeof(WAD::Lump) * 9;
+	for(int i = 0; i < dirSize; ++i)
+	{
+		((uint8_t*)localDir)[i] = byteData[wadHeader->dirOffset + i];
+	}
+
+    // Lump directories
+    //auto& mapName = directory[0];
+    //auto& things = directory[1];
+    auto& lineDefsLump = localDir[2];
+    //auto& sideDefsLump = directory[3];
+    auto& verticesLump = localDir[4];
+    auto& segLumps = localDir[5];
+    auto& ssectorLumps = localDir[6];
+    auto& nodeLumps = localDir[7];
+    auto& sectorLumps = localDir[8];
+    //auto& reject = directory[9];
+    //auto& blockMap = directory[10];
+
+    // Load vertex data
+    dstLevel.vertices = reinterpret_cast<const WAD::Vertex*>(&byteData[verticesLump.dataOffset]);
+
+    // Load line defs
+    dstLevel.linedefs = (const WAD::LineDef*)(&byteData[lineDefsLump.dataOffset]);
+
+    // Load nodes
+    dstLevel.numNodes = nodeLumps.dataSize / sizeof(WAD::Node);
+    dstLevel.nodes = (const WAD::Node*)(&byteData[nodeLumps.dataOffset]);
+
+    // Load subsectors
+    dstLevel.subsectors = (const WAD::SubSector*)&byteData[ssectorLumps.dataOffset];
+
+    // Load segments
+    dstLevel.segments = (const WAD::Seg*)(&byteData[segLumps.dataOffset]);
+
+    // Load sectors
+    dstLevel.sectors = (const WAD::Sector*)&byteData[sectorLumps.dataOffset];
+
+    return true;
+}
 
 // TODO: Optimize this with a LUT to avoid the BIOS call
 intp16 fastAtan2(intp8 x, intp8 y)
