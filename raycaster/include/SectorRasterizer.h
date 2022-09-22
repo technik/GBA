@@ -32,7 +32,7 @@ public:
     static inline uint16_t fillClr2 = BasicColor::Red.raw;
 
 private:
-    static void RenderSubsector(const WAD::LevelData& level, uint16_t ssIndex, const Camera& cam);
-    static void RenderBSPNode(const WAD::LevelData& level, uint16_t nodeIndex, const Camera& cam);
-    static void RenderWall(const Camera& cam, const math::Vec2p8& A, const math::Vec2p8& B, Color clr);
+    static void RenderSubsector(const WAD::LevelData& level, uint16_t ssIndex, const Camera& cam, math::intp12* depthBuffer);
+    static void RenderBSPNode(const WAD::LevelData& level, uint16_t nodeIndex, const Camera& cam, math::intp12* depthBuffer);
+    static void RenderWall(const Camera& cam, const math::Vec2p8& A, const math::Vec2p8& B, Color clr, math::intp12* depthBuffer);
 };

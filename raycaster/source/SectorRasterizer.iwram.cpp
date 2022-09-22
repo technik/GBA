@@ -220,7 +220,7 @@ void clear(uint16_t* buffer, uint16_t topClr, uint16_t bottomClr, int area)
 	DMA::Channel0().Fill(&buffer[3 * area / 4], bottomClr, area / 4);
 }
 
-void SectorRasterizer::RenderSubsector(const WAD::LevelData& level, uint16_t ssIndex, const Camera& cam)
+void SectorRasterizer::RenderSubsector(const WAD::LevelData& level, uint16_t ssIndex, const Camera& cam, intp12* depthBuffer)
 {
 	constexpr uint16_t FlagTwoSided = 0x04;
 	const WAD::SubSector& subsector = level.subsectors[ssIndex];
@@ -238,7 +238,7 @@ void SectorRasterizer::RenderSubsector(const WAD::LevelData& level, uint16_t ssI
 		auto clrNdx = segment.linedefNum % 8;
 		Vec2p8 A = { intp8::castFromShiftedInteger<8>(v0.x.raw), intp8::castFromShiftedInteger<8>(v0.y.raw) };
 		Vec2p8 B = { intp8::castFromShiftedInteger<8>(v1.x.raw), intp8::castFromShiftedInteger<8>(v1.y.raw) };
-		RenderWall(cam, A, B, edgeClr[clrNdx]);
+		RenderWall(cam, A, B, edgeClr[clrNdx], depthBuffer);
 	}
 }
 
@@ -260,7 +260,7 @@ bool insideAABB(const WAD::AABB& aabb, const Vec3p8& pos)
 		&& (pos.m_y.raw >= aabb.bottom.raw);
 }
 
-void SectorRasterizer::RenderBSPNode(const WAD::LevelData& level, uint16_t nodeIndex, const Camera& cam)
+void SectorRasterizer::RenderBSPNode(const WAD::LevelData& level, uint16_t nodeIndex, const Camera& cam, intp12* depthBuffer)
 {
 	constexpr uint16_t NodeMask = (1 << 15);
 	auto& node = level.nodes[nodeIndex];
@@ -268,19 +268,19 @@ void SectorRasterizer::RenderBSPNode(const WAD::LevelData& level, uint16_t nodeI
 	if (nodeIndex & NodeMask) // Leaf
 	{
 		// Render
-		RenderSubsector(level, nodeIndex & ~NodeMask, cam);
+		RenderSubsector(level, nodeIndex & ~NodeMask, cam, depthBuffer);
 		return;
 	}
 	else // Branch
 	{
-		// Traverse back to front
+		// Traverse front to back
 		int frontChild = side(node, cam.m_pose.pos);
 
 		// Render the node I'm not in first
-		RenderBSPNode(level, node.child[frontChild ^ 1], cam);
+		RenderBSPNode(level, node.child[frontChild], cam, depthBuffer);
 
 		// Then the node I'm in
-		RenderBSPNode(level, node.child[frontChild], cam);
+		RenderBSPNode(level, node.child[frontChild ^ 1], cam, depthBuffer);
 	}
 }
 
@@ -291,13 +291,15 @@ void SectorRasterizer::RenderWorld(WAD::LevelData& level, const Camera& cam)
 	// Clear the background
 	clear(backbuffer, BasicColor::SkyBlue.raw, BasicColor::DarkGreen.raw, DisplayMode::Area);
 
+	intp12 depthBuffer[DisplayMode::Width] = {}; // 1/depth z-buffer.
+
 	// Traverse the BSP (in a random order for now)
 	// Always start at the last node
 	uint16_t rootNode = uint16_t(level.numNodes) - uint16_t(1);
-	RenderBSPNode(level, rootNode, cam);
+	RenderBSPNode(level, rootNode, cam, depthBuffer);
 }
 
-void SectorRasterizer::RenderWall(const Camera& cam, const Vec2p8& A, const Vec2p8& B, Color wallClr)
+void SectorRasterizer::RenderWall(const Camera& cam, const Vec2p8& A, const Vec2p8& B, Color wallClr, math::intp12* depthBuffer)
 {
 	uint16_t* backbuffer = (uint16_t*)DisplayMode::backBuffer();
 
@@ -325,13 +327,20 @@ void SectorRasterizer::RenderWall(const Camera& cam, const Vec2p8& A, const Vec2
 
 	intp8 h0 = (int32_t(DisplayMode::Width/8) * csA.y()).cast<8>();
 	intp8 h1 = (int32_t(DisplayMode::Width/8) * csB.y()).cast<8>();
-	intp8 m = (h0-h1) / (x1-x0);
+	intp8 m = (h0 - h1) / (x1 - x0);
+	intp12 md = (csB.y() - csA.y()) / (x1 - x0);
 	
 	x1 = std::min<int32_t>(x1, DisplayMode::Width-1);
 
 	for(int x = std::max<int32_t>(0,x0); x < x1; ++x)
 	{		
-		int mx = (m*(x-x0)).floor();
+		int mx = (m * (x - x0)).floor();
+		intp12 d = (md*(x-x0)) + csA.y();
+		if (d < depthBuffer[x])
+		{
+			continue;
+		}
+		depthBuffer[x] = d;
 		int y0 = std::max<int32_t>(0, (DisplayMode::Height/2 - h0).floor() + mx);
 		int y1 = std::min<int32_t>(DisplayMode::Height, (DisplayMode::Height/2 + h0).floor() - mx);
 				
