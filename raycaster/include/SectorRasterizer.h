@@ -18,7 +18,7 @@ extern "C" {
 // Util
 static constexpr size_t LevelDataSize = sizeof(WAD::LevelData);
 
-IWRAM_CODE bool loadWAD(WAD::LevelData& dstLevel);
+bool loadWAD(WAD::LevelData& dstLevel);
 
 class SectorRasterizer
 {
@@ -32,7 +32,7 @@ public:
     static inline uint16_t fillClr2 = BasicColor::Red.raw;
 
 private:
-    static void RenderSubsector(const WAD::LevelData& level, uint16_t ssIndex, const Camera& cam, math::intp12* depthBuffer);
-    static void RenderBSPNode(const WAD::LevelData& level, uint16_t nodeIndex, const Camera& cam, math::intp12* depthBuffer);
-    static void RenderWall(const Camera& cam, const math::Vec2p8& A, const math::Vec2p8& B, Color clr, math::intp12* depthBuffer);
+    static void RenderSubsector(const WAD::LevelData& level, uint16_t ssIndex, const Camera& cam, uint8_t* depthBuffer);
+    static void RenderBSPNode(const WAD::LevelData& level, uint16_t nodeIndex, const Camera& cam, uint8_t* depthBuffer);
+    static void RenderWall(const Camera& cam, const math::Vec2p8& A, const math::Vec2p8& B, Color clr, uint8_t* depthBuffer);
 };

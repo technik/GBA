@@ -14,8 +14,6 @@
 
 #include <gfx/palette.h>
 
-#include <test.wad.h>
-
 using namespace math;
 using namespace gfx;
 
@@ -36,30 +34,6 @@ Color edgeClr[] = {
 	BasicColor::DarkGrey,
 	BasicColor::DarkGreen
 };
-
-IWRAM_CODE bool loadWAD(WAD::LevelData& dstLevel)
-{
-    // Load vertex data
-    dstLevel.vertices = (const WAD::Vertex*)test_WADVertices;
-
-    // Load line defs
-    dstLevel.linedefs = (const WAD::LineDef*)test_WADLineDefs;
-
-    // Load nodes
-    dstLevel.numNodes = (test_WADNodesSize*4) / sizeof(WAD::Node);
-    dstLevel.nodes = (const WAD::Node*)test_WADNodes;
-
-    // Load subsectors
-    dstLevel.subsectors = (const WAD::SubSector*)test_WADSubsectors;
-
-    // Load segments
-    dstLevel.segments = (const WAD::Seg*)test_WADSegments;
-
-    // Load sectors
-    dstLevel.sectors = (const WAD::Sector*)test_WADSectors;
-
-    return true;
-}
 
 // TODO: Optimize this with a LUT to avoid the BIOS call
 intp16 fastAtan2(intp8 x, intp8 y)
@@ -220,7 +194,7 @@ void clear(uint16_t* buffer, uint16_t topClr, uint16_t bottomClr, int area)
 	DMA::Channel0().Fill(&buffer[3 * area / 4], bottomClr, area / 4);
 }
 
-void SectorRasterizer::RenderSubsector(const WAD::LevelData& level, uint16_t ssIndex, const Camera& cam, intp12* depthBuffer)
+void SectorRasterizer::RenderSubsector(const WAD::LevelData& level, uint16_t ssIndex, const Camera& cam, uint8_t* depthBuffer)
 {
 	constexpr uint16_t FlagTwoSided = 0x04;
 	const WAD::SubSector& subsector = level.subsectors[ssIndex];
@@ -260,7 +234,7 @@ bool insideAABB(const WAD::AABB& aabb, const Vec3p8& pos)
 		&& (pos.m_y.raw >= aabb.bottom.raw);
 }
 
-void SectorRasterizer::RenderBSPNode(const WAD::LevelData& level, uint16_t nodeIndex, const Camera& cam, intp12* depthBuffer)
+void SectorRasterizer::RenderBSPNode(const WAD::LevelData& level, uint16_t nodeIndex, const Camera& cam, uint8_t* depthBuffer)
 {
 	constexpr uint16_t NodeMask = (1 << 15);
 	auto& node = level.nodes[nodeIndex];
@@ -291,7 +265,8 @@ void SectorRasterizer::RenderWorld(WAD::LevelData& level, const Camera& cam)
 	// Clear the background
 	clear(backbuffer, BasicColor::SkyBlue.raw, BasicColor::DarkGreen.raw, DisplayMode::Area);
 
-	intp12 depthBuffer[DisplayMode::Width] = {}; // 1/depth z-buffer.
+	// Since we always render front to back, we just need to keep track of whether a column has already been drawn or not.
+	uint8_t depthBuffer[DisplayMode::Width] = {}; // 0 means clear.
 
 	// Traverse the BSP (in a random order for now)
 	// Always start at the last node
@@ -299,7 +274,7 @@ void SectorRasterizer::RenderWorld(WAD::LevelData& level, const Camera& cam)
 	RenderBSPNode(level, rootNode, cam, depthBuffer);
 }
 
-void SectorRasterizer::RenderWall(const Camera& cam, const Vec2p8& A, const Vec2p8& B, Color wallClr, math::intp12* depthBuffer)
+void SectorRasterizer::RenderWall(const Camera& cam, const Vec2p8& A, const Vec2p8& B, Color wallClr, uint8_t* depthBuffer)
 {
 	uint16_t* backbuffer = (uint16_t*)DisplayMode::backBuffer();
 
@@ -328,19 +303,19 @@ void SectorRasterizer::RenderWall(const Camera& cam, const Vec2p8& A, const Vec2
 	intp8 h0 = (int32_t(DisplayMode::Width/8) * csA.y()).cast<8>();
 	intp8 h1 = (int32_t(DisplayMode::Width/8) * csB.y()).cast<8>();
 	intp8 m = (h0 - h1) / (x1 - x0);
-	intp12 md = (csB.y() - csA.y()) / (x1 - x0);
+	//intp12 md = (csB.y() - csA.y()) / (x1 - x0);
 	
 	x1 = std::min<int32_t>(x1, DisplayMode::Width-1);
 
 	for(int x = std::max<int32_t>(0,x0); x < x1; ++x)
 	{		
 		int mx = (m * (x - x0)).floor();
-		intp12 d = (md*(x-x0)) + csA.y();
-		if (d < depthBuffer[x])
+		//intp12 d = (md*(x-x0)) + csA.y();
+		if (depthBuffer[x])
 		{
 			continue;
 		}
-		depthBuffer[x] = d;
+		depthBuffer[x] = 255;
 		int y0 = std::max<int32_t>(0, (DisplayMode::Height/2 - h0).floor() + mx);
 		int y1 = std::min<int32_t>(DisplayMode::Height, (DisplayMode::Height/2 + h0).floor() - mx);
 				

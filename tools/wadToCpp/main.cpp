@@ -24,8 +24,8 @@ struct WADMetrics
 void serializeData(const void* data, size_t byteCount, const std::string& variableName, std::ostream& out)
 {
     // Only multiples of 4 bytes supported
-    assert(byteCount % 4 == 0);
-    auto dwordCount = byteCount / 4;
+    //assert(byteCount % 4 == 0);
+    auto dwordCount = (byteCount+3) / 4;
     uint32_t* packedData = (uint32_t*)data;
 
     out << "extern const uint32_t " << variableName << "[" << dwordCount << "] = {\n";
@@ -60,7 +60,7 @@ void serializeData(const void* data, size_t byteCount, const std::string& variab
 void appendBuffer(std::ostream& cpp, std::ostream& header, const std::string& variableName, const void* data, std::size_t byteCount)
 {
     // Only multiples of 4 bytes supported
-    assert(byteCount % 4 == 0);
+    //assert(byteCount % 4 == 0);
     auto dwordCount = (byteCount+3) / 4;
 
     header << "constexpr uint32_t " << variableName << "Size = " << dwordCount << ";\n";
