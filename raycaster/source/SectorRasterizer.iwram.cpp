@@ -19,6 +19,10 @@
 using namespace math;
 using namespace gfx;
 
+//#define FOV 90
+//#define FOV 50
+#define FOV 66
+
 Color edgeClr[] = {
 	BasicColor::Red,
 	BasicColor::Orange,
@@ -99,10 +103,17 @@ Vec2p8 worldToViewSpace(const Pose& camPose, const Vec2p8& worldPos)
 Vec2p12 viewToClipSpace(const Vec2p8& viewSpace, int halfScreenWidth)
 {
 	// Project x onto the screen
+	intp12 invDepth = 1_p12 / max(intp12(1.f/64), viewSpace.y().cast<12>());
 	// Assuming tg(fov_x/2) = 0.5
-	intp12 invDepth = 2_p12 / max(intp12(1.f/64), viewSpace.y().cast<12>());
 	Vec2p12 result;
+	// Assuming tg(fov_x/2) = 1
+#if FOV == 90
 	result.x() = (viewSpace.x() * invDepth.cast<8>()).cast<12>();
+#elif FOV == 50
+	result.x() = (viewSpace.x() * invDepth.cast<8>() * 2).cast<12>();
+#elif FOV == 66
+	result.x() = (viewSpace.x() * invDepth.cast<8>() * 3/2).cast<12>();
+#endif
 	result.y() = invDepth;
 	return result;
 }
@@ -147,7 +158,13 @@ bool clipWall(Vec2p8& v0, Vec2p8& v1)
 
 	// Clip angles to the visible view frustum
 	// Shifting by a quarter revolution gives us the angle to "y", the view direction
-	constexpr intp16 clipAngle = 0.07379180882521663_p16; // atan(0.5) = fov/2
+#if FOV == 90
+	constexpr intp16 clipAngle = 0.125_p16; // atan(1.0) = fov/2. Corresponds to a fov of exactly 90 deg
+#elif FOV == 50
+	constexpr intp16 clipAngle = 0.07379180882521663_p16; // atan(0.5) = fov/2. Corresponds to a fov of about 50 deg
+#elif FOV == 66
+	constexpr intp16 clipAngle = 0.0935835209054994_p16; // atan(0.5) = fov/2. Corresponds to a fov of about 50 deg
+#endif
 	constexpr intp16 leftClip = 0.25_p16 + clipAngle;
 	constexpr intp16 rightClip = 0.25_p16 - clipAngle;
 	if (angle1 > leftClip) // Past the left side of the screen
