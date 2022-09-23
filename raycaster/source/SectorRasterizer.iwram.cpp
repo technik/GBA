@@ -194,7 +194,7 @@ void clear(uint16_t* buffer, uint16_t topClr, uint16_t bottomClr, int area)
 	DMA::Channel0().Fill(&buffer[3 * area / 4], bottomClr, area / 4);
 }
 
-void SectorRasterizer::RenderSubsector(const WAD::LevelData& level, uint16_t ssIndex, const Camera& cam, uint8_t* depthBuffer)
+void SectorRasterizer::RenderSubsector(const WAD::LevelData& level, uint16_t ssIndex, const Camera& cam, DepthBuffer& depthBuffer)
 {
 	constexpr uint16_t FlagTwoSided = 0x04;
 	const WAD::SubSector& subsector = level.subsectors[ssIndex];
@@ -234,7 +234,7 @@ bool insideAABB(const WAD::AABB& aabb, const Vec3p8& pos)
 		&& (pos.m_y.raw >= aabb.bottom.raw);
 }
 
-void SectorRasterizer::RenderBSPNode(const WAD::LevelData& level, uint16_t nodeIndex, const Camera& cam, uint8_t* depthBuffer)
+void SectorRasterizer::RenderBSPNode(const WAD::LevelData& level, uint16_t nodeIndex, const Camera& cam, DepthBuffer& depthBuffer)
 {
 	constexpr uint16_t NodeMask = (1 << 15);
 	auto& node = level.nodes[nodeIndex];
@@ -260,13 +260,9 @@ void SectorRasterizer::RenderBSPNode(const WAD::LevelData& level, uint16_t nodeI
 
 void SectorRasterizer::RenderWorld(WAD::LevelData& level, const Camera& cam)
 {
-	uint16_t* backbuffer = (uint16_t*)DisplayMode::backBuffer();
-
-	// Clear the background
-	clear(backbuffer, BasicColor::SkyBlue.raw, BasicColor::DarkGreen.raw, DisplayMode::Area);
-
 	// Since we always render front to back, we just need to keep track of whether a column has already been drawn or not.
-	uint8_t depthBuffer[DisplayMode::Width] = {}; // 0 means clear.
+	DepthBuffer depthBuffer;
+	depthBuffer.Clear();
 
 	// Traverse the BSP (in a random order for now)
 	// Always start at the last node
@@ -274,7 +270,7 @@ void SectorRasterizer::RenderWorld(WAD::LevelData& level, const Camera& cam)
 	RenderBSPNode(level, rootNode, cam, depthBuffer);
 }
 
-void SectorRasterizer::RenderWall(const Camera& cam, const Vec2p8& A, const Vec2p8& B, Color wallClr, uint8_t* depthBuffer)
+void SectorRasterizer::RenderWall(const Camera& cam, const Vec2p8& A, const Vec2p8& B, Color wallClr, DepthBuffer& depthBuffer)
 {
 	uint16_t* backbuffer = (uint16_t*)DisplayMode::backBuffer();
 
@@ -311,18 +307,42 @@ void SectorRasterizer::RenderWall(const Camera& cam, const Vec2p8& A, const Vec2
 	{		
 		int mx = (m * (x - x0)).floor();
 		//intp12 d = (md*(x-x0)) + csA.y();
-		if (depthBuffer[x])
+		if (depthBuffer.lowBound[x])
 		{
 			continue;
 		}
-		depthBuffer[x] = 255;
+		depthBuffer.lowBound[x] = 255;
 		int y0 = std::max<int32_t>(0, (DisplayMode::Height/2 - h0).floor() + mx);
 		int y1 = std::min<int32_t>(DisplayMode::Height, (DisplayMode::Height/2 + h0).floor() - mx);
-				
+
+		// Ceiling
+		for(int y = 0; y < y0; ++y)
+		{
+			auto pixel = DisplayMode::pixel(x, y);
+			backbuffer[pixel] = skyClr;
+		}
+
+		// Wall		
 		for(int y = y0; y < y1; ++y)
 		{
 			auto pixel = DisplayMode::pixel(x, y);
 			backbuffer[pixel] = wallClr.raw;
 		}
+
+		// Ground
+		for(int y = y1; y < DisplayMode::Height; ++y)
+		{
+			auto pixel = DisplayMode::pixel(x, y);
+			backbuffer[pixel] = groundClr;
+		}
+	}
+}
+
+void SectorRasterizer::DepthBuffer::Clear()
+{
+	for(int i = 0; i < DisplayMode::Width; ++i)
+	{
+		lowBound[i] = 0;
+		highBound[i] = DisplayMode::Area;
 	}
 }

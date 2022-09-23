@@ -20,6 +20,7 @@ static constexpr size_t LevelDataSize = sizeof(WAD::LevelData);
 
 bool loadWAD(WAD::LevelData& dstLevel);
 
+
 class SectorRasterizer
 {
 public:
@@ -28,11 +29,19 @@ public:
     static void Init();
     static void RenderWorld(WAD::LevelData& level, const Camera& cam);
 
-    static inline uint16_t fillClr = BasicColor::SkyBlue.raw;
-    static inline uint16_t fillClr2 = BasicColor::Red.raw;
+    static inline uint16_t skyClr = BasicColor::SkyBlue.raw;
+    static inline uint16_t groundClr = BasicColor::DarkGreen.raw;
 
 private:
-    static void RenderSubsector(const WAD::LevelData& level, uint16_t ssIndex, const Camera& cam, uint8_t* depthBuffer);
-    static void RenderBSPNode(const WAD::LevelData& level, uint16_t nodeIndex, const Camera& cam, uint8_t* depthBuffer);
-    static void RenderWall(const Camera& cam, const math::Vec2p8& A, const math::Vec2p8& B, Color clr, uint8_t* depthBuffer);
+    struct DepthBuffer
+    {
+        uint8_t lowBound[DisplayMode::Width];
+        uint8_t highBound[DisplayMode::Width];
+
+        void Clear();
+    };
+
+    static void RenderSubsector(const WAD::LevelData& level, uint16_t ssIndex, const Camera& cam, DepthBuffer& depthBuffer);
+    static void RenderBSPNode(const WAD::LevelData& level, uint16_t nodeIndex, const Camera& cam, DepthBuffer& depthBuffer);
+    static void RenderWall(const Camera& cam, const math::Vec2p8& A, const math::Vec2p8& B, Color clr, DepthBuffer& depthBuffer);
 };
