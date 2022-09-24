@@ -22,9 +22,10 @@
 #endif
 
 float fullScreenVertices[] = {
-    -0.5f, -0.5f, 0.0f,
-     0.5f, -0.5f, 0.0f,
-     0.0f,  0.5f, 0.0f
+    // x,    y,    z,   u,   v
+    -1.0f, -1.0f, 0.0f, 0.f, 1.f,
+     3.0f, -1.0f, 0.0f, 2.0f, 1.f,
+    -1.0f,  3.0f, 0.0f, 0.f, -1.f,
 };
 
 static void glfw_error_callback(int error, const char* description)
@@ -118,13 +119,17 @@ public:
         glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
         glBufferData(GL_ARRAY_BUFFER, sizeof(fullScreenVertices), fullScreenVertices, GL_STATIC_DRAW);
         // 3. then set our vertex attributes pointers
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3*sizeof(float)));
         glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
 
         if (!LoadShader(m_fullScreenShader))
         {
             return false;
         }
+
+        InitBuffers();
 
         return true;
     }
@@ -140,10 +145,42 @@ public:
 
         glUseProgram(m_fullScreenShader);
         glBindVertexArray(m_VAO);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, m_backBufferTexture);
         glDrawArrays(GL_TRIANGLES, 0, 3);
     }
 
 private:
+    void InitBuffers()
+    {
+        backBuffer.resize(160 * 120 * 3);
+
+        // Fill texture with data
+        for (int i = 0; i < 120; ++i)
+        {
+            for (int j = 0; j < 160; ++j)
+            {
+                backBuffer[3 * (i * 160 + j) + 0] = i^ j;
+                backBuffer[3 * (i * 160 + j) + 1] = i^ j;
+                backBuffer[3 * (i * 160 + j) + 2] = i^ j;
+            }
+        }
+
+        glGenTextures(1, &m_backBufferTexture);
+        glBindTexture(GL_TEXTURE_2D, m_backBufferTexture);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 160, 120, 0, GL_RGB, GL_UNSIGNED_BYTE, backBuffer.data());
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    }
+
+    unsigned int m_backBufferTexture;
+    std::vector<uint8_t> backBuffer;
+
     unsigned int m_VBO;
     unsigned int m_VAO;
     uint32_t m_fullScreenShader = uint32_t(-1);

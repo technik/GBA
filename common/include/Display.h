@@ -22,31 +22,41 @@ public:
 
 	void InitMode5()
 	{
+#ifndef _WIN32
 		SetMode<5,BG2>();
 		bg2RotScale.a = (160<<8)/ScreenWidth; // =(160/240.0)<<8
 		bg2RotScale.d = (128<<8)/ScreenHeight; // =(128/160.0)<<8
+#endif
 	}
 
 	auto& BG2RotScale() { return bg2RotScale; }
 
 	void StartBlank()
 	{
+#ifdef GBA
 		control = control | ForceBlank;
+#endif
 	}
 
 	void EndBlank()
 	{
+#ifndef _WIN32
 		control = control & (~ForceBlank);
+#endif
 	}
 
 	void EnableHBlankAccess()
 	{
+#ifndef _WIN32
 		control = control | HBlank;
+#endif
 	}
 
 	void DisableHBlankAccess()
 	{
+#ifndef _WIN32
 		control = control & (~HBlank);
+#endif
 	}
 
 	// Display control bits
@@ -62,9 +72,11 @@ public:
 	template<uint16_t videoMode, uint16_t bgMode>
 	void SetMode()
 	{
+#ifndef _WIN32
 		static_assert(videoMode < 6, "Only video modes 0-5 are enabled in the GBA");
         static_assert(bgMode <= (BG0+BG1+BG2+BG3) && bgMode >= BG0);
 		control = videoMode | bgMode;
+#endif
 	};
 
 	void enableSprites()
@@ -83,7 +95,11 @@ public:
 
     uint16_t* backBuffer() const
 	{
+#endif
         return reinterpret_cast<uint16_t*>((control & FrameSelect) ? 0x06000000 : (0x06000000 + 0xA000));
+#else
+		return nullptr;
+#endif
     }
 
 	void vSync()

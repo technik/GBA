@@ -1,7 +1,16 @@
 #version 330 core
 out vec4 FragColor;
 
+in vec2 uv0;
+
+uniform sampler2D backBuffer;
+
 void main()
 {
-    FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
+	ivec2 coords = ivec2(uv0.x * 160, uv0.y * 120);
+	float clr = (coords.x ^ coords.y) / 255.0f;
+    //FragColor = vec4(uv0.x, uv0.y, 0, 1.0f);
+    //FragColor = vec4(clr, clr, clr, 1.0f);
+
+    FragColor = texture(backBuffer, uv0);
 }
