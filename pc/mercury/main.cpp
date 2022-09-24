@@ -42,7 +42,7 @@ uint32_t LoadSubShader(const char* fileName, uint32_t shaderType)
     shaderFile.read(code.data(), fileSize);
 
     uint32_t shader;
-    shader = glCreateShader(GL_VERTEX_SHADER);
+    shader = glCreateShader(shaderType);
 
     const char* rawCode = code.data();
     glShaderSource(shader, 1, &rawCode, NULL);
@@ -104,31 +104,50 @@ bool LoadShader(uint32_t& shaderProgram)
     return true;
 }
 
-void InitDeviceMode()
+class DeviceMode
 {
-    // Copy the vertex data of our full screen triangle
-    unsigned int VBO;
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(fullScreenVertices), fullScreenVertices, GL_STATIC_DRAW);
-
-    uint32_t shader;
-    if (LoadShader(shader))
+public:
+    bool Init()
     {
-        glUseProgram(shader);
+        // Copy the vertex data of our full screen triangle
+        glGenBuffers(1, &m_VBO);
+
+        glGenVertexArrays(1, &m_VAO);
+        glBindVertexArray(m_VAO);
+        // 2. copy our vertices array in a buffer for OpenGL to use
+        glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(fullScreenVertices), fullScreenVertices, GL_STATIC_DRAW);
+        // 3. then set our vertex attributes pointers
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
+
+        if (!LoadShader(m_fullScreenShader))
+        {
+            return false;
+        }
+
+        return true;
     }
-}
 
-void drawFrame()
-{
-    // Generate an image with the software rasterizer
-    // Copy it to the GPU
-    // Render a full screen triangle that samples from it
+    void drawFrame()
+    {
+        // Generate an image with the software rasterizer
+        // Copy it to the GPU
+        // Render a full screen triangle that samples from it
+        ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+        glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
+        glClear(GL_COLOR_BUFFER_BIT);
 
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-    glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
-    glClear(GL_COLOR_BUFFER_BIT);
-}
+        glUseProgram(m_fullScreenShader);
+        glBindVertexArray(m_VAO);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+    }
+
+private:
+    unsigned int m_VBO;
+    unsigned int m_VAO;
+    uint32_t m_fullScreenShader = uint32_t(-1);
+};
 
 int main(int, char**)
 {
@@ -170,33 +189,38 @@ int main(int, char**)
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
-    InitDeviceMode();
+    DeviceMode gbaDevice;
+
+    bool loadOk = gbaDevice.Init();
 
     // Main loop
-    while (!glfwWindowShouldClose(window))
+    if (loadOk)
     {
-        // Poll and handle events (inputs, window resize, etc.)
-        // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
-        // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
-        // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
-        // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
-        glfwPollEvents();
+        while (!glfwWindowShouldClose(window))
+        {
+            // Poll and handle events (inputs, window resize, etc.)
+            // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
+            // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
+            // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
+            // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
+            glfwPollEvents();
 
-        // Start the Dear ImGui frame
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
+            // Start the Dear ImGui frame
+            ImGui_ImplOpenGL3_NewFrame();
+            ImGui_ImplGlfw_NewFrame();
+            ImGui::NewFrame();
 
-        // Rendering
-        ImGui::Render();
-        int display_w, display_h;
-        glfwGetFramebufferSize(window, &display_w, &display_h);
-        glViewport(0, 0, display_w, display_h);
+            // Rendering
+            ImGui::Render();
+            int display_w, display_h;
+            glfwGetFramebufferSize(window, &display_w, &display_h);
+            glViewport(0, 0, display_w, display_h);
 
-        drawFrame();
+            gbaDevice.drawFrame();
 
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        glfwSwapBuffers(window);
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+            glfwSwapBuffers(window);
+        }
     }
 
     // Cleanup
