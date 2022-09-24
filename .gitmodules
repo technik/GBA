@@ -1,0 +1,3 @@
+[submodule "pc/external/imgui"]
+	path = pc/external/imgui
+	url = https://github.com/ocornut/imgui.git
