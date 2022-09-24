@@ -34,6 +34,9 @@
     <ClCompile Include="..\external\imgui\backends\imgui_impl_opengl3.cpp">
       <Filter>sources</Filter>
     </ClCompile>
+    <ClCompile Include="glad.c">
+      <Filter>sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\backends\imgui_impl_opengl3_loader.h">
