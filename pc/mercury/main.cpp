@@ -4,7 +4,9 @@
 // Read online: https://github.com/ocornut/imgui/tree/master/docs
 
 #include <iostream>
+#include <fstream>
 #include <stdio.h>
+#include <vector>
 
 #include <glad.h>
 #include <GLFW/glfw3.h> // Will drag system OpenGL headers
@@ -30,15 +32,102 @@ static void glfw_error_callback(int error, const char* description)
     fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
-void InitDevideMode()
+uint32_t LoadSubShader(const char* fileName, uint32_t shaderType)
 {
-    //unsigned int VBO;
-    //glGenBuffers(1, &VBO);
+    // Read vertex shader file
+    std::ifstream shaderFile(fileName, std::ios_base::ate);
+    auto fileSize = shaderFile.tellg();
+    shaderFile.seekg(std::ios_base::beg);
+    std::vector<char> code(fileSize);
+    shaderFile.read(code.data(), fileSize);
+
+    uint32_t shader;
+    shader = glCreateShader(GL_VERTEX_SHADER);
+
+    const char* rawCode = code.data();
+    glShaderSource(shader, 1, &rawCode, NULL);
+    glCompileShader(shader);
+
+    // Check for errors
+    int  success;
+    char infoLog[512];
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+
+    if (!success)
+    {
+        glGetShaderInfoLog(shader, 512, NULL, infoLog);
+        std::cout << "Shader compilation failed for file:" << fileName << "\n" << infoLog << std::endl;
+
+        return uint32_t(-1);
+    }
+
+    return shader;
+}
+
+bool LoadShader(uint32_t& shaderProgram)
+{
+    // Read vertex shader code
+    auto vertexShader = LoadSubShader("fullScreen.vtx", GL_VERTEX_SHADER);
+    if(vertexShader == uint32_t(-1))
+    {
+        return false;
+    }
+
+    // Read pixel shader
+    auto fragmentShader = LoadSubShader("fullScreen.pxl", GL_FRAGMENT_SHADER);
+    if (fragmentShader == uint32_t(-1))
+    {
+        glDeleteShader(vertexShader);
+        return false;
+    }
+
+    // Link into a full shader
+    shaderProgram = glCreateProgram();
+
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragmentShader);
+    glLinkProgram(shaderProgram);
+
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+
+    // Check for errors
+    int  success;
+    char infoLog[512];
+    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+    if (!success) {
+        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+        
+        return false;
+    }
+
+    return true;
+}
+
+void InitDeviceMode()
+{
+    // Copy the vertex data of our full screen triangle
+    unsigned int VBO;
+    glGenBuffers(1, &VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(fullScreenVertices), fullScreenVertices, GL_STATIC_DRAW);
+
+    uint32_t shader;
+    if (LoadShader(shader))
+    {
+        glUseProgram(shader);
+    }
 }
 
 void drawFrame()
 {
-    // Generate an image,
+    // Generate an image with the software rasterizer
+    // Copy it to the GPU
+    // Render a full screen triangle that samples from it
+
+    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
+    glClear(GL_COLOR_BUFFER_BIT);
 }
 
 int main(int, char**)
@@ -81,10 +170,7 @@ int main(int, char**)
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
-    // Our state
-    bool show_demo_window = true;
-    bool show_another_window = false;
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    InitDeviceMode();
 
     // Main loop
     while (!glfwWindowShouldClose(window))
@@ -106,12 +192,10 @@ int main(int, char**)
         int display_w, display_h;
         glfwGetFramebufferSize(window, &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
-        glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
-        glClear(GL_COLOR_BUFFER_BIT);
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         drawFrame();
 
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         glfwSwapBuffers(window);
     }
 
