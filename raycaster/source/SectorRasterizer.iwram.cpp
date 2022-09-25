@@ -175,6 +175,9 @@ bool clipWall(Vec2p8& v0, Vec2p8& v1)
 	intp8 dY = v1.y() - v0.y();
 	intp8 num = (v0.x() * dY - v0.y() * dX).cast<8>();
 
+	if (num == 0)
+		return false;
+
 	intp8 h0 = num / (cos0 * dY - sin0 * dX).cast<8>();
 	intp8 h1 = num / (cos1 * dY - sin1 * dX).cast<8>();
 
@@ -282,6 +285,7 @@ void SectorRasterizer::RenderWall(const Camera& cam, const Vec2p8& A, const Vec2
 	auto vsB = worldToViewSpace(cam.m_pose, B);
 
 	// Clip
+
 	if(!clipWall(vsA, vsB))
 		return; // Early out on clipped walls
 

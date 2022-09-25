@@ -1,6 +1,9 @@
 #pragma once
 
 #include "Device.h"
+#ifdef _WIN32
+#include <Display.h> // For glfw window access
+#endif
 
 struct Keypad
 {
@@ -20,30 +23,49 @@ struct Keypad
 
 	inline static bool Held(uint16_t key)
 	{
-#ifdef GBA
 		return s_curState & key;
-#else
-		return false;
-#endif
 	}
 
 	inline static bool Pressed(uint16_t key)
 	{
-#ifdef GBA
 		auto lastHeld = s_lastState & key;
 		return Held(key) && !lastHeld;
-#else
-		return false;
-#endif
 	}
 
 	inline static void Update()
 	{
-#ifdef GBA
 		s_lastState = s_curState;
+#ifdef GBA
 		s_curState = ~IO::KEYINPUT::Get().value;
+#else
+		auto window = Mode5Display::s_window;
+		// Same key mapping as in the emulators
+		updateKey(window, GLFW_KEY_Z, A);
+		updateKey(window, GLFW_KEY_X, B);
+		updateKey(window, GLFW_KEY_A, L);
+		updateKey(window, GLFW_KEY_S, R);
+		updateKey(window, GLFW_KEY_DOWN, DOWN);
+		updateKey(window, GLFW_KEY_UP, UP);
+		updateKey(window, GLFW_KEY_LEFT, LEFT);
+		updateKey(window, GLFW_KEY_RIGHT, RIGHT);
+		updateKey(window, GLFW_KEY_ENTER, START);
+		updateKey(window, GLFW_KEY_BACKSLASH, SELECT);
 #endif
 	}
+
+#ifdef _WIN32
+	inline static void updateKey(GLFWwindow* window, uint32_t glfwKey, uint16_t gbaKey)
+	{
+		if (glfwGetKey(window, glfwKey) == GLFW_PRESS)
+		{
+			s_curState |= gbaKey;
+		}
+		else if (glfwGetKey(window, glfwKey) == GLFW_RELEASE)
+		{
+			s_curState &= ~gbaKey;
+		}
+	}
+#endif
 
 	static inline int32_t s_lastState = 0;
 	static inline int32_t s_curState = 0;

@@ -119,10 +119,10 @@ bool Mode5Display::Init()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Create window with graphics context
-    m_window = glfwCreateWindow(240 * 4, 160 * 4, "Mercury", NULL, NULL);
-    if (m_window == NULL)
+    s_window = glfwCreateWindow(240 * 4, 160 * 4, "Mercury", NULL, NULL);
+    if (s_window == NULL)
         return false;
-    glfwMakeContextCurrent(m_window);
+    glfwMakeContextCurrent(s_window);
     glfwSwapInterval(1); // Enable vsync
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -141,9 +141,8 @@ bool Mode5Display::Init()
     //ImGui::StyleColorsLight();
 
     // Setup Platform/Renderer backends
-    ImGui_ImplGlfw_InitForOpenGL(m_window, true);
+    ImGui_ImplGlfw_InitForOpenGL(s_window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
-
 
     // Copy the vertex data of our full screen triangle
     glGenBuffers(1, &m_VBO);
@@ -185,7 +184,7 @@ bool Mode5Display::BeginFrame()
 #ifdef GBA
     return true;
 #else
-    if (glfwWindowShouldClose(m_window))
+    if (glfwWindowShouldClose(s_window))
     {
         return false;
     }
@@ -205,7 +204,7 @@ bool Mode5Display::BeginFrame()
     // Rendering
     ImGui::Render();
     int display_w, display_h;
-    glfwGetFramebufferSize(m_window, &display_w, &display_h);
+    glfwGetFramebufferSize(s_window, &display_w, &display_h);
     glViewport(0, 0, display_w, display_h);
 
     return true;
@@ -220,7 +219,7 @@ void Mode5Display::Flip()
     // Copy our back buffer to the GPU
     glBindTexture(GL_TEXTURE_2D, m_backBufferTexture);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, Width, Height, 0, GL_RED, GL_UNSIGNED_SHORT, s_backBuffer.data());
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R16UI, Width, Height, 0, GL_RED_INTEGER, GL_UNSIGNED_SHORT, s_backBuffer.data());
     
     // Render a full screen triangle that samples from it
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
@@ -236,6 +235,6 @@ void Mode5Display::Flip()
 
     // Finish the frame
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-    glfwSwapBuffers(m_window);
+    glfwSwapBuffers(s_window);
 #endif
 }

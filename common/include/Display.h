@@ -228,7 +228,7 @@ public:
 	}
 
 #ifdef _WIN32
-	GLFWwindow* m_window;
+	inline static GLFWwindow* s_window;
 	uint32_t m_backBufferTexture;
 	inline static std::vector<Color> s_backBuffer;
 
