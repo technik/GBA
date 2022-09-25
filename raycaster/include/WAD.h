@@ -31,8 +31,7 @@ namespace WAD
         uint16_t flags;
         uint16_t SpecialType;
         uint16_t SectorTag;
-        uint16_t RightSideDef;
-        uint16_t LeftSideDef;
+        uint16_t SideNum[2];
     };
 
     struct Seg

@@ -13,9 +13,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="mainDemo.cpp">
-      <Filter>sources</Filter>
-    </ClCompile>
     <ClCompile Include="..\external\imgui\imgui.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
@@ -79,6 +76,15 @@
       <Filter>sources</Filter>
     </ClInclude>
     <ClInclude Include="..\external\imgui\backends\imgui_impl_opengl3.h">
+      <Filter>sources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\raycaster\include\raycaster.h">
+      <Filter>sources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\raycaster\include\SectorRasterizer.h">
+      <Filter>sources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\raycaster\include\WAD.h">
       <Filter>sources</Filter>
     </ClInclude>
   </ItemGroup>

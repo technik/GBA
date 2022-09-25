@@ -47,5 +47,5 @@ private:
 
     static void RenderSubsector(const WAD::LevelData& level, uint16_t ssIndex, const Camera& cam, DepthBuffer& depthBuffer);
     static void RenderBSPNode(const WAD::LevelData& level, uint16_t nodeIndex, const Camera& cam, DepthBuffer& depthBuffer);
-    static void RenderWall(const Camera& cam, const math::Vec2p8& A, const math::Vec2p8& B, Color clr, DepthBuffer& depthBuffer);
+    static void RenderWall(const Camera& cam, const math::Vec2p8& A, const math::Vec2p8& B, math::intp8 floorH, math::intp8 ceilingH, Color clr, DepthBuffer& depthBuffer);
 };

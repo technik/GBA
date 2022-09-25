@@ -177,10 +177,12 @@
     <ClCompile Include="..\external\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\external\imgui\imgui_widgets.cpp" />
     <ClCompile Include="glad.c" />
-    <ClCompile Include="mainDemo.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\backends\imgui_impl_opengl3_loader.h" />
+    <ClInclude Include="..\..\raycaster\include\raycaster.h" />
+    <ClInclude Include="..\..\raycaster\include\SectorRasterizer.h" />
+    <ClInclude Include="..\..\raycaster\include\WAD.h" />
     <ClInclude Include="..\external\imgui\backends\imgui_impl_glfw.h" />
     <ClInclude Include="..\external\imgui\backends\imgui_impl_opengl3.h" />
     <ClInclude Include="..\external\imgui\imconfig.h" />

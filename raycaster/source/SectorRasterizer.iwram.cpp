@@ -175,11 +175,14 @@ bool clipWall(Vec2p8& v0, Vec2p8& v1)
 	intp8 dY = v1.y() - v0.y();
 	intp8 num = (v0.x() * dY - v0.y() * dX).cast<8>();
 
-	if (num == 0)
+	intp8 den0 = (cos0 * dY - sin0 * dX).cast<8>();
+	intp8 den1 = (cos1 * dY - sin1 * dX).cast<8>();
+
+	if (num == 0 || den0 == 0 || den1 == 0)
 		return false;
 
-	intp8 h0 = num / (cos0 * dY - sin0 * dX).cast<8>();
-	intp8 h1 = num / (cos1 * dY - sin1 * dX).cast<8>();
+	intp8 h0 = num / den0;
+	intp8 h1 = num / den1;
 
 	v0.x() = (cos0 * h0).cast<8>();
 	v0.y() = (sin0 * h0).cast<8>();
@@ -208,14 +211,18 @@ void SectorRasterizer::RenderSubsector(const WAD::LevelData& level, uint16_t ssI
 		if (lineDef.flags & FlagTwoSided)
 			continue; // For now, fully skip portals, as we only support full height walls.
 
-		//auto& sector = level.sectors[lineDef.SectorTag];
+		auto& sector = level.sectors[lineDef.SectorTag];
+
+		intp8 floorH = sector.floorhHeight * 8 - cam.m_pose.pos.m_z;
+		intp8 ceilingH = sector.ceilingHeight * 8 - cam.m_pose.pos.m_z;
+
 		auto& v0 = level.vertices[segment.startVertex];
 		auto& v1 = level.vertices[segment.endVertex];
 
 		auto clrNdx = segment.linedefNum % 8;
 		Vec2p8 A = { intp8::castFromShiftedInteger<8>(v0.x.raw), intp8::castFromShiftedInteger<8>(v0.y.raw) };
 		Vec2p8 B = { intp8::castFromShiftedInteger<8>(v1.x.raw), intp8::castFromShiftedInteger<8>(v1.y.raw) };
-		RenderWall(cam, A, B, edgeClr[clrNdx], depthBuffer);
+		RenderWall(cam, A, B, floorH, ceilingH, edgeClr[clrNdx], depthBuffer);
 	}
 }
 
@@ -273,7 +280,7 @@ void SectorRasterizer::RenderWorld(WAD::LevelData& level, const Camera& cam)
 	RenderBSPNode(level, rootNode, cam, depthBuffer);
 }
 
-void SectorRasterizer::RenderWall(const Camera& cam, const Vec2p8& A, const Vec2p8& B, Color wallClr, DepthBuffer& depthBuffer)
+void SectorRasterizer::RenderWall(const Camera& cam, const Vec2p8& A, const Vec2p8& B, math::intp8 floorH, math::intp8 ceilingH, Color wallClr, DepthBuffer& depthBuffer)
 {
 	uint16_t* backbuffer = (uint16_t*)DisplayMode::backBuffer();
 
@@ -300,24 +307,29 @@ void SectorRasterizer::RenderWall(const Camera& cam, const Vec2p8& A, const Vec2
 		return;
 	}
 
-	intp8 h0 = (int32_t(DisplayMode::Width/8) * csA.y()).cast<8>();
-	intp8 h1 = (int32_t(DisplayMode::Width/8) * csB.y()).cast<8>();
-	intp8 m = (h0 - h1) / (x1 - x0);
-	//intp12 md = (csB.y() - csA.y()) / (x1 - x0);
+	intp8 hFloorA = (floorH * csA.y()).cast<8>();
+	intp8 hFloorB = (floorH * csB.y()).cast<8>();
+	intp8 hCeilingA = (ceilingH * csA.y()).cast<8>();
+	intp8 hCeilingB = (ceilingH * csB.y()).cast<8>();
+	intp8 mFloor = (hFloorB - hFloorA) / (x1 - x0);
+	intp8 mCeil = (hCeilingB - hCeilingA) / (x1 - x0);
+	int y0A = (DisplayMode::Height / 2 - hCeilingA).floor();
+	int y1A = (DisplayMode::Height / 2 - hFloorA).floor();
 	
 	x1 = std::min<int32_t>(x1, DisplayMode::Width-1);
 
 	for(int x = std::max<int32_t>(0,x0); x < x1; ++x)
 	{		
-		int mx = (m * (x - x0)).floor();
+		int floorDY = (mFloor * (x - x0)).floor();
+		int ceilDY = (mCeil * (x - x0)).floor();
 		//intp12 d = (md*(x-x0)) + csA.y();
 		if (depthBuffer.lowBound[x])
 		{
 			continue;
 		}
 		depthBuffer.lowBound[x] = 255;
-		int y0 = std::max<int32_t>(0, (DisplayMode::Height/2 - h0).floor() + mx);
-		int y1 = std::min<int32_t>(DisplayMode::Height, (DisplayMode::Height/2 + h0).floor() - mx);
+		int y0 = std::max<int32_t>(0, y0A - ceilDY);
+		int y1 = std::min<int32_t>(DisplayMode::Height, y1A - floorDY);
 
 		// Ceiling
 		for(int y = 0; y < y0; ++y)

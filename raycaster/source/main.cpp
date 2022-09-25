@@ -147,7 +147,7 @@ int main()
 	FrameCounter frameCounter(text);
 
 	// -- Init game state ---
-	auto camera = Camera(Renderer::DisplayMode::Width, Renderer::DisplayMode::Height, Vec3p8(0_p8, 0_p8, 0_p8));
+	auto camera = Camera(Renderer::DisplayMode::Width, Renderer::DisplayMode::Height, Vec3p8(0_p8, 0_p8, 1.7_p8));
 #if SECTOR_RASTER
 	camera.m_halfClipHeight = Renderer::DisplayMode::Height / 2;
 	camera.m_halfClipWidth = Renderer::DisplayMode::Width / 2;
