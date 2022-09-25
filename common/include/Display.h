@@ -95,7 +95,7 @@ public:
 
     uint16_t* backBuffer() const
 	{
-#endif
+#ifndef _WIN32
         return reinterpret_cast<uint16_t*>((control & FrameSelect) ? 0x06000000 : (0x06000000 + 0xA000));
 #else
 		return nullptr;
