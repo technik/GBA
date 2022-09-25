@@ -23,6 +23,7 @@ public:
     template<unsigned prescaler>
     void reset()
     {
+#ifdef GBA
         static_assert(prescaler < 4);
         // Forze Enable bit to 0 so that the reload value will be copied
         // immediately to the counter once we reset it.
@@ -30,16 +31,21 @@ public:
         counter = 0;
         // Copy reload to restart and re-enable the timer
         control = START | prescaler;
+#endif
     }
 
     void pause()
     {
+#ifdef GBA
         control = control & (~START);
+#endif
     }
     
     void resume()
     {
+#ifdef GBA
         control = control | START;
+#endif
     }
 };
 

@@ -21,9 +21,18 @@ using namespace gfx;
 // No need to place this method in fast memory
 void SectorRasterizer::Init()
 {
-	DisplayMode displayMode;
 	displayMode.Init();
 	Display().enableSprites();
+}
+
+bool SectorRasterizer::BeginFrame()
+{
+    return displayMode.BeginFrame();
+}
+
+void SectorRasterizer::EndFrame()
+{
+    displayMode.Flip();
 }
 
 bool loadWAD(WAD::LevelData& dstLevel)

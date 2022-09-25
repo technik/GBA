@@ -20,19 +20,29 @@ struct Keypad
 
 	inline static bool Held(uint16_t key)
 	{
+#ifdef GBA
 		return s_curState & key;
+#else
+		return false;
+#endif
 	}
 
 	inline static bool Pressed(uint16_t key)
 	{
+#ifdef GBA
 		auto lastHeld = s_lastState & key;
 		return Held(key) && !lastHeld;
+#else
+		return false;
+#endif
 	}
 
 	inline static void Update()
 	{
+#ifdef GBA
 		s_lastState = s_curState;
 		s_curState = ~IO::KEYINPUT::Get().value;
+#endif
 	}
 
 	static inline int32_t s_lastState = 0;

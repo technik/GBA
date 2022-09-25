@@ -44,6 +44,7 @@ void FrameCounter::render(TextSystem& text)
 
 uint32_t FrameCounter::count()
 {
+#ifdef GBA
 	//uint32_t ms = Timer0().counter/16; // ~Milliseconds
 	uint32_t tc = Timer0().counter;
 	Timer0().reset<Timer::e1024>(); // Reset timer and set prescaler to ~1/16th of a millisecond
@@ -69,4 +70,7 @@ uint32_t FrameCounter::count()
 	//	}
 	//}
 	return fps;
+#else
+	return 0;
+#endif
 }

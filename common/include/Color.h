@@ -6,7 +6,7 @@
 
 struct Color
 {
-	Color();
+	Color() = default;
 	
 	template<std::integral T>
 	constexpr Color(T r, T g, T b)

@@ -11,6 +11,7 @@ using namespace gfx;
 
 void TextSystem::Init()
 {
+#ifdef GBA
     // Init palette
     mPaletteStart = SpritePalette::Allocator::alloc(2); // Bg and text colors
     SpritePalette::color(mPaletteStart+0).raw = BasicColor::Black.raw;
@@ -28,13 +29,16 @@ void TextSystem::Init()
     {
         textTileData[i] = fontTileData[i];
     }
+#endif
 }
 
 void TextSystem::writeNumbers(const uint8_t* str, Sprite::Object* dst, uint32_t n)
 {
+#ifdef GBA
     constexpr uint32_t kHighBankDTileOffset = 512;
     for(uint32_t i = 0; i < n; ++i)
     {
         dst[i].setTiles((2*str[i]+mTileStart) + 32 + kHighBankDTileOffset, 0);
     }
+#endif
 }

@@ -2,9 +2,7 @@
 // mode7.iwram.c
 // Interrupts
 //
-extern "C" {
-	#include <tonc.h>
-}
+#include <base.h>
 
 #include <Camera.h>
 #include <raycaster.h>

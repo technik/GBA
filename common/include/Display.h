@@ -1,7 +1,24 @@
 #pragma once
 
-#ifdef _WIN32
+#ifndef GBA
 #include "imageUtils.h"
+#include <iostream>
+#include <fstream>
+#include <stdio.h>
+#include <vector>
+
+#include <glad.h>
+#include <GLFW/glfw3.h> // Will drag system OpenGL headers
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
+// [Win32] Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
+// To link with VS2010-era libraries, VS2015+ requires linking with legacy_stdio_definitions.lib, which we do using this pragma.
+// Your own project should not be affected, as you are likely to link with a newer binary of GLFW that is adequate for your version of Visual Studio.
+#if defined(_MSC_VER) && (_MSC_VER >= 1900) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS)
+#pragma comment(lib, "legacy_stdio_definitions")
+#endif
 #endif // _WIN32
 
 #include <cstdint>
@@ -195,30 +212,15 @@ public:
 		return x + Width * y;
 	}
 
-	void flip()
-	{
-#ifndef _WIN32
-		DisplayControl::Get().flipFrame();
-#endif
-	}
+	bool BeginFrame();
+	void Flip();
 
-	void Init()
-	{
-#ifdef _WIN32
-		s_backBuffer.resize(Width, Height);
-#else
-		auto& disp = DisplayControl::Get();
-		disp.SetMode<5,DisplayControl::BG2>();
-		
-		disp.BG2RotScale().a = (Width<<8)/ScreenWidth; // =(160/240.0)<<8
-		disp.BG2RotScale().d = (Height<<8)/ScreenHeight; // =(128/160.0)<<8
-#endif
-	}
+	bool Init();
 
 	static Color* backBuffer()
 	{
 #ifdef _WIN32
-		return reinterpret_cast<Color*>(&s_backBuffer.at(0, 0));
+		return s_backBuffer.data();
 #else
 		auto& disp = DisplayControl::Get();
 		return reinterpret_cast<Color*>(disp.backBuffer());
@@ -226,6 +228,12 @@ public:
 	}
 
 #ifdef _WIN32
-	static inline Image16bit s_backBuffer;
+	GLFWwindow* m_window;
+	uint32_t m_backBufferTexture;
+	inline static std::vector<Color> s_backBuffer;
+
+	uint32_t m_VBO;
+	uint32_t m_VAO;
+	uint32_t m_fullScreenShader = uint32_t(-1);
 #endif // _WIN32
 };

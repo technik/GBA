@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\common\source\Display.cpp" />
     <ClCompile Include="..\..\common\source\Draw.cpp" />
     <ClCompile Include="..\..\common\source\font.bmp.cpp" />
     <ClCompile Include="..\..\common\source\gfx\armGfx.iwram.cpp" />
@@ -27,6 +28,28 @@
     <ClCompile Include="..\..\common\source\raycast.iwram.cpp" />
     <ClCompile Include="..\..\common\source\Text.cpp" />
     <ClCompile Include="..\..\common\source\tools\frameCounter.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\common\include\base.h" />
+    <ClInclude Include="..\..\common\include\Camera.h" />
+    <ClInclude Include="..\..\common\include\Color.h" />
+    <ClInclude Include="..\..\common\include\Device.h" />
+    <ClInclude Include="..\..\common\include\Display.h" />
+    <ClInclude Include="..\..\common\include\Draw.h" />
+    <ClInclude Include="..\..\common\include\font.h" />
+    <ClInclude Include="..\..\common\include\gfx\armGfx.h" />
+    <ClInclude Include="..\..\common\include\gfx\palette.h" />
+    <ClInclude Include="..\..\common\include\gfx\sprite.h" />
+    <ClInclude Include="..\..\common\include\gfx\tile.h" />
+    <ClInclude Include="..\..\common\include\Keypad.h" />
+    <ClInclude Include="..\..\common\include\linearMath.h" />
+    <ClInclude Include="..\..\common\include\matrix.h" />
+    <ClInclude Include="..\..\common\include\pose.h" />
+    <ClInclude Include="..\..\common\include\raycast.h" />
+    <ClInclude Include="..\..\common\include\Text.h" />
+    <ClInclude Include="..\..\common\include\Timer.h" />
+    <ClInclude Include="..\..\common\include\tools\frameCounter.h" />
+    <ClInclude Include="..\..\common\include\vector.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -135,6 +158,9 @@
       </SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+    </ProjectReference>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -155,6 +181,9 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+    </ProjectReference>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

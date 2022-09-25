@@ -4,10 +4,7 @@
 
 // External libraries
 #include <stdio.h>
-extern "C"
- {
-#include <tonc_types.h>
- }
+#include <base.h>
 
 // Engine code
 #include <Color.h>
@@ -62,10 +59,12 @@ void InitSystems()
 	// TextInit
 	text.Init();
 
+#ifdef GBA
 	// Set up interrupts
 	irq_init(NULL);
 	// vblank int for vsync
 	irq_add(II_VBLANK, NULL);
+#endif
 }
 
 class MiniMap
@@ -183,9 +182,14 @@ int main()
 		playerController.m_pose.pos.x() = min(intp8(kMapCols) - 1.125_p8, playerController.m_pose.pos.x());
 		playerController.m_pose.pos.y() = min(intp8(kMapRows) - 1.125_p8, playerController.m_pose.pos.y());
 #endif
+		if (!Renderer::BeginFrame())
+		{
+			return 0; // Exit the app
+		}
 
 		// -- Render --
 		Renderer::RenderWorld(level, camera);
+#ifdef GBA
 		frameCounter.render(text);
 
 		timerT2 = Timer1().counter;
@@ -195,8 +199,8 @@ int main()
 			vBlank = !vBlank;
 		if(vBlank)
 			VBlankIntrWait();
-
-		Display().flipFrame();
+#endif
+		Renderer::EndFrame();
 
 		// Copy the render target
 		// TODO: Use the dma here
