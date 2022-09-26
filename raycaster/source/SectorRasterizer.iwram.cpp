@@ -208,8 +208,8 @@ void SectorRasterizer::RenderSubsector(const WAD::LevelData& level, uint16_t ssI
 	{
 		auto& segment = level.segments[i];
 		auto& lineDef = level.lineDefs[segment.linedefNum];
-		//if (lineDef.flags & FlagTwoSided)
-		//	continue; // For now, fully skip portals, as we only support full height walls.
+		if (lineDef.flags & FlagTwoSided)
+			continue; // For now, fully skip portals, as we only support full height walls.
 
 		auto& sector = level.sectors[lineDef.SectorTag];
 
