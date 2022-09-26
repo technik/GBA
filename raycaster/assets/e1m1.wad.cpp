@@ -1661,24 +1661,24 @@ extern const uint32_t e1m1_WADNodes[651] = {
 
 void loadMap_e1m1_WAD(WAD::LevelData& dstLevel) {
 	// Load vertex data
-	dstLevel.vertices = (const WAD::Vertex*)test_WADVertices;
+	dstLevel.vertices = (const WAD::Vertex*)e1m1_WADVertices;
 
 	// Load line defs
-	dstLevel.lineDefs = (const WAD::LineDef*)test_WADLineDefs;
+	dstLevel.lineDefs = (const WAD::LineDef*)e1m1_WADLineDefs;
 
 	// Load side defs
-	dstLevel.sideDefs = (const WAD::SideDef*)test_WADSideDefs;
+	dstLevel.sideDefs = (const WAD::SideDef*)e1m1_WADSideDefs;
 
 	// Load subsectors defs
-	dstLevel.subSectors = (const WAD::SubSector*)test_WADSubSectors;
+	dstLevel.subSectors = (const WAD::SubSector*)e1m1_WADSubSectors;
 
 	// Load segments defs
-	dstLevel.segments = (const WAD::Seg*)test_WADSegments;
+	dstLevel.segments = (const WAD::Seg*)e1m1_WADSegments;
 
 	// Load sectors defs
-	dstLevel.sectors = (const WAD::Sector*)test_WADSectors;
+	dstLevel.sectors = (const WAD::Sector*)e1m1_WADSectors;
 
 	// Load nodes
-	dstLevel.numNodes = (test_WADNodesSize * 4) / sizeof(WAD::Node);
-	dstLevel.nodes = (const WAD::Node*)test_WADNodes;
+	dstLevel.numNodes = (e1m1_WADNodesSize * 4) / sizeof(WAD::Node);
+	dstLevel.nodes = (const WAD::Node*)e1m1_WADNodes;
 }

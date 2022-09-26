@@ -37,31 +37,14 @@ void SectorRasterizer::EndFrame()
     displayMode.Flip();
 }
 
-#define LEVEL 0
+#define LEVEL 1
 
 bool loadWAD(WAD::LevelData& dstLevel)
 {
 #if LEVEL == 0
     loadMap_test_WAD(dstLevel);
 #elif LEVEL == 1
-    // Load vertex data
-    dstLevel.vertices = (const WAD::Vertex*)portaltest_WADVertices;
-
-    // Load line defs
-    dstLevel.linedefs = (const WAD::LineDef*)portaltest_WADLineDefs;
-
-    // Load nodes
-    dstLevel.numNodes = (portaltest_WADNodesSize * 4) / sizeof(WAD::Node);
-    dstLevel.nodes = (const WAD::Node*)portaltest_WADNodes;
-
-    // Load subsectors
-    dstLevel.subsectors = (const WAD::SubSector*)portaltest_WADSubsectors;
-
-    // Load segments
-    dstLevel.segments = (const WAD::Seg*)portaltest_WADSegments;
-
-    // Load sectors
-    dstLevel.sectors = (const WAD::Sector*)portaltest_WADSectors;
+    loadMap_mercury_WAD(dstLevel);
 #elif LEVEL == 2
 #endif
 
