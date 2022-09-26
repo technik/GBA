@@ -49,6 +49,7 @@ void CharacterController::update()
 	m_pose.pos.y() += disp.y();
 
 	// Jumps
+	/*
 	if(Keypad::Pressed(Keypad::A) && m_pose.pos.z() == 0_p8)
 	{
 		jump = 7_p8; // Impulse
@@ -66,7 +67,7 @@ void CharacterController::update()
 			m_pose.pos.z() = 0_p8;
 			jump = 0_p8;
 		}
-	}
+	}*/
 
 	m_pose.update();
 }

@@ -9,16 +9,34 @@
 #include <xxhash/xxh3.h>
 #include <WAD.h>
 
-#include <gfx/tile.h>
-#include <imageUtils.h>
-
 struct WADMetrics
 {
     int numVertices;
     int numLineDefs;
+    int numSideDefs;
     int numSegments;
     int numSectors;
     int numSubsectors;
+    int numNodes;
+
+    // BBox
+    int minX, minY;
+    int maxX, maxY;
+
+    int totalSize;
+
+    void print()
+    {
+        std::cout << "BBox: (" << minX << "," << minY << ") to (" << maxX << "," << maxY << ")\n";
+        std::cout << "Vertices: " << numVertices << "\n";
+        std::cout << "Lines: " << numLineDefs << "\n";
+        std::cout << "Sides: " << numSideDefs << "\n";
+        std::cout << "Segments: " << numSegments << "\n";
+        std::cout << "Sectors: " << numSectors << "\n";
+        std::cout << "SubSectors: " << numSubsectors << "\n";
+        std::cout << "BSP Nodes: " << numNodes << "\n";
+        std::cout << "Total size: " << totalSize << "\n";
+    }
 };
 
 void serializeData(const void* data, size_t byteCount, const std::string& variableName, std::ostream& out)
@@ -69,6 +87,80 @@ void appendBuffer(std::ostream& cpp, std::ostream& header, const std::string& va
     serializeData(data, byteCount, variableName, cpp);
 }
 
+void writeLoadFunction(std::ofstream& header, std::ofstream& cpp, std::string mapName)
+{
+    // Write the prototype
+    header << "void loadMap_" << mapName << "(WAD::LevelData& dstLevel);\n\n";
+
+    // Write the implementation
+    cpp << "void loadMap_" << mapName << "(WAD::LevelData& dstLevel) {\n"
+        << "\t// Load vertex data\n"
+        << "\tdstLevel.vertices = (const WAD::Vertex*)" << mapName << "Vertices;\n"
+        << "\n"
+        << "\t// Load line defs\n"
+        << "\tdstLevel.lineDefs = (const WAD::LineDef*)" << mapName << "LineDefs;\n"
+        << "\n"
+        << "\t// Load side defs\n"
+        << "\tdstLevel.sideDefs = (const WAD::SideDef*)" << mapName << "SideDefs;\n"
+        << "\n"
+        << "\t// Load subsectors defs\n"
+        << "\tdstLevel.subSectors = (const WAD::SubSector*)" << mapName << "SubSectors;\n"
+        << "\n"
+        << "\t// Load segments defs\n"
+        << "\tdstLevel.segments = (const WAD::Seg*)" << mapName << "Segments;\n"
+        << "\n"
+        << "\t// Load sectors defs\n"
+        << "\tdstLevel.sectors = (const WAD::Sector*)" << mapName << "Sectors;\n"
+        << "\n"
+        << "\t// Load nodes\n"
+        << "\tdstLevel.numNodes = (" << mapName << "NodesSize * 4) / sizeof(WAD::Node);\n"
+        << "\tdstLevel.nodes = (const WAD::Node*)" << mapName << "Nodes;\n"
+        << "}\n";
+}
+
+void adjustUnits(const WAD::LevelData& level, WADMetrics& metrics)
+{
+    // Vertices
+    if (!metrics.numVertices)
+        return;
+
+    auto vertices = const_cast<WAD::Vertex*>(level.vertices);
+
+    // Compute bounding box and center the level around 0 for better use of our finite range
+    int minX = vertices[0].x.raw;
+    int minY = vertices[0].y.raw;
+    int maxX = vertices[0].x.raw;
+    int maxY = vertices[0].y.raw;
+    for (int i = 0; i < metrics.numVertices; ++i)
+    {
+        int x = vertices[i].x.raw;
+        int y = vertices[i].y.raw;
+        minX = std::min(minX, x);
+        maxX = std::max(maxX, x);
+        minY = std::min(minY, y);
+        maxY = std::max(maxY, y);
+    }
+    int x0 = (minX + maxX) / 2;
+    int y0 = (minY + maxY) / 2;
+    metrics.minX = minX - x0;
+    metrics.minY = minY - y0;
+    metrics.maxX = maxX - x0;
+    metrics.maxY = maxY - y0;
+
+    for (int i = 0; i < metrics.numVertices; ++i)
+    {
+        vertices[i].x.raw = (vertices[i].x.raw - x0) * 8;
+        vertices[i].y.raw = (vertices[i].y.raw - y0) * 8;
+    }
+
+    // Sector heights
+    auto sectors = const_cast<WAD::Sector*>(level.sectors);
+    for (int i = 0; i < metrics.numSectors; ++i)
+    {
+        sectors[i].ceilingHeight.raw *= 10;
+    }
+}
+
 void serializeWAD(const WAD::LevelData& level, const WADMetrics& metrics, const std::string& inputFileName)
 {
     // --- Serialize data ---
@@ -83,12 +175,14 @@ void serializeWAD(const WAD::LevelData& level, const WADMetrics& metrics, const 
     auto variableName = fileWithoutExtension + "_WAD";
 
     appendBuffer(outCppFile, outHeader, variableName + "Vertices", level.vertices, sizeof(WAD::Vertex) * metrics.numVertices);
-    appendBuffer(outCppFile, outHeader, variableName + "LineDefs", level.linedefs, sizeof(WAD::LineDef) * metrics.numLineDefs);
+    appendBuffer(outCppFile, outHeader, variableName + "LineDefs", level.lineDefs, sizeof(WAD::LineDef) * metrics.numLineDefs);
+    appendBuffer(outCppFile, outHeader, variableName + "SideDefs", level.sideDefs, sizeof(WAD::SideDef) * metrics.numSideDefs);
     appendBuffer(outCppFile, outHeader, variableName + "Segments", level.segments, sizeof(WAD::Seg) * metrics.numSegments);
-    appendBuffer(outCppFile, outHeader, variableName + "Subsectors", level.subsectors, sizeof(WAD::SubSector) * metrics.numSubsectors);
+    appendBuffer(outCppFile, outHeader, variableName + "SubSectors", level.subSectors, sizeof(WAD::SubSector) * metrics.numSubsectors);
     appendBuffer(outCppFile, outHeader, variableName + "Sectors", level.sectors, sizeof(WAD::Sector) * metrics.numSectors);
     appendBuffer(outCppFile, outHeader, variableName + "Nodes", level.nodes, sizeof(WAD::Node) * level.numNodes);
     outCppFile << "\n";
+    writeLoadFunction(outHeader, outCppFile, variableName);
 }
 
 std::vector<uint8_t> loadRawWAD(std::string_view fileName)
@@ -138,7 +232,7 @@ bool loadWAD(WAD::LevelData& dstLevel, WADMetrics& metrics, std::vector<uint8_t>
     //auto& mapName = directory[0];
     //auto& things = directory[1];
     auto& lineDefsLump = localDir[2];
-    //auto& sideDefsLump = directory[3];
+    auto& sideDefsLump = directory[3];
     auto& verticesLump = localDir[4];
     auto& segLumps = localDir[5];
     auto& ssectorLumps = localDir[6];
@@ -147,21 +241,35 @@ bool loadWAD(WAD::LevelData& dstLevel, WADMetrics& metrics, std::vector<uint8_t>
     //auto& reject = directory[9];
     //auto& blockMap = directory[10];
 
+    metrics.totalSize =
+        lineDefsLump.dataSize +
+        sideDefsLump.dataSize +
+        verticesLump.dataSize +
+        segLumps.dataSize +
+        ssectorLumps.dataSize +
+        nodeLumps.dataSize +
+        sectorLumps.dataSize;
+
     // Load vertex data
     metrics.numVertices = verticesLump.dataSize / sizeof(WAD::Vertex);
     dstLevel.vertices = reinterpret_cast<const WAD::Vertex*>(&byteData[verticesLump.dataOffset]);
 
     // Load line defs
     metrics.numLineDefs = lineDefsLump.dataSize / sizeof(WAD::LineDef);
-    dstLevel.linedefs = (const WAD::LineDef*)(&byteData[lineDefsLump.dataOffset]);
+    dstLevel.lineDefs = (const WAD::LineDef*)(&byteData[lineDefsLump.dataOffset]);
+
+    // Load side defs
+    metrics.numSideDefs = sideDefsLump.dataSize / sizeof(WAD::SideDef);
+    dstLevel.sideDefs = (const WAD::SideDef*)(&byteData[sideDefsLump.dataOffset]);
 
     // Load nodes
     dstLevel.numNodes = nodeLumps.dataSize / sizeof(WAD::Node);
+    metrics.numNodes = dstLevel.numNodes;
     dstLevel.nodes = (const WAD::Node*)(&byteData[nodeLumps.dataOffset]);
 
     // Load subsectors
     metrics.numSubsectors = ssectorLumps.dataSize / sizeof(WAD::SubSector);
-    dstLevel.subsectors = (const WAD::SubSector*)&byteData[ssectorLumps.dataOffset];
+    dstLevel.subSectors = (const WAD::SubSector*)&byteData[ssectorLumps.dataOffset];
 
     // Load segments
     metrics.numSegments = segLumps.dataSize / sizeof(WAD::Seg);
@@ -195,8 +303,14 @@ int main(int _argc, const char** _argv)
         return -1;
     }
 
+    // Translate units from "Doom compatible" to a common frame where we correct for Doom's 1.25 aspect ratio.
+    adjustUnits(parsedWAD, metrics);
+
     // Write into a header/cpp pair
     serializeWAD(parsedWAD, metrics, fileName);
+
+    // Finally print metrics
+    metrics.print();
 
     return 0;
 }

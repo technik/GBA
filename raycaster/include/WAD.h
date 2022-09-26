@@ -34,6 +34,15 @@ namespace WAD
         uint16_t SideNum[2];
     };
 
+    struct SideDef
+    {
+        uint16_t xOffet, yOffset;
+        char upperTextureName[8];
+        char lowerTextureName[8];
+        char middleTextureName[8];
+        uint8_t sector;
+    };
+
     struct Seg
     {
         int16_t startVertex;
@@ -80,10 +89,11 @@ namespace WAD
         uint32_t numNodes = 0;
 
         const WAD::Vertex* vertices;
-        const WAD::LineDef* linedefs;
+        const WAD::LineDef* lineDefs;
+        const WAD::SideDef* sideDefs;
         const WAD::Node* nodes;
         const WAD::Seg* segments;
         const WAD::Sector* sectors;
-        const WAD::SubSector* subsectors;
+        const WAD::SubSector* subSectors;
     };
 }

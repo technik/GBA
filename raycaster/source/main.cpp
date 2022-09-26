@@ -175,6 +175,7 @@ int main()
 		// Next frame logic
 		Keypad::Update();
 		playerController.update();
+		// We're actually controlling the camera
 
 #if !SECTOR_RASTER
 		playerController.m_pose.pos.x() = max(1.125_p8, playerController.m_pose.pos.x());

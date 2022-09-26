@@ -28,7 +28,8 @@ endmacro()
 ################################################################################
 
 # Collect all sources
-file(GLOB_RECURSE COMMON_FILES "pc/include/*.h" "common/source/*.cpp" "common/include/*.inl" "common/include/*.h" "common/include/*.hpp")
+file(GLOB_RECURSE COMMON_FILES "pc/include/*.h" "common/source/*.cpp" "common/include/*.inl" "common/include/*.h")
+file(GLOB_RECURSE COMMON_HEADERS "pc/include/*.h" "common/include/*.h")
 GroupSources(common common)
 GroupSources(pc pc)
 
@@ -44,7 +45,7 @@ set_target_properties(lutGenerator PROPERTIES FOLDER tools)
 add_executable(pngToCpp tools/pngToCpp/main.cpp ${COMMON_FILES})
 set_target_properties(pngToCpp PROPERTIES FOLDER tools)
 
-add_executable(wadToCpp tools/wadToCpp/main.cpp ${COMMON_FILES})
+add_executable(wadToCpp tools/wadToCpp/main.cpp ${COMMON_HEADERS})
 set_target_properties(wadToCpp PROPERTIES FOLDER tools)
 
 ### Tests

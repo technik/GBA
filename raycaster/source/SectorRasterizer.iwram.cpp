@@ -203,18 +203,18 @@ void clear(uint16_t* buffer, uint16_t topClr, uint16_t bottomClr, int area)
 void SectorRasterizer::RenderSubsector(const WAD::LevelData& level, uint16_t ssIndex, const Camera& cam, DepthBuffer& depthBuffer)
 {
 	constexpr uint16_t FlagTwoSided = 0x04;
-	const WAD::SubSector& subsector = level.subsectors[ssIndex];
-	for (int i = subsector.firstSegment; i < subsector.firstSegment + subsector.segmentCount; ++i)
+	const WAD::SubSector& subSector = level.subSectors[ssIndex];
+	for (int i = subSector.firstSegment; i < subSector.firstSegment + subSector.segmentCount; ++i)
 	{
 		auto& segment = level.segments[i];
-		auto& lineDef = level.linedefs[segment.linedefNum];
+		auto& lineDef = level.lineDefs[segment.linedefNum];
 		if (lineDef.flags & FlagTwoSided)
 			continue; // For now, fully skip portals, as we only support full height walls.
 
 		auto& sector = level.sectors[lineDef.SectorTag];
 
-		intp8 floorH = sector.floorhHeight * 8 - cam.m_pose.pos.m_z;
-		intp8 ceilingH = sector.ceilingHeight * 8 - cam.m_pose.pos.m_z;
+		intp8 floorH = sector.floorhHeight - cam.m_pose.pos.m_z;
+		intp8 ceilingH = sector.ceilingHeight - cam.m_pose.pos.m_z;
 
 		auto& v0 = level.vertices[segment.startVertex];
 		auto& v1 = level.vertices[segment.endVertex];
@@ -307,10 +307,10 @@ void SectorRasterizer::RenderWall(const Camera& cam, const Vec2p8& A, const Vec2
 		return;
 	}
 
-	intp8 hFloorA = (floorH * csA.y()).cast<8>();
-	intp8 hFloorB = (floorH * csB.y()).cast<8>();
-	intp8 hCeilingA = (ceilingH * csA.y()).cast<8>();
-	intp8 hCeilingB = (ceilingH * csB.y()).cast<8>();
+	intp8 hFloorA = (floorH * csA.y()).cast<8>() * int(DisplayMode::Width/2);
+	intp8 hFloorB = (floorH * csB.y()).cast<8>() * int(DisplayMode::Width/2);
+	intp8 hCeilingA = (ceilingH * csA.y()).cast<8>() * int(DisplayMode::Width/2);
+	intp8 hCeilingB = (ceilingH * csB.y()).cast<8>() * int(DisplayMode::Width/2);
 	intp8 mFloor = (hFloorB - hFloorA) / (x1 - x0);
 	intp8 mCeil = (hCeilingB - hCeilingA) / (x1 - x0);
 	int y0A = (DisplayMode::Height / 2 - hCeilingA).floor();
