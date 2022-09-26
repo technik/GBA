@@ -153,6 +153,18 @@ void adjustUnits(const WAD::LevelData& level, WADMetrics& metrics)
         vertices[i].y.raw = (vertices[i].y.raw - y0) * 8;
     }
 
+    // Nodes
+    auto nodes = const_cast<WAD::Node*>(level.nodes);
+    for (int i = 0; i < metrics.numNodes; ++i)
+    {
+        nodes[i].x.raw = (nodes[i].x.raw - x0) * 8;
+        nodes[i].y.raw = (nodes[i].y.raw - y0) * 8;
+        nodes[i].dx.raw = nodes[i].x.raw * 8;
+        nodes[i].dy.raw = nodes[i].y.raw * 8;
+    }
+
+    // TODO: AABBs and possibly texture offsets
+
     // Sector heights
     auto sectors = const_cast<WAD::Sector*>(level.sectors);
     for (int i = 0; i < metrics.numSectors; ++i)
