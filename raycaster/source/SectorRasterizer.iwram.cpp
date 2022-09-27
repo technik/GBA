@@ -236,14 +236,6 @@ void SectorRasterizer::RenderSubsector(const WAD::LevelData& level, uint16_t ssI
 	for (int i = subSector.firstSegment; i < subSector.firstSegment + subSector.segmentCount; ++i)
 	{
 		auto& segment = level.segments[i];
-		auto& frontLine = level.lineDefs[segment.linedefNum];
-		//if (lineDef.flags & FlagTwoSided)
-		//	continue; // For now, fully skip portals, as we only support full height walls.
-
-		auto& frontSector = level.sectors[frontLine.SectorTag];
-
-		intp8 floorH = frontSector.floorhHeight - cam.m_pose.pos.m_z;
-		intp8 ceilingH = frontSector.ceilingHeight - cam.m_pose.pos.m_z;
 
 		Vec2p12 vA, vB;
 		if (!clipSegment(cam, level.vertices, segment, vA, vB))
@@ -251,8 +243,42 @@ void SectorRasterizer::RenderSubsector(const WAD::LevelData& level, uint16_t ssI
 			continue; // Ignore non-visible segments
 		}
 
+		// Locate drawing info
 		auto clrNdx = segment.linedefNum % 8;
-		RenderWall(cam, vA, vB, floorH, ceilingH, edgeClr[clrNdx], depthBuffer);
+		auto& lineDef = level.lineDefs[segment.linedefNum];
+		auto& frontSide = level.sideDefs[lineDef.SideNum[0]];
+		auto& frontSector = level.sectors[frontSide.sector];
+
+		intp8 floorH = frontSector.floorhHeight - cam.m_pose.pos.m_z;
+		intp8 ceilingH = frontSector.ceilingHeight - cam.m_pose.pos.m_z;
+
+		if (lineDef.SideNum[1] == uint16_t(-1) // No back sector, must be an opaque wall
+			|| !(lineDef.flags & FlagTwoSided)) // Explicitly opaque
+		{
+			RenderWall(cam, vA, vB, floorH, ceilingH, edgeClr[clrNdx], depthBuffer);
+			continue;
+		}
+
+		auto& backSide = level.sideDefs[lineDef.SideNum[1]];
+		auto& backSector = level.sectors[backSide.sector];
+
+		// TODO: Closed door optimization
+		//if (backSector.ceilingHeight <= frontSector.floorhHeight
+		//	|| backSector.floorhHeight >= frontSector.ceilingHeight)
+		//{
+		//	RenderWall(cam, vA, vB, floorH, ceilingH, edgeClr[clrNdx], depthBuffer);
+		//	continue;
+		//}
+
+		// Invisible portal
+		if (backSector.floorhHeight == frontSector.floorhHeight
+			&& backSector.ceilingHeight == frontSector.ceilingHeight)
+		{
+			continue;
+		}
+
+		// Regular portal
+		RenderPortal(cam, vA, vB, floorH, ceilingH, backSector, edgeClr[clrNdx], depthBuffer);
 	}
 }
 
@@ -312,8 +338,6 @@ void SectorRasterizer::RenderWorld(WAD::LevelData& level, const Camera& cam)
 
 void SectorRasterizer::RenderWall(const Camera& cam, const Vec2p12& ndcA, const Vec2p12& ndcB, math::intp8 floorH, math::intp8 ceilingH, Color wallClr, DepthBuffer& depthBuffer)
 {
-	uint16_t* backbuffer = (uint16_t*)DisplayMode::backBuffer();
-
 	// TODO: Use .12 precision here and move this into the clipping method instead?
 	intp8 ssA = (ndcA.x() * int(DisplayMode::Width/2)).cast<8>() + int(DisplayMode::Width/2);
 	intp8 ssB = (ndcB.x() * int(DisplayMode::Width/2)).cast<8>() + int(DisplayMode::Width/2);
@@ -337,6 +361,7 @@ void SectorRasterizer::RenderWall(const Camera& cam, const Vec2p12& ndcA, const 
 	
 	x1 = std::min<int32_t>(x1, DisplayMode::Width-1);
 
+	uint16_t* backbuffer = (uint16_t*)DisplayMode::backBuffer();
 	for(int x = std::max<int32_t>(0,x0); x < x1; ++x)
 	{		
 		int floorDY = (mFloor * (x - x0)).floor();
@@ -373,11 +398,112 @@ void SectorRasterizer::RenderWall(const Camera& cam, const Vec2p12& ndcA, const 
 	}
 }
 
+void SectorRasterizer::RenderPortal(const Camera& cam,
+	const Vec2p12& ndcA, const Vec2p12& ndcB,
+	intp8 floorH, intp8 ceilingH,
+	const WAD::Sector& backSector,
+	Color wallClr, DepthBuffer& depthBuffer)
+{
+	// TODO: Use .12 precision here and move this into the clipping method instead?
+	intp8 ssA = (ndcA.x() * int(DisplayMode::Width / 2)).cast<8>() + int(DisplayMode::Width / 2);
+	intp8 ssB = (ndcB.x() * int(DisplayMode::Width / 2)).cast<8>() + int(DisplayMode::Width / 2);
+
+	// No intersection with the view frustum
+	int32_t x0 = ssA.floor();
+	int32_t x1 = ssB.floor() + 1;
+	if ((x0 >= int32_t(DisplayMode::Width)) || (x1 < 0) || x0 >= x1)
+	{
+		return;
+	}
+
+	// back sector heights
+	intp8 backCeiling = backSector.ceilingHeight - cam.m_pose.pos.m_z;
+	intp8 backFloor = backSector.floorhHeight - cam.m_pose.pos.m_z;
+
+	intp8 hBakcFloorA = (backFloor * ndcA.y()).cast<8>() * int(DisplayMode::Width / 2);
+	intp8 hBakcFloorB = (backFloor * ndcB.y()).cast<8>() * int(DisplayMode::Width / 2);
+	intp8 hBakcCeilingA = (backCeiling * ndcA.y()).cast<8>() * int(DisplayMode::Width / 2);
+	intp8 hBakcCeilingB = (backCeiling * ndcB.y()).cast<8>() * int(DisplayMode::Width / 2);
+	intp8 mBackFloor = (hBakcFloorB - hBakcFloorA) / (x1 - x0);
+	intp8 mBackCeil = (hBakcCeilingB - hBakcCeilingA) / (x1 - x0);
+
+	// Front sector lines
+	intp8 hFloorA = (floorH * ndcA.y()).cast<8>() * int(DisplayMode::Width / 2);
+	intp8 hFloorB = (floorH * ndcB.y()).cast<8>() * int(DisplayMode::Width / 2);
+	intp8 hCeilingA = (ceilingH * ndcA.y()).cast<8>() * int(DisplayMode::Width / 2);
+	intp8 hCeilingB = (ceilingH * ndcB.y()).cast<8>() * int(DisplayMode::Width / 2);
+	intp8 mFloor = (hFloorB - hFloorA) / (x1 - x0);
+	intp8 mCeil = (hCeilingB - hCeilingA) / (x1 - x0);
+
+	// Draw limits on the first vertex
+	int y0A = (DisplayMode::Height / 2 - hCeilingA).floor();
+	int y1A = (DisplayMode::Height / 2 - hBakcCeilingA).floor(); // End of top
+	int y2A = (DisplayMode::Height / 2 - hBakcFloorA).floor(); // Start of bottom
+	int y3A = (DisplayMode::Height / 2 - hFloorA).floor();
+
+	x1 = std::min<int32_t>(x1, DisplayMode::Width - 1);
+
+	uint16_t* backbuffer = (uint16_t*)DisplayMode::backBuffer();
+	for (int x = std::max<int32_t>(0, x0); x < x1; ++x)
+	{
+		// Skip fully occluded columns
+		if (depthBuffer.lowBound[x] >= depthBuffer.highBound[x])
+		{
+			continue;
+		}
+
+		// Compute deltas for all 4 lines
+		int floorDY = (mFloor * (x - x0)).floor();
+		int ceilDY = (mCeil * (x - x0)).floor();
+		int backFloorDY = (mBackFloor * (x - x0)).floor();
+		int backCeilDY = (mBackCeil * (x - x0)).floor();
+
+		// Draw the ceiling in front
+		int32_t cullTop = depthBuffer.lowBound[x];
+		int32_t cullBottom = depthBuffer.highBound[x];
+
+		int32_t y0 = min(cullBottom, y0A - ceilDY);
+		for (int y = cullTop; y < y0; ++y)
+		{
+			auto pixel = DisplayMode::pixel(x, y);
+			backbuffer[pixel] = skyClr;
+		}
+		y0 = max(cullTop, y0);
+
+		// Draw the top section
+		int y1 = min(cullBottom, y1A - backCeilDY);
+		for (int y = y0; y < y1; ++y)
+		{
+			auto pixel = DisplayMode::pixel(x, y);
+			backbuffer[pixel] = wallClr.raw;
+		}
+		depthBuffer.lowBound[x] = max(depthBuffer.lowBound[x], y1);
+
+		// Bottom wall
+		int y2 = max(cullTop, y2A - backFloorDY);
+		int y3 = min(cullBottom, y3A - floorDY);
+		for (int y = y0; y < y3; ++y)
+		{
+			auto pixel = DisplayMode::pixel(x, y);
+			backbuffer[pixel] = wallClr.raw;
+		}
+		y3 = max(y2, y3);
+		depthBuffer.highBound[x] = min(depthBuffer.highBound[x], y2);
+
+		// Ground
+		for (int y = y2; y < cullBottom; ++y)
+		{
+			auto pixel = DisplayMode::pixel(x, y);
+			backbuffer[pixel] = groundClr;
+		}
+	}
+}
+
 void SectorRasterizer::DepthBuffer::Clear()
 {
 	for(int i = 0; i < DisplayMode::Width; ++i)
 	{
 		lowBound[i] = 0;
-		highBound[i] = DisplayMode::Area;
+		highBound[i] = DisplayMode::Height;
 	}
 }
