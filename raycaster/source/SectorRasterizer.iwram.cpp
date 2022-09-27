@@ -74,7 +74,7 @@ Vec2p8 worldToViewSpace(const Pose& camPose, const Vec2p8& worldPos)
 }
 
 // Returns x in screen space, invDepth as y
-Vec2p12 viewToClipSpace(const Vec2p8& viewSpace, int halfScreenWidth)
+Vec2p12 viewToClipSpace(const Vec2p8& viewSpace)
 {
 	// Project x onto the screen
 	intp12 invDepth = 1_p12 / max(intp12(1.f/64), viewSpace.y().cast<12>());
@@ -200,6 +200,35 @@ void clear(uint16_t* buffer, uint16_t topClr, uint16_t bottomClr, int area)
 	DMA::Channel0().Fill(&buffer[3 * area / 4], bottomClr, area / 4);
 }
 
+// Clip a segment against the screen.
+// Returns whether the segment is potentially visible, and if so, fills in the clipped vertices into ndcA and ndcB.
+// The clipped vertices have the following components:
+// x: screen space x, in the range [-1,1]
+// y: inverse distance to the camera plane.
+bool clipSegment(const Camera& cam, const WAD::Vertex* vertices, const WAD::Seg& segment, Vec2p12& ndcA, Vec2p12& ndcB)
+{
+	// Reconstruct segment vertices
+	auto& v0 = vertices[segment.startVertex];
+	auto& v1 = vertices[segment.endVertex];
+
+	Vec2p8 A = { intp8::castFromShiftedInteger<8>(v0.x.raw), intp8::castFromShiftedInteger<8>(v0.y.raw) };
+	Vec2p8 B = { intp8::castFromShiftedInteger<8>(v1.x.raw), intp8::castFromShiftedInteger<8>(v1.y.raw) };
+
+	// Project to view space
+	auto vsA = worldToViewSpace(cam.m_pose, A);
+	auto vsB = worldToViewSpace(cam.m_pose, B);
+
+	// Clip
+	if (!clipWall(vsA, vsB))
+		return false; // Early out on clipped walls
+
+	// Convert to normalized coordinates
+	ndcA = viewToClipSpace(vsA);
+	ndcB = viewToClipSpace(vsB);
+
+	return true;
+}
+
 void SectorRasterizer::RenderSubsector(const WAD::LevelData& level, uint16_t ssIndex, const Camera& cam, DepthBuffer& depthBuffer)
 {
 	constexpr uint16_t FlagTwoSided = 0x04;
@@ -207,22 +236,23 @@ void SectorRasterizer::RenderSubsector(const WAD::LevelData& level, uint16_t ssI
 	for (int i = subSector.firstSegment; i < subSector.firstSegment + subSector.segmentCount; ++i)
 	{
 		auto& segment = level.segments[i];
-		auto& lineDef = level.lineDefs[segment.linedefNum];
-		if (lineDef.flags & FlagTwoSided)
-			continue; // For now, fully skip portals, as we only support full height walls.
+		auto& frontLine = level.lineDefs[segment.linedefNum];
+		//if (lineDef.flags & FlagTwoSided)
+		//	continue; // For now, fully skip portals, as we only support full height walls.
 
-		auto& sector = level.sectors[lineDef.SectorTag];
+		auto& frontSector = level.sectors[frontLine.SectorTag];
 
-		intp8 floorH = sector.floorhHeight - cam.m_pose.pos.m_z;
-		intp8 ceilingH = sector.ceilingHeight - cam.m_pose.pos.m_z;
+		intp8 floorH = frontSector.floorhHeight - cam.m_pose.pos.m_z;
+		intp8 ceilingH = frontSector.ceilingHeight - cam.m_pose.pos.m_z;
 
-		auto& v0 = level.vertices[segment.startVertex];
-		auto& v1 = level.vertices[segment.endVertex];
+		Vec2p12 vA, vB;
+		if (!clipSegment(cam, level.vertices, segment, vA, vB))
+		{
+			continue; // Ignore non-visible segments
+		}
 
 		auto clrNdx = segment.linedefNum % 8;
-		Vec2p8 A = { intp8::castFromShiftedInteger<8>(v0.x.raw), intp8::castFromShiftedInteger<8>(v0.y.raw) };
-		Vec2p8 B = { intp8::castFromShiftedInteger<8>(v1.x.raw), intp8::castFromShiftedInteger<8>(v1.y.raw) };
-		RenderWall(cam, A, B, floorH, ceilingH, edgeClr[clrNdx], depthBuffer);
+		RenderWall(cam, vA, vB, floorH, ceilingH, edgeClr[clrNdx], depthBuffer);
 	}
 }
 
@@ -280,24 +310,13 @@ void SectorRasterizer::RenderWorld(WAD::LevelData& level, const Camera& cam)
 	RenderBSPNode(level, rootNode, cam, depthBuffer);
 }
 
-void SectorRasterizer::RenderWall(const Camera& cam, const Vec2p8& A, const Vec2p8& B, math::intp8 floorH, math::intp8 ceilingH, Color wallClr, DepthBuffer& depthBuffer)
+void SectorRasterizer::RenderWall(const Camera& cam, const Vec2p12& ndcA, const Vec2p12& ndcB, math::intp8 floorH, math::intp8 ceilingH, Color wallClr, DepthBuffer& depthBuffer)
 {
 	uint16_t* backbuffer = (uint16_t*)DisplayMode::backBuffer();
 
-	auto vsA = worldToViewSpace(cam.m_pose, A);
-	auto vsB = worldToViewSpace(cam.m_pose, B);
-
-	// Clip
-
-	if(!clipWall(vsA, vsB))
-		return; // Early out on clipped walls
-
-	Vec2p12 csA = viewToClipSpace(vsA, DisplayMode::Width/2);
-	Vec2p12 csB = viewToClipSpace(vsB, DisplayMode::Width/2);
-
-	// TODO: Clip wall to the view frustum and recompute invDepth from there
-	intp8 ssA = (csA.x() * int(DisplayMode::Width/2)).cast<8>() + int(DisplayMode::Width/2);
-	intp8 ssB = (csB.x() * int(DisplayMode::Width/2)).cast<8>() + int(DisplayMode::Width/2);
+	// TODO: Use .12 precision here and move this into the clipping method instead?
+	intp8 ssA = (ndcA.x() * int(DisplayMode::Width/2)).cast<8>() + int(DisplayMode::Width/2);
+	intp8 ssB = (ndcB.x() * int(DisplayMode::Width/2)).cast<8>() + int(DisplayMode::Width/2);
 
 	// No intersection with the view frustum
 	int32_t x0 = ssA.floor();
@@ -307,10 +326,10 @@ void SectorRasterizer::RenderWall(const Camera& cam, const Vec2p8& A, const Vec2
 		return;
 	}
 
-	intp8 hFloorA = (floorH * csA.y()).cast<8>() * int(DisplayMode::Width/2);
-	intp8 hFloorB = (floorH * csB.y()).cast<8>() * int(DisplayMode::Width/2);
-	intp8 hCeilingA = (ceilingH * csA.y()).cast<8>() * int(DisplayMode::Width/2);
-	intp8 hCeilingB = (ceilingH * csB.y()).cast<8>() * int(DisplayMode::Width/2);
+	intp8 hFloorA = (floorH * ndcA.y()).cast<8>() * int(DisplayMode::Width/2);
+	intp8 hFloorB = (floorH * ndcB.y()).cast<8>() * int(DisplayMode::Width/2);
+	intp8 hCeilingA = (ceilingH * ndcA.y()).cast<8>() * int(DisplayMode::Width/2);
+	intp8 hCeilingB = (ceilingH * ndcB.y()).cast<8>() * int(DisplayMode::Width/2);
 	intp8 mFloor = (hFloorB - hFloorA) / (x1 - x0);
 	intp8 mCeil = (hCeilingB - hCeilingA) / (x1 - x0);
 	int y0A = (DisplayMode::Height / 2 - hCeilingA).floor();

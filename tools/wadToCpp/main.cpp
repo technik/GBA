@@ -159,8 +159,8 @@ void adjustUnits(const WAD::LevelData& level, WADMetrics& metrics)
     {
         nodes[i].x.raw = (nodes[i].x.raw - x0) * 8;
         nodes[i].y.raw = (nodes[i].y.raw - y0) * 8;
-        nodes[i].dx.raw = nodes[i].x.raw * 8;
-        nodes[i].dy.raw = nodes[i].y.raw * 8;
+        nodes[i].dx.raw = nodes[i].dx.raw * 8;
+        nodes[i].dy.raw = nodes[i].dy.raw * 8;
     }
 
     // TODO: AABBs and possibly texture offsets
