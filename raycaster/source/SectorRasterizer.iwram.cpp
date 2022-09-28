@@ -367,34 +367,38 @@ void SectorRasterizer::RenderWall(const Camera& cam, const Vec2p12& ndcA, const 
 		int floorDY = (mFloor * (x - x0)).floor();
 		int ceilDY = (mCeil * (x - x0)).floor();
 		//intp12 d = (md*(x-x0)) + csA.y();
-		if (depthBuffer.lowBound[x])
+		if (depthBuffer.lowBound[x] >= depthBuffer.highBound[x])
 		{
 			continue;
 		}
+		int cullMin = depthBuffer.lowBound[x];
+		int cullMax = depthBuffer.highBound[x];
 		depthBuffer.lowBound[x] = 255;
 		int y0 = std::max<int32_t>(0, y0A - ceilDY);
 		int y1 = std::min<int32_t>(DisplayMode::Height, y1A - floorDY);
 
 		// Ceiling
-		for(int y = 0; y < y0; ++y)
+		for(int y = cullMin; y < y0; ++y)
 		{
 			auto pixel = DisplayMode::pixel(x, y);
 			backbuffer[pixel] = skyClr;
 		}
 
 		// Wall		
-		for(int y = y0; y < y1; ++y)
+		for(int y = max(y0,cullMin); y < min(y1,cullMax); ++y)
 		{
 			auto pixel = DisplayMode::pixel(x, y);
 			backbuffer[pixel] = wallClr.raw;
 		}
 
 		// Ground
-		for(int y = y1; y < DisplayMode::Height; ++y)
+		for(int y = y1; y < cullMax; ++y)
 		{
 			auto pixel = DisplayMode::pixel(x, y);
 			backbuffer[pixel] = groundClr;
 		}
+
+		depthBuffer.lowBound[x] = cullMax;
 	}
 }
 
