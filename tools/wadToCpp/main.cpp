@@ -170,6 +170,7 @@ void adjustUnits(const WAD::LevelData& level, WADMetrics& metrics)
     for (int i = 0; i < metrics.numSectors; ++i)
     {
         sectors[i].ceilingHeight.raw *= 10;
+        sectors[i].floorhHeight.raw *= 10;
     }
 }
 
