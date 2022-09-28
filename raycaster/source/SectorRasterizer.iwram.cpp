@@ -482,7 +482,7 @@ void SectorRasterizer::RenderPortal(const Camera& cam,
 		// Bottom wall
 		int y2 = max(cullTop, y2A - backFloorDY);
 		int y3 = min(cullBottom, y3A - floorDY);
-		for (int y = y0; y < y3; ++y)
+		for (int y = y2; y < y3; ++y)
 		{
 			auto pixel = DisplayMode::pixel(x, y);
 			backbuffer[pixel] = wallClr.raw;
@@ -491,7 +491,7 @@ void SectorRasterizer::RenderPortal(const Camera& cam,
 		depthBuffer.highBound[x] = min(depthBuffer.highBound[x], y2);
 
 		// Ground
-		for (int y = y2; y < cullBottom; ++y)
+		for (int y = y3; y < cullBottom; ++y)
 		{
 			auto pixel = DisplayMode::pixel(x, y);
 			backbuffer[pixel] = groundClr;
