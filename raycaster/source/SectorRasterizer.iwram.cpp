@@ -278,7 +278,8 @@ void SectorRasterizer::RenderSubsector(const WAD::LevelData& level, uint16_t ssI
 		}
 
 		// Regular portal
-		RenderPortal(cam, vA, vB, floorH, ceilingH, backSector, edgeClr[clrNdx], depthBuffer);
+		auto renderClr = segment.direction ? BasicColor::DarkGreen : edgeClr[clrNdx];
+		RenderPortal(cam, vA, vB, floorH, ceilingH, backSector, renderClr, depthBuffer);
 	}
 }
 

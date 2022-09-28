@@ -40,6 +40,7 @@ void CharacterController::update()
 	}
 	// up/down : forward/back
 	dir.y() = horSpeed * (Keypad::Held(Keypad::UP) - Keypad::Held(Keypad::DOWN));
+	dir.z() = horSpeed * (Keypad::Held(Keypad::A) - Keypad::Held(Keypad::B));
 
 	Vec2p8 disp;
 	disp.x() = (dir.x() * m_pose.cosf - dir.y() * m_pose.sinf).cast<8>();
@@ -47,6 +48,8 @@ void CharacterController::update()
 
 	m_pose.pos.x() += disp.x();
 	m_pose.pos.y() += disp.y();
+	m_pose.pos.z() += dir.z();
+
 
 	// Jumps
 	/*

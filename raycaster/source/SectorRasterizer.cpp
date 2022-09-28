@@ -37,7 +37,7 @@ void SectorRasterizer::EndFrame()
     displayMode.Flip();
 }
 
-#define LEVEL 0
+#define LEVEL 1
 
 bool loadWAD(WAD::LevelData& dstLevel)
 {
@@ -46,6 +46,7 @@ bool loadWAD(WAD::LevelData& dstLevel)
 #elif LEVEL == 1
     loadMap_mercury_WAD(dstLevel);
 #elif LEVEL == 2
+    loadMap_portaltest_WAD(dstLevel);
 #endif
 
     return true;
