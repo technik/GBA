@@ -374,12 +374,12 @@ void SectorRasterizer::RenderWall(const Camera& cam, const Vec2p12& ndcA, const 
 		}
 		int cullMin = depthBuffer.lowBound[x];
 		int cullMax = depthBuffer.highBound[x];
-		depthBuffer.lowBound[x] = 255;
+
 		int y0 = std::max<int32_t>(0, y0A - ceilDY);
 		int y1 = std::min<int32_t>(DisplayMode::Height, y1A - floorDY);
 
 		// Ceiling
-		for(int y = cullMin; y < y0; ++y)
+		for(int y = cullMin; y < min(y0,cullMax); ++y)
 		{
 			auto pixel = DisplayMode::pixel(x, y);
 			backbuffer[pixel] = skyClr;
@@ -463,40 +463,39 @@ void SectorRasterizer::RenderPortal(const Camera& cam,
 		int backFloorDY = (mBackFloor * (x - x0)).floor();
 		int backCeilDY = (mBackCeil * (x - x0)).floor();
 
-		// Draw the ceiling in front
-		int32_t cullTop = depthBuffer.lowBound[x];
-		int32_t cullBottom = depthBuffer.highBound[x];
+		// Draw the ceiling in front;
+		int cullMin = depthBuffer.lowBound[x];
+		int cullMax = depthBuffer.highBound[x];
 
-		int32_t y0 = min(cullBottom, y0A - ceilDY);
-		for (int y = cullTop; y < y0; ++y)
+		int32_t y0 = y0A - ceilDY;
+		for (int y = cullMin; y < std::min(y0, cullMax); ++y)
 		{
 			auto pixel = DisplayMode::pixel(x, y);
 			backbuffer[pixel] = skyClr;
 		}
-		y0 = max(cullTop, y0);
 
 		// Draw the top section
-		int y1 = min(cullBottom, y1A - backCeilDY);
-		for (int y = y0; y < y1; ++y)
+		int y1 = y1A - backCeilDY;
+		for (int y = max(y0, cullMin); y < min(y1, cullMax); ++y)
 		{
 			auto pixel = DisplayMode::pixel(x, y);
 			backbuffer[pixel] = wallClr.raw;
 		}
-		depthBuffer.lowBound[x] = max(depthBuffer.lowBound[x], y1);
+		depthBuffer.lowBound[x] = max(cullMax, y1);
 
 		// Bottom wall
-		int y2 = max(cullTop, y2A - backFloorDY);
-		int y3 = min(cullBottom, y3A - floorDY);
-		for (int y = y2; y < y3; ++y)
+		int y2 = y2A - backFloorDY;
+		int y3 = y3A - floorDY;
+		for (int y = max(y2, cullMin); y < min(y3, cullMax); ++y)
 		{
 			auto pixel = DisplayMode::pixel(x, y);
 			backbuffer[pixel] = wallClr.raw;
 		}
 		y3 = max(y2, y3);
-		depthBuffer.highBound[x] = min(depthBuffer.highBound[x], y2);
+		depthBuffer.highBound[x] = min(cullMax, y2);
 
 		// Ground
-		for (int y = y3; y < cullBottom; ++y)
+		for (int y = max(y3, cullMin); y < cullMax; ++y)
 		{
 			auto pixel = DisplayMode::pixel(x, y);
 			backbuffer[pixel] = groundClr;

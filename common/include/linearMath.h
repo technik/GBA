@@ -98,6 +98,7 @@ namespace math
 		FORCE_INLINE constexpr explicit Fixed(T x)
 		{
 			raw = Store(x<<shift);
+			dbgAssert((raw >> shift) == x);
 		}
 		constexpr explicit Fixed(float x) : raw(Store(x * (1<<shift))) {}
 		FORCE_INLINE constexpr Fixed(const math::Fixed<Store,Shift>& _other)
@@ -123,6 +124,7 @@ namespace math
 			{
 				constexpr size_t diff = shift - otherShift;
 				result.raw = x * (1<<diff);
+				dbgAssert((result.raw >> diff) == x);
 			}
 			return result;
 		}
@@ -143,6 +145,7 @@ namespace math
 				// No need to round anything when upcasting
 				constexpr size_t diff = shift - otherShift;
 				result.raw = x * (1<<diff);
+				dbgAssert((result.raw >> diff) == x);
 			}
 			return result;
 		}
@@ -156,6 +159,7 @@ namespace math
 			{
 				constexpr size_t diff = resultShift - shift;
 				result.raw = raw * (1<<diff);
+				dbgAssert((result.raw >> diff) == raw); // Overflow!
 			}
 			else
 			{
@@ -217,6 +221,7 @@ namespace math
 		template<size_t resultShift>
 		constexpr auto roundUnsafe() const // The caller is responsible for making sure the value is positive
 		{
+			dbgAssert(raw >= 0);
 			Fixed<store_type, resultShift> result;
 			if constexpr(resultShift >= shift) // the other type shift is bigger than this, shift left
 			{
@@ -236,7 +241,9 @@ namespace math
 		template<std::integral T>
 		FORCE_INLINE void operator+=(T x)
 		{
-			raw += x*(1<<shift);
+			const auto shifted = x * (1 << shift);
+			assert(shifted / (1 << shift) == x); // Overflow!
+			raw += shifted;
 		}
 		
 		FORCE_INLINE void operator+=(Fixed x)
@@ -247,7 +254,9 @@ namespace math
 		template<std::integral T>
 		FORCE_INLINE void operator-=(T x)
 		{
-			raw -= x*(1<<shift);
+			const auto shifted = x * (1 << shift);
+			assert(shifted / (1 << shift) == x); // Overflow!
+			raw -= shifted;
 		}
 		
 		FORCE_INLINE void operator-=(Fixed x)
@@ -348,6 +357,7 @@ namespace math
 		using product_type = decltype(a.raw*b.raw);
 		Fixed<product_type, shiftA+shiftB> result;
 		result.raw = a.raw*b.raw;
+		dbgAssert(int64_t(a.raw) * b.raw == int64_t(result.raw)); // Overflow detected!
 		return result;
 	}
 

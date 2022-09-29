@@ -4,7 +4,8 @@
 #include <tonc.h>
 #endif
 #ifdef _WIN32
-#define FORCE_INLINE
+#include <cassert>
+#define FORCE_INLINE inline
 #elif defined(GBA)
 #define FORCE_INLINE __attribute__((always_inline))
 #endif
@@ -20,3 +21,10 @@
 #define EWRAM_CODE
 #define IWRAM_DATA
 #endif
+
+FORCE_INLINE void dbgAssert(bool x)
+{
+#ifdef _WIN32
+    assert(x);
+#endif
+}
