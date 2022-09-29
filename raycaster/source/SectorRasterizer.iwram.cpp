@@ -211,8 +211,8 @@ bool clipSegment(const Camera& cam, const WAD::Vertex* vertices, const WAD::Seg&
 	auto& v0 = vertices[segment.startVertex];
 	auto& v1 = vertices[segment.endVertex];
 
-	Vec2p8 A = { intp8::castFromShiftedInteger<8>(v0.x.raw), intp8::castFromShiftedInteger<8>(v0.y.raw) };
-	Vec2p8 B = { intp8::castFromShiftedInteger<8>(v1.x.raw), intp8::castFromShiftedInteger<8>(v1.y.raw) };
+	Vec2p8 A = { intp8::castFromShiftedInteger<16>(v0.x.raw), intp8::castFromShiftedInteger<16>(v0.y.raw) };
+	Vec2p8 B = { intp8::castFromShiftedInteger<16>(v1.x.raw), intp8::castFromShiftedInteger<16>(v1.y.raw) };
 
 	// Project to view space
 	auto vsA = worldToViewSpace(cam.m_pose, A);
@@ -393,7 +393,7 @@ void SectorRasterizer::RenderWall(const Camera& cam, const Vec2p12& ndcA, const 
 		}
 
 		// Ground
-		for(int y = y1; y < cullMax; ++y)
+		for(int y = max(y1,cullMin); y < cullMax; ++y)
 		{
 			auto pixel = DisplayMode::pixel(x, y);
 			backbuffer[pixel] = groundClr;

@@ -67,63 +67,6 @@ void InitSystems()
 #endif
 }
 
-class MiniMap
-{
-public:
-	MiniMap()
-	{
-		// Initialize the palette
-		m_paletteStart = SpritePalette::Allocator::alloc(2);
-		SpritePalette::color(m_paletteStart+0).raw = BasicColor::Black.raw;
-		SpritePalette::color(m_paletteStart+1).raw = BasicColor::Green.raw;
-
-		// Init tiles
-		auto& tileBank = gfx::TileBank::GetBank(gfx::TileBank::HighSpriteBank);
-		m_tileNdx = tileBank.allocDTiles(1);
-
-		// Init sprite
-		m_Sprite = Sprite::ObjectAllocator::alloc(1);
-		m_Sprite->Configure(Sprite::ObjectMode::Normal, Sprite::GfxMode::Normal, Sprite::ColorMode::Palette256, Sprite::Shape::square16x16);
-		m_Sprite->SetNonAffineTransform(false, true, Sprite::Shape::square16x16);
-		m_Sprite->setPos(240-24, 160-24);
-		m_Sprite->setTiles(DTile::HighSpriteBankIndex(m_tileNdx));
-
-		RenderSprite();
-	}
-
-	void UpdatePos(unsigned x, unsigned y)
-	{
-		//
-	}
-
-private:
-	void RenderSprite()
-	{
-		auto& tileBank = gfx::TileBank::GetBank(gfx::TileBank::HighSpriteBank);
-		auto* renderPos = reinterpret_cast<uint16_t*>(&tileBank.GetDTile(m_tileNdx));
-
-		// Fast copy map data into VRAM
-		for(int tile = 0; tile < 4; ++tile)
-		{
-			for(int row = 0; row < 8; row++)
-			{
-				for(int col = 0; col < 4; ++col)
-				{
-					auto srcRow = row+8*(tile/2);
-					auto srcCol = 2*col+8*(tile&1);
-					uint16_t clrA = g_worldMap[srcRow*16+srcCol+0] + m_paletteStart;
-					uint16_t clrB = g_worldMap[srcRow*16+srcCol+1] + m_paletteStart;
-					renderPos[col+4*row+32*tile] = (clrB << 8) | clrA;
-				}
-			}
-		}
-	}
-
-	uint32_t m_paletteStart;
-	uint32_t m_tileNdx;
-	Sprite::Object* m_Sprite;
-};
-
 volatile uint32_t timerT2 = 0;
 
 // Renderer selection

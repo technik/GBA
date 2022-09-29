@@ -16,6 +16,7 @@
 #include <test.wad.h>
 #include <mercury.wad.h>
 #include <portaltest.wad.h>
+#include <e1m1.wad.h>
 
 using namespace math;
 using namespace gfx;
@@ -37,7 +38,7 @@ void SectorRasterizer::EndFrame()
     displayMode.Flip();
 }
 
-#define LEVEL 1
+#define LEVEL 3
 
 bool loadWAD(WAD::LevelData& dstLevel)
 {
@@ -47,6 +48,8 @@ bool loadWAD(WAD::LevelData& dstLevel)
     loadMap_mercury_WAD(dstLevel);
 #elif LEVEL == 2
     loadMap_portaltest_WAD(dstLevel);
+#elif LEVEL == 3
+    loadMap_e1m1_WAD(dstLevel);
 #endif
 
     return true;

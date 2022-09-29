@@ -28,14 +28,33 @@ struct WADMetrics
     void print()
     {
         std::cout << "BBox: (" << minX << "," << minY << ") to (" << maxX << "," << maxY << ")\n";
-        std::cout << "Vertices: " << numVertices << "\n";
+        std::cout << "Vertices: " << numVertices << ", size: " << numVertices * sizeof(WAD::Vertex) << "\n";
         std::cout << "Lines: " << numLineDefs << "\n";
         std::cout << "Sides: " << numSideDefs << "\n";
         std::cout << "Segments: " << numSegments << "\n";
-        std::cout << "Sectors: " << numSectors << "\n";
+        std::cout << "Sectors: " << numSectors << ", size: " << numSectors * sizeof(WAD::Sector) << "\n";
         std::cout << "SubSectors: " << numSubsectors << "\n";
-        std::cout << "BSP Nodes: " << numNodes << "\n";
+        std::cout << "BSP Nodes: " << numNodes << ", size: " << numNodes * sizeof(WAD::Node) << "\n";
         std::cout << "Total size: " << totalSize << "\n";
+    }
+};
+
+struct WADTemporaries
+{
+    std::vector<uint8_t> rawWAD;
+    std::vector<WAD::CompressedVertex> compressedVertices;
+    std::vector<WAD::Vertex> vertices;
+
+    void decompressVertices()
+    {
+        vertices.reserve(compressedVertices.size()); // Allocate uncompressed vertex data
+
+        for (auto v : compressedVertices)
+        {
+            auto& dst = vertices.emplace_back();
+            dst.x.raw = int(v.x.raw) << 8;
+            dst.y.raw = int(v.y.raw) << 8;
+        }
     }
 };
 
@@ -216,81 +235,92 @@ std::vector<uint8_t> loadRawWAD(std::string_view fileName)
     return rawData;
 }
 
-bool loadWAD(WAD::LevelData& dstLevel, WADMetrics& metrics, std::vector<uint8_t>& rawWAD, std::string_view fileName)
+const WAD::Lump* findLump(const std::string& name, const WAD::Lump* directory, int numLumps)
 {
-    rawWAD = loadRawWAD(fileName);
-    if (rawWAD.empty())
+    for (int i = 0; i < numLumps; ++i)
+    {
+        auto& lump = directory[i];
+        if (!strncmp(name.c_str(), lump.lumpName, name.size()))
+            return &lump;
+    }
+    return nullptr;
+}
+
+bool loadWAD(WAD::LevelData& dstLevel, WADTemporaries& temporaryLevelData, WADMetrics& metrics, std::string_view fileName)
+{
+    temporaryLevelData.rawWAD = loadRawWAD(fileName);
+    if (temporaryLevelData.rawWAD.empty())
         return false;
 
-    const uint8_t* byteData = reinterpret_cast<const uint8_t*>(rawWAD.data());
+    const uint8_t* byteData = reinterpret_cast<const uint8_t*>(temporaryLevelData.rawWAD.data());
+
     // Verify WAD format
     const char* defString = reinterpret_cast<const char*>(byteData);
-    //assert(!strncmp(defString, "PWAD", 4));
+    
     if (strncmp(defString, "PWAD", 4) != 0)
         return false;
 
+    // Load header and directory
     auto wadHeader = reinterpret_cast<const WAD::Header*>(byteData);
-
     auto directory = reinterpret_cast<const WAD::Lump*>(&byteData[wadHeader->dirOffset]);
 
-    WAD::Lump localDir[9];
-    // Get a local copy of the directory to avoid alignment issues
-    auto dirSize = sizeof(WAD::Lump) * 9;
-    for (int i = 0; i < dirSize; ++i)
-    {
-        ((uint8_t*)localDir)[i] = byteData[wadHeader->dirOffset + i];
-    }
+    // Locate lumps
+    auto* lineDefsLump = findLump("LINEDEFS", directory, wadHeader->numLumps);
+    auto* sideDefsLump = findLump("SIDEDEFS", directory, wadHeader->numLumps);
+    auto* verticesLump = findLump("VERTEXES", directory, wadHeader->numLumps);
+    auto* segLumps = findLump("SEGS", directory, wadHeader->numLumps);
+    auto* ssectorLumps = findLump("SSECTORS", directory, wadHeader->numLumps);
+    auto* nodeLumps = findLump("NODES", directory, wadHeader->numLumps);
+    auto* sectorLumps = findLump("SECTORS", directory, wadHeader->numLumps);
 
-    // Lump directories
-    //auto& mapName = directory[0];
-    //auto& things = directory[1];
-    auto& lineDefsLump = localDir[2];
-    auto& sideDefsLump = directory[3];
-    auto& verticesLump = localDir[4];
-    auto& segLumps = localDir[5];
-    auto& ssectorLumps = localDir[6];
-    auto& nodeLumps = localDir[7];
-    auto& sectorLumps = localDir[8];
-    //auto& reject = directory[9];
-    //auto& blockMap = directory[10];
+    if (!lineDefsLump ||
+        !sideDefsLump ||
+        !verticesLump ||
+        !segLumps ||
+        !ssectorLumps ||
+        !nodeLumps ||
+        !sectorLumps)
+        return false;
 
     metrics.totalSize =
-        lineDefsLump.dataSize +
-        sideDefsLump.dataSize +
-        verticesLump.dataSize +
-        segLumps.dataSize +
-        ssectorLumps.dataSize +
-        nodeLumps.dataSize +
-        sectorLumps.dataSize;
+        lineDefsLump->dataSize +
+        sideDefsLump->dataSize +
+        // verticesLump.dataSize +, used preprocessed vertex data instead.
+        segLumps->dataSize +
+        ssectorLumps->dataSize +
+        nodeLumps->dataSize +
+        sectorLumps->dataSize;
 
     // Load vertex data
-    metrics.numVertices = verticesLump.dataSize / sizeof(WAD::Vertex);
-    dstLevel.vertices = reinterpret_cast<const WAD::Vertex*>(&byteData[verticesLump.dataOffset]);
+    metrics.numVertices = verticesLump->dataSize / sizeof(WAD::CompressedVertex);
+    metrics.totalSize += metrics.numVertices * sizeof(WAD::Vertex);
+    temporaryLevelData.compressedVertices.resize(metrics.numVertices);
+    memcpy(temporaryLevelData.compressedVertices.data(), &byteData[verticesLump->dataOffset], verticesLump->dataSize);
 
     // Load line defs
-    metrics.numLineDefs = lineDefsLump.dataSize / sizeof(WAD::LineDef);
-    dstLevel.lineDefs = (const WAD::LineDef*)(&byteData[lineDefsLump.dataOffset]);
+    metrics.numLineDefs = lineDefsLump->dataSize / sizeof(WAD::LineDef);
+    dstLevel.lineDefs = (const WAD::LineDef*)(&byteData[lineDefsLump->dataOffset]);
 
     // Load side defs
-    metrics.numSideDefs = sideDefsLump.dataSize / sizeof(WAD::SideDef);
-    dstLevel.sideDefs = (const WAD::SideDef*)(&byteData[sideDefsLump.dataOffset]);
+    metrics.numSideDefs = sideDefsLump->dataSize / sizeof(WAD::SideDef);
+    dstLevel.sideDefs = (const WAD::SideDef*)(&byteData[sideDefsLump->dataOffset]);
 
     // Load nodes
-    dstLevel.numNodes = nodeLumps.dataSize / sizeof(WAD::Node);
+    dstLevel.numNodes = nodeLumps->dataSize / sizeof(WAD::Node);
     metrics.numNodes = dstLevel.numNodes;
-    dstLevel.nodes = (const WAD::Node*)(&byteData[nodeLumps.dataOffset]);
+    dstLevel.nodes = (const WAD::Node*)(&byteData[nodeLumps->dataOffset]);
 
     // Load subsectors
-    metrics.numSubsectors = ssectorLumps.dataSize / sizeof(WAD::SubSector);
-    dstLevel.subSectors = (const WAD::SubSector*)&byteData[ssectorLumps.dataOffset];
+    metrics.numSubsectors = ssectorLumps->dataSize / sizeof(WAD::SubSector);
+    dstLevel.subSectors = (const WAD::SubSector*)&byteData[ssectorLumps->dataOffset];
 
     // Load segments
-    metrics.numSegments = segLumps.dataSize / sizeof(WAD::Seg);
-    dstLevel.segments = (const WAD::Seg*)(&byteData[segLumps.dataOffset]);
+    metrics.numSegments = segLumps->dataSize / sizeof(WAD::Seg);
+    dstLevel.segments = (const WAD::Seg*)(&byteData[segLumps->dataOffset]);
 
     // Load sectors
-    metrics.numSectors = sectorLumps.dataSize / sizeof(WAD::Sector);
-    dstLevel.sectors = (const WAD::Sector*)&byteData[sectorLumps.dataOffset];
+    metrics.numSectors = sectorLumps->dataSize / sizeof(WAD::Sector);
+    dstLevel.sectors = (const WAD::Sector*)&byteData[sectorLumps->dataOffset];
 
     return true;
 }
@@ -309,12 +339,15 @@ int main(int _argc, const char** _argv)
     // Read WAD file into a buffer
     WAD::LevelData parsedWAD;
     WADMetrics metrics;
-    std::vector<uint8_t> rawWAD; // Needs to stay alive until after serialization of all the data
-    if (!loadWAD(parsedWAD, metrics, rawWAD, fileName))
+    // Needs to keep alive the following data until after serialization of all the data
+    WADTemporaries temporaryLevelData;
+    if (!loadWAD(parsedWAD, temporaryLevelData, metrics, fileName))
     {
         std::cout << "Unable to load WAD file " << fileName << "\n";
         return -1;
     }
+    temporaryLevelData.decompressVertices();
+    parsedWAD.vertices = temporaryLevelData.vertices.data();
 
     // Translate units from "Doom compatible" to a common frame where we correct for Doom's 1.25 aspect ratio.
     adjustUnits(parsedWAD, metrics);

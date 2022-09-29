@@ -20,9 +20,15 @@ namespace WAD
         char lumpName[8];
     };
 
-    struct Vertex
+    struct CompressedVertex
     {
         math::int8p8 x, y;
+    };
+
+    // 16.16 vertex, as used in the game
+    struct Vertex
+    {
+        math::intp16 x, y;
     };
 
     struct LineDef
@@ -88,12 +94,12 @@ namespace WAD
     {
         uint32_t numNodes = 0;
 
-        const WAD::Vertex* vertices;
-        const WAD::LineDef* lineDefs;
-        const WAD::SideDef* sideDefs;
-        const WAD::Node* nodes;
-        const WAD::Seg* segments;
-        const WAD::Sector* sectors;
-        const WAD::SubSector* subSectors;
+        const WAD::Vertex* vertices{};
+        const WAD::LineDef* lineDefs{};
+        const WAD::SideDef* sideDefs{};
+        const WAD::Node* nodes{};
+        const WAD::Seg* segments{};
+        const WAD::Sector* sectors{};
+        const WAD::SubSector* subSectors{};
     };
 }

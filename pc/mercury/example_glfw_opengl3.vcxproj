@@ -162,6 +162,7 @@
     <ProjectReference />
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\raycaster\assets\e1m1.wad.cpp" />
     <ClCompile Include="..\..\raycaster\assets\mercury.wad.cpp" />
     <ClCompile Include="..\..\raycaster\assets\portaltest.wad.cpp" />
     <ClCompile Include="..\..\raycaster\assets\test.wad.cpp" />
