@@ -90,13 +90,13 @@ int main()
 	FrameCounter frameCounter(text);
 
 	// -- Init game state ---
-	auto camera = Camera(Renderer::DisplayMode::Width, Renderer::DisplayMode::Height, Vec3p8(0_p8, 0_p8, 1.7_p8));
+	auto camera = Camera(Renderer::DisplayMode::Width, Renderer::DisplayMode::Height, Vec3p16(0_p16, 0_p16, 1.7_p16));
 #if SECTOR_RASTER
 	camera.m_halfClipHeight = Renderer::DisplayMode::Height / 2;
 	camera.m_halfClipWidth = Renderer::DisplayMode::Width / 2;
 #endif
 	auto playerController = CharacterController(camera.m_pose);
-	playerController.horSpeed = 0.06125_p8;
+	playerController.horSpeed = 0.06125_p16;
 	playerController.angSpeed = 0.01_p16;
 
 #if !SECTOR_RASTER

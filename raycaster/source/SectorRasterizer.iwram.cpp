@@ -36,99 +36,95 @@ Color edgeClr[] = {
 };
 
 // TODO: Optimize this with a LUT to avoid the BIOS call
-intp16 fastAtan2(intp8 x, intp8 y)
+intp16 fastAtan2(intp16 x, intp16 y)
 {
 	// Map angle to the first quadrant
-	intp8 x1 = abs(x);
-	intp8 y1 = abs(y);
+	intp16 x1 = abs(x);
+	intp16 y1 = abs(y);
 
 	// Note: ArcTan takes a .14 fixed argument. To get the best precision, we perform the division shifts manually
 	intp16 atan16;
 	if (x1 >= abs(y1)) // Lower half of Q1, upper half of Q4
 	{
-		// .14f = ( .8f << 14 ) / .8f
-		int ratio = ((y.raw << 14) / x1.raw); // Note we used y with sign to get both the tangent of the first and second quadrants correctly
+		// .16f << 6 = .22f
+		// .14f = .22f / .8f
+		int ratio = ((y.raw << 6) / (x1.raw>>8)); // Note we used y with sign to get both the tangent of the first and second quadrants correctly
 		atan16 = intp16::castFromShiftedInteger<16>(ArcTan(ratio));
 	}
 	else // Upper half of Q1, lower half of Q4
 	{
-		// .14f = ( .8f << 14 ) / .8f
-		int ratio = ((x1.raw << 14) / y1.raw);
+		// .14f = ( .16f << 6 ) / .8f
+		int ratio = ((x1.raw << 6) / (y1.raw>>8));
 		atan16 = 0.25_p16 - intp16::castFromShiftedInteger<16>(ArcTan(ratio));
 		atan16 = y > 0 ? atan16 : -atan16;
 	}
 	return (x.raw >= 0) ? atan16 : 0.5_p16 - atan16;
 }
 
-Vec2p8 worldToViewSpace(const Pose& camPose, const Vec2p8& worldPos)
-{
-	Vec2p8 relPos;
-	relPos.x() = worldPos.x() - camPose.pos.x();
-	relPos.y() = worldPos.y() - camPose.pos.y();
-
-	Vec2p8 viewSpace;
-	viewSpace.x() = (relPos.x() * camPose.cosf + relPos.y() * camPose.sinf).cast<8>();
-	viewSpace.y() = (relPos.y() * camPose.cosf - relPos.x() * camPose.sinf).cast<8>();
-
-	return viewSpace;
-}
-
 // Returns x in screen space, invDepth as y
-Vec2p12 viewToClipSpace(const Vec2p8& viewSpace)
+Vec2p12 viewToClipSpace(const Vec2p16& viewSpace)
 {
+	dbgAssert(viewSpace.y() >= 0_p16);
 	// Project x onto the screen
 	intp12 invDepth = 1_p12 / max(intp12(1.f/64), viewSpace.y().cast<12>());
 	// Assuming tg(fov_x/2) = 0.5
 	Vec2p12 result;
 	// Assuming tg(fov_x/2) = 1
 #if FOV == 90
-	result.x() = (viewSpace.x() * invDepth.cast<8>()).cast<12>();
+	result.x() = (viewSpace.x().cast<12>() * invDepth).cast<12>();
 #elif FOV == 50
-	result.x() = (viewSpace.x() * invDepth.cast<8>() * 2).cast<12>();
+	result.x() = (viewSpace.x().cast<12>() * invDepth * 2).cast<12>();
 #elif FOV == 66
-	result.x() = (viewSpace.x() * invDepth.cast<8>() * 3/2).cast<12>();
+	result.x() = (viewSpace.x().cast<12>() * invDepth * 3 / 2).cast<12>();
 #endif
 	result.y() = invDepth;
 	return result;
 }
 
-// Clips a wall that's already in view space.
-// Returns whether the wall is visible.
-bool clipWall(Vec2p8& v0, Vec2p8& v1)
+intp16 PointToDist(const Vec2p16& p)
 {
-	constexpr intp8 nearClip = intp8(1/64.f);
-	// Clip behind the view.
-	if (v0.y() <= nearClip && v1.y() <= nearClip)
-		return false;
-
-	// Clip against the y=0 line
-	// Skip walls fully positive or parallel to y=0
-	if((v0.y() < nearClip ||  v1.y() < nearClip) && !(v0.y() == v1.y()))
+	// Rotate the point to the first octant.
+	// We only care about distance, which is invariant to rotations
+	intp16 x = abs(p.m_x);
+	intp16 y = abs(p.m_y);
+	if(y > x)
 	{
-		intp8 dX = v1.x() - v0.x();
-		intp12 denom = (v1.y() - v0.y()).cast<12>();
-		intp12 num = (dX * (nearClip - v0.y())).cast<12>();
-		intp8 xClip = v0.x() + (num / denom).cast<8>();
-
-		if (v0.y() < 0)
-		{
-			v0.x() = xClip;
-			v0.y() = nearClip;
-		}
-		else if (v1.y() < 0)
-		{
-			v1.x() = xClip;
-			v1.y() = nearClip;
-		}
+		auto temp = x;
+		x = y;
+		y = temp;
 	}
 
-	// Clip back facing walls
-	if(v0.x() * v1.y() >= v1.x() * v0.y())
-		return false;
-	
+	// .16f << 6 = .22f
+		// .14f = .22f / .8f
+	auto ratio14 = (y / x).cast<14>(); // Note we used y with sign to get both the tangent of the first and second quadrants correctly
+	intp16 atan16 = intp16::castFromShiftedInteger<16>(ArcTan(ratio14.raw));
+
+	intp16 cosT = intp16::castFromShiftedInteger<12>(lu_cos(atan16.raw));
+	return x / cosT;
+}
+
+// Clips a wall that's already in view space.
+// Returns whether the wall is visible.
+bool clipWall(const Vec2p16& v0, const Vec2p16& v1, intp16 camAngle, Vec2p12& ndcA, Vec2p12& ndcB)
+{
 	// Compute endpoint angles
 	intp16 angle0 = fastAtan2(v0.x(), v0.y());
 	intp16 angle1 = fastAtan2(v1.x(), v1.y());
+
+	// Clip back facing walls
+	auto span = angle1 - angle0;
+	span.raw &= 0xffff;
+	dbgAssert(span >= 0_p16);
+	if (span <= 0.5_p16)
+	{
+		return false;
+	}
+
+	intp16 rw_angle = angle0; // Keep this for computing invDepth
+	angle0 -= camAngle;
+	angle1 -= camAngle;
+
+	constexpr intp16 nearClip = intp16(1/64.f);
 
 	// Clip angles to the visible view frustum
 	// Shifting by a quarter revolution gives us the angle to "y", the view direction
@@ -162,33 +158,51 @@ bool clipWall(Vec2p8& v0, Vec2p8& v1)
 		return false;
 
 	// Shift to improve numerical precision
+	// This works because the internal LUT does a shift>>7 before indexing.
 	angle0.raw += 1 << 6;
 	angle1.raw += 1 << 6;
 
 	// Reconstruct clipped vertices
-	auto cos0 = intp12::castFromShiftedInteger<12>(lu_cos(angle0.raw));
 	auto sin0 = intp12::castFromShiftedInteger<12>(lu_sin(angle0.raw));
-	auto cos1 = intp12::castFromShiftedInteger<12>(lu_cos(angle1.raw));
 	auto sin1 = intp12::castFromShiftedInteger<12>(lu_sin(angle1.raw));
-		
-	intp8 dX = v1.x() - v0.x();
-	intp8 dY = v1.y() - v0.y();
-	intp8 num = (v0.x() * dY - v0.y() * dX).cast<8>();
+	auto cos0 = intp12::castFromShiftedInteger<12>(lu_cos(angle0.raw));
+	auto cos1 = intp12::castFromShiftedInteger<12>(lu_cos(angle1.raw));
+#if FOV == 66 // Multiply by two to compensate for the 0.5 tan
+	ndcA.x() = 2*cos0/sin0;
+	ndcB.x() = 2*cos1/sin1;
+#else
+	dbgAssert(false); // Unimplemented FOV. Need to divide by tan(fov/2)
+#endif
 
-	intp8 den0 = (cos0 * dY - sin0 * dX).cast<8>();
-	intp8 den1 = (cos1 * dY - sin1 * dX).cast<8>();
+	// Depth calculation
+	// We could safely cast down to .8 without loss because maps are grid aligned to .5 anyway.
+	intp16 dx = (v1.x() - v0.x()).cast<16>();
+	intp16 dy = (v1.y() - v0.y()).cast<16>();
+	// Angle normal to the plane, in world space
+	constexpr auto ang90deg = 0.25_p16;
+	intp16 wsNormalAngle = fastAtan2(dx, dy) + ang90deg;
+	// Angle from the shortest distance (aligned with the normal) to the reference angle
+	intp16 offsetAngle = abs(rw_angle - wsNormalAngle);
+	// Distance to the reference angle
+	intp16 hyp = PointToDist(v0);
+	// Project distance towards the normal
+	intp16 proj = intp16::castFromShiftedInteger<12>(lu_cos(offsetAngle.raw));
+	proj = max(proj, 0_p16);
+	intp16 distanceToPlane = hyp * proj;
 
-	if (num == 0 || den0 == 0 || den1 == 0)
-		return false;
+	// Move clipped angle to world space and substract 
+	angle0 += camAngle;
+	angle1 += camAngle;
+	intp16 offset0 = angle0 - wsNormalAngle;
+	intp16 offset1 = angle1 - wsNormalAngle;
 
-	intp8 h0 = num / den0;
-	intp8 h1 = num / den1;
+	intp16 invD0 = intp16::castFromShiftedInteger<12>(max(0,lu_cos(offset0.raw))) / (distanceToPlane * sin0.cast<16>());
+	intp16 invD1 = intp16::castFromShiftedInteger<12>(max(0,lu_cos(offset1.raw))) / (distanceToPlane * sin1.cast<16>());
+	ndcA.y() = invD0.cast<12>();
+	ndcB.y() = invD1.cast<12>();
 
-	v0.x() = (cos0 * h0).cast<8>();
-	v0.y() = (sin0 * h0).cast<8>();
-	v1.x() = (cos1 * h1).cast<8>();
-	v1.y() = (sin1 * h1).cast<8>();
-
+	dbgAssert(ndcA.y() >= 0_p12);
+	dbgAssert(ndcB.y() >= 0_p12);
 	return true;
 }
 
@@ -205,31 +219,22 @@ void clear(uint16_t* buffer, uint16_t topClr, uint16_t bottomClr, int area)
 // The clipped vertices have the following components:
 // x: screen space x, in the range [-1,1]
 // y: inverse distance to the camera plane.
-bool clipSegment(const Camera& cam, const WAD::Vertex* vertices, const WAD::Seg& segment, Vec2p12& ndcA, Vec2p12& ndcB)
+bool clipSegment(const Pose& view, const WAD::Vertex* vertices, const WAD::Seg& segment, Vec2p12& ndcA, Vec2p12& ndcB)
 {
 	// Reconstruct segment vertices
 	auto& v0 = vertices[segment.startVertex];
 	auto& v1 = vertices[segment.endVertex];
 
-	Vec2p8 A = { intp8::castFromShiftedInteger<16>(v0.x.raw), intp8::castFromShiftedInteger<16>(v0.y.raw) };
-	Vec2p8 B = { intp8::castFromShiftedInteger<16>(v1.x.raw), intp8::castFromShiftedInteger<16>(v1.y.raw) };
-
+	auto pos16 = Vec2p16(view.pos.m_y.cast<16>(), view.pos.m_y.cast<16>());
 	// Project to view space
-	auto vsA = worldToViewSpace(cam.m_pose, A);
-	auto vsB = worldToViewSpace(cam.m_pose, B);
+	auto vsA = v0 - pos16;
+	auto vsB = v1 - pos16;
 
 	// Clip
-	if (!clipWall(vsA, vsB))
-		return false; // Early out on clipped walls
-
-	// Convert to normalized coordinates
-	ndcA = viewToClipSpace(vsA);
-	ndcB = viewToClipSpace(vsB);
-
-	return true;
+	return clipWall(vsA, vsB, view.phi, ndcA, ndcB);
 }
 
-void SectorRasterizer::RenderSubsector(const WAD::LevelData& level, uint16_t ssIndex, const Camera& cam, DepthBuffer& depthBuffer)
+void SectorRasterizer::RenderSubsector(const WAD::LevelData& level, uint16_t ssIndex, const Pose& view, DepthBuffer& depthBuffer)
 {
 	constexpr uint16_t FlagTwoSided = 0x04;
 	const WAD::SubSector& subSector = level.subSectors[ssIndex];
@@ -238,7 +243,7 @@ void SectorRasterizer::RenderSubsector(const WAD::LevelData& level, uint16_t ssI
 		auto& segment = level.segments[i];
 
 		Vec2p12 vA, vB;
-		if (!clipSegment(cam, level.vertices, segment, vA, vB))
+		if (!clipSegment(view, level.vertices, segment, vA, vB))
 		{
 			continue; // Ignore non-visible segments
 		}
@@ -249,13 +254,13 @@ void SectorRasterizer::RenderSubsector(const WAD::LevelData& level, uint16_t ssI
 		auto& frontSide = level.sideDefs[lineDef.SideNum[0]];
 		auto& frontSector = level.sectors[frontSide.sector];
 
-		intp8 floorH = frontSector.floorhHeight - cam.m_pose.pos.m_z;
-		intp8 ceilingH = frontSector.ceilingHeight - cam.m_pose.pos.m_z;
+		intp12 floorH = (intp16::castFromShiftedInteger<8>(frontSector.floorhHeight.raw) - view.pos.m_z).cast<12>();
+		intp12 ceilingH = (intp16::castFromShiftedInteger<8>(frontSector.ceilingHeight.raw) - view.pos.m_z).cast<12>();
 
 		if (lineDef.SideNum[1] == uint16_t(-1) // No back sector, must be an opaque wall
 			|| !(lineDef.flags & FlagTwoSided)) // Explicitly opaque
 		{
-			RenderWall(cam, vA, vB, floorH, ceilingH, edgeClr[clrNdx], depthBuffer);
+			RenderWall(vA, vB, floorH, ceilingH, edgeClr[clrNdx], depthBuffer);
 			continue;
 		}
 
@@ -279,18 +284,19 @@ void SectorRasterizer::RenderSubsector(const WAD::LevelData& level, uint16_t ssI
 
 		// Regular portal
 		auto renderClr = segment.direction ? BasicColor::DarkGreen : edgeClr[clrNdx];
-		RenderPortal(cam, vA, vB, floorH, ceilingH, backSector, renderClr, depthBuffer);
+		RenderPortal(view, vA, vB, floorH, ceilingH, backSector, renderClr, depthBuffer);
 	}
 }
 
-int32_t side(const WAD::Node& node, const Vec3p8& pos)
+int32_t side(const WAD::Plane& plane, const intp16& x, const intp16& y)
 {
-	int32_t relX = pos.m_x.raw - node.x.raw;
-	int32_t relY = pos.m_y.raw - node.y.raw;
+	intp12 relX = (x - plane.origin.m_x).cast<12>();
+	intp12 relY = (y - plane.origin.m_y).cast<12>();
 
-	// We just care about the sign, so ignore the shifts
-	int32_t cross = relX * node.dy.raw - relY * node.dx.raw;
-	return cross > 0 ? 0 : 1;
+	// It is safe to cast the plane component down to .8 without loss because we know they've been shifted on decompression
+	auto cross = relX * plane.dir.m_y.cast<8>() - relY * plane.dir.m_x.cast<8>();
+	// We just care about the sign, so ignore the shift
+	return cross.raw > 0 ? 0 : 1;
 }
 
 bool insideAABB(const WAD::AABB& aabb, const Vec3p8& pos)
@@ -301,7 +307,7 @@ bool insideAABB(const WAD::AABB& aabb, const Vec3p8& pos)
 		&& (pos.m_y.raw >= aabb.bottom.raw);
 }
 
-void SectorRasterizer::RenderBSPNode(const WAD::LevelData& level, uint16_t nodeIndex, const Camera& cam, DepthBuffer& depthBuffer)
+void SectorRasterizer::RenderBSPNode(const WAD::LevelData& level, uint16_t nodeIndex, const Pose& view, DepthBuffer& depthBuffer)
 {
 	constexpr uint16_t NodeMask = (1 << 15);
 	auto& node = level.nodes[nodeIndex];
@@ -309,19 +315,20 @@ void SectorRasterizer::RenderBSPNode(const WAD::LevelData& level, uint16_t nodeI
 	if (nodeIndex & NodeMask) // Leaf
 	{
 		// Render
-		RenderSubsector(level, nodeIndex & ~NodeMask, cam, depthBuffer);
+		RenderSubsector(level, nodeIndex & ~NodeMask, view, depthBuffer);
 		return;
 	}
 	else // Branch
 	{
 		// Traverse front to back
-		int frontChild = side(node, cam.m_pose.pos);
+		int frontChild = side(node.plane, view.pos.m_x, view.pos.m_y);
 
-		// Render the node I'm not in first
-		RenderBSPNode(level, node.child[frontChild], cam, depthBuffer);
+		// Render the node I'm in first
+		RenderBSPNode(level, node.child[frontChild], view, depthBuffer);
 
-		// Then the node I'm in
-		RenderBSPNode(level, node.child[frontChild ^ 1], cam, depthBuffer);
+		// Then the node I'm not in
+		// TODO: Check bounding box here
+		RenderBSPNode(level, node.child[frontChild ^ 1], view, depthBuffer);
 	}
 }
 
@@ -334,14 +341,16 @@ void SectorRasterizer::RenderWorld(WAD::LevelData& level, const Camera& cam)
 	// Traverse the BSP (in a random order for now)
 	// Always start at the last node
 	uint16_t rootNode = uint16_t(level.numNodes) - uint16_t(1);
-	RenderBSPNode(level, rootNode, cam, depthBuffer);
+	RenderBSPNode(level, rootNode, cam.m_pose, depthBuffer);
 }
 
-void SectorRasterizer::RenderWall(const Camera& cam, const Vec2p12& ndcA, const Vec2p12& ndcB, math::intp8 floorH, math::intp8 ceilingH, Color wallClr, DepthBuffer& depthBuffer)
+void SectorRasterizer::RenderWall(
+	const Vec2p12& ndcA, const Vec2p12& ndcB,
+	math::intp12 floorH, math::intp12 ceilingH,
+	Color wallClr, DepthBuffer& depthBuffer)
 {
-	// TODO: Use .12 precision here and move this into the clipping method instead?
-	intp8 ssA = (ndcA.x() * int(DisplayMode::Width/2)).cast<8>() + int(DisplayMode::Width/2);
-	intp8 ssB = (ndcB.x() * int(DisplayMode::Width/2)).cast<8>() + int(DisplayMode::Width/2);
+	intp12 ssA = (ndcA.x() * int(DisplayMode::Width/2)) + int(DisplayMode::Width/2);
+	intp12 ssB = (ndcB.x() * int(DisplayMode::Width/2)) + int(DisplayMode::Width/2);
 
 	// No intersection with the view frustum
 	int32_t x0 = ssA.floor();
@@ -367,45 +376,45 @@ void SectorRasterizer::RenderWall(const Camera& cam, const Vec2p12& ndcA, const 
 	{		
 		int floorDY = (mFloor * (x - x0)).floor();
 		int ceilDY = (mCeil * (x - x0)).floor();
-		//intp12 d = (md*(x-x0)) + csA.y();
-		if (depthBuffer.lowBound[x] >= depthBuffer.highBound[x])
+
+		int floorClip = depthBuffer.floorClip[x];
+		int ceilingClip = depthBuffer.ceilingClip[x];
+		if (ceilingClip >= floorClip)
 		{
 			continue;
 		}
-		int cullMin = depthBuffer.lowBound[x];
-		int cullMax = depthBuffer.highBound[x];
 
 		int y0 = std::max<int32_t>(0, y0A - ceilDY);
 		int y1 = std::min<int32_t>(DisplayMode::Height, y1A - floorDY);
 
 		// Ceiling
-		for(int y = cullMin; y < min(y0,cullMax); ++y)
+		for(int y = ceilingClip; y < min(y0,floorClip); ++y)
 		{
 			auto pixel = DisplayMode::pixel(x, y);
 			backbuffer[pixel] = skyClr;
 		}
 
 		// Wall		
-		for(int y = max(y0,cullMin); y < min(y1,cullMax); ++y)
+		for(int y = max(y0, ceilingClip); y < min(y1, floorClip); ++y)
 		{
 			auto pixel = DisplayMode::pixel(x, y);
 			backbuffer[pixel] = wallClr.raw;
 		}
 
 		// Ground
-		for(int y = max(y1,cullMin); y < cullMax; ++y)
+		for(int y = max(y1, ceilingClip); y < floorClip; ++y)
 		{
 			auto pixel = DisplayMode::pixel(x, y);
 			backbuffer[pixel] = groundClr;
 		}
 
-		depthBuffer.lowBound[x] = cullMax;
+		depthBuffer.ceilingClip[x] = floorClip;
 	}
 }
 
-void SectorRasterizer::RenderPortal(const Camera& cam,
+void SectorRasterizer::RenderPortal(const Pose& view,
 	const Vec2p12& ndcA, const Vec2p12& ndcB,
-	intp8 floorH, intp8 ceilingH,
+	intp12 floorH, intp12 ceilingH,
 	const WAD::Sector& backSector,
 	Color wallClr, DepthBuffer& depthBuffer)
 {
@@ -422,8 +431,8 @@ void SectorRasterizer::RenderPortal(const Camera& cam,
 	}
 
 	// back sector heights
-	intp8 backCeiling = backSector.ceilingHeight - cam.m_pose.pos.m_z;
-	intp8 backFloor = backSector.floorhHeight - cam.m_pose.pos.m_z;
+	intp12 backCeiling = backSector.ceilingHeight.cast<12>() - view.pos.m_z.cast<12>();
+	intp12 backFloor = backSector.floorhHeight.cast<12>() - view.pos.m_z.cast<12>();
 
 	intp8 hBakcFloorA = (backFloor * ndcA.y()).cast<8>() * int(DisplayMode::Width / 2);
 	intp8 hBakcFloorB = (backFloor * ndcB.y()).cast<8>() * int(DisplayMode::Width / 2);
@@ -451,8 +460,10 @@ void SectorRasterizer::RenderPortal(const Camera& cam,
 	uint16_t* backbuffer = (uint16_t*)DisplayMode::backBuffer();
 	for (int x = std::max<int32_t>(0, x0); x < x1; ++x)
 	{
+		int floorClip = depthBuffer.floorClip[x];
+		int ceilingClip = depthBuffer.ceilingClip[x];
 		// Skip fully occluded columns
-		if (depthBuffer.lowBound[x] >= depthBuffer.highBound[x])
+		if (ceilingClip >= floorClip)
 		{
 			continue;
 		}
@@ -464,11 +475,9 @@ void SectorRasterizer::RenderPortal(const Camera& cam,
 		int backCeilDY = (mBackCeil * (x - x0)).floor();
 
 		// Draw the ceiling in front;
-		int cullMin = depthBuffer.lowBound[x];
-		int cullMax = depthBuffer.highBound[x];
 
 		int32_t y0 = y0A - ceilDY;
-		for (int y = cullMin; y < std::min(y0, cullMax); ++y)
+		for (int y = ceilingClip; y < min(y0, floorClip); ++y)
 		{
 			auto pixel = DisplayMode::pixel(x, y);
 			backbuffer[pixel] = skyClr;
@@ -476,26 +485,25 @@ void SectorRasterizer::RenderPortal(const Camera& cam,
 
 		// Draw the top section
 		int y1 = y1A - backCeilDY;
-		for (int y = max(y0, cullMin); y < min(y1, cullMax); ++y)
+		for (int y = max(y0, ceilingClip); y < min(y1, floorClip); ++y)
 		{
 			auto pixel = DisplayMode::pixel(x, y);
 			backbuffer[pixel] = wallClr.raw;
 		}
-		depthBuffer.lowBound[x] = max(cullMax, y1);
+		depthBuffer.ceilingClip[x] = max(ceilingClip, y1);
 
 		// Bottom wall
 		int y2 = y2A - backFloorDY;
 		int y3 = y3A - floorDY;
-		for (int y = max(y2, cullMin); y < min(y3, cullMax); ++y)
+		for (int y = max(y2, ceilingClip); y < min(y3, floorClip); ++y)
 		{
 			auto pixel = DisplayMode::pixel(x, y);
 			backbuffer[pixel] = wallClr.raw;
 		}
-		y3 = max(y2, y3);
-		depthBuffer.highBound[x] = min(cullMax, y2);
+		depthBuffer.floorClip[x] = max(0, min(floorClip, y3));
 
 		// Ground
-		for (int y = max(y3, cullMin); y < cullMax; ++y)
+		for (int y = max(y3, ceilingClip); y < floorClip; ++y)
 		{
 			auto pixel = DisplayMode::pixel(x, y);
 			backbuffer[pixel] = groundClr;
@@ -507,7 +515,7 @@ void SectorRasterizer::DepthBuffer::Clear()
 {
 	for(int i = 0; i < DisplayMode::Width; ++i)
 	{
-		lowBound[i] = 0;
-		highBound[i] = DisplayMode::Height;
+		ceilingClip[i] = 0;
+		floorClip[i] = DisplayMode::Height;
 	}
 }

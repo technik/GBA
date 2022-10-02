@@ -39,18 +39,21 @@ private:
 
     struct DepthBuffer
     {
-        uint8_t lowBound[DisplayMode::Width];
-        uint8_t highBound[DisplayMode::Width];
+        uint8_t floorClip[DisplayMode::Width];
+        uint8_t ceilingClip[DisplayMode::Width];
 
         void Clear();
     };
 
-    static void RenderSubsector(const WAD::LevelData& level, uint16_t ssIndex, const Camera& cam, DepthBuffer& depthBuffer);
-    static void RenderBSPNode(const WAD::LevelData& level, uint16_t nodeIndex, const Camera& cam, DepthBuffer& depthBuffer);
-    static void RenderWall(const Camera& cam, const math::Vec2p12& ndcA, const math::Vec2p12& ndcB, math::intp8 floorH, math::intp8 ceilingH, Color clr, DepthBuffer& depthBuffer);
-    static void RenderPortal(const Camera& cam,
+    static void RenderSubsector(const WAD::LevelData& level, uint16_t ssIndex, const Pose& view, DepthBuffer& depthBuffer);
+    static void RenderBSPNode(const WAD::LevelData& level, uint16_t nodeIndex, const Pose& view, DepthBuffer& depthBuffer);
+    static void RenderWall(
         const math::Vec2p12& ndcA, const math::Vec2p12& ndcB,
-        math::intp8 floorH, math::intp8 ceilingH,
+        math::intp12 floorH, math::intp12 ceilingH,
+        Color clr, DepthBuffer& depthBuffer);
+    static void RenderPortal(const Pose& view,
+        const math::Vec2p12& ndcA, const math::Vec2p12& ndcB,
+        math::intp12 floorH, math::intp12 ceilingH,
         const WAD::Sector& backSector,
         Color clr, DepthBuffer& depthBuffer);
 };

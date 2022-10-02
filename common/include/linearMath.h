@@ -35,7 +35,7 @@ inline int min(int a, int b)
 inline int16_t ArcTan(int16_t x)
 {
 	float arg = float(x) / (1 << 14);
-	float rev = atan(arg) / (2 * std::numbers::pi);
+	float rev = float(atan(arg) / (2 * std::numbers::pi));
 	return int16_t(8192 * 8 * rev);
 }
 
@@ -356,8 +356,17 @@ namespace math
 	{
 		using product_type = decltype(a.raw*b.raw);
 		Fixed<product_type, shiftA+shiftB> result;
-		result.raw = a.raw*b.raw;
+		result.raw = product_type(int64_t(a.raw)*int64_t(b.raw));
 		dbgAssert(int64_t(a.raw) * b.raw == int64_t(result.raw)); // Overflow detected!
+		return result;
+	}
+
+	// Explicit override for 16.16
+	FORCE_INLINE auto operator*(const Fixed<int32_t,16>& a, const Fixed<int32_t, 16>& b)
+	{
+		Fixed<int32_t, 16> result;
+		result.raw = int32_t((int64_t(a.raw) * int64_t(b.raw)) >> 16);
+		dbgAssert((int64_t(a.raw) * b.raw)>>16 == int64_t(result.raw)); // Overflow detected!
 		return result;
 	}
 
@@ -397,7 +406,7 @@ namespace math
 	{
 		using div_type = decltype(a.raw / b.raw);
 		Fixed<div_type, shift> result;
-		result.raw = (a.raw<<shift) / b.raw;
+		result.raw = (int64_t(a.raw)<<shift) / b.raw;
 		return result;
 	}
 

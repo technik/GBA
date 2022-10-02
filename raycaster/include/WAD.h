@@ -26,10 +26,7 @@ namespace WAD
     };
 
     // 16.16 vertex, as used in the game
-    struct Vertex
-    {
-        math::intp16 x, y;
-    };
+    using Vertex = math::Vec2p16;
 
     struct LineDef
     {
@@ -70,7 +67,20 @@ namespace WAD
         math::int8p8 top, bottom, left, right;
     };
 
+    struct Plane
+    {
+        math::Vec2p16 origin;
+        math::Vec2p16 dir;
+    };
+
     struct Node
+    {
+        Plane plane;
+        AABB aabb[2];
+        uint16_t child[2];
+    };
+
+    struct CompressedNode
     {
         math::int8p8 x, y;
         math::int8p8 dx, dy;

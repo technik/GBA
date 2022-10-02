@@ -80,6 +80,7 @@ void yLine(Color* backBuffer,
 	}
 }
 
+/* Deprecated
 void Mode4Renderer::RenderWorld(const Camera& cam)
 {	
 	// Reconstruct local axes for fast ray interpolation
@@ -135,7 +136,7 @@ void Mode4Renderer::RenderWorld(const Camera& cam)
 		//draw the pixels of the stripe as a vertical line
 		yDLine(backbuffer, col, drawStart, drawEnd, texX ? texClr : wallDColorSeam);
 	}
-}
+}*/
 
 void DrawMinimapMode3(Color* backBuffer, Vec3p8 centerPos)
 {
@@ -166,6 +167,7 @@ void DrawMinimapMode3(Color* backBuffer, Vec3p8 centerPos)
 	dst[(tileX + Mode3Display::Width*(kMapRows-tileY))] = BasicColor::Yellow;
 }
 
+/* Deprecated
 void RenderMode3(const Camera& cam)
 {	
 	auto backBuffer = Mode3Display::frontBuffer();// DisplayControl::Get().backBuffer();
@@ -213,4 +215,4 @@ void RenderMode3(const Camera& cam)
 
 	// Measure render time
 	DrawMinimapMode3(backBuffer, cam.m_pose.pos);
-}
+}*/

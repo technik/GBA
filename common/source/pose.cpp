@@ -14,12 +14,9 @@ void FPSController::update()
 	// B/A : rise/sink
 	dir.z() = verSpeed*(Keypad::Held(Keypad::A) - Keypad::Held(Keypad::B));
 
-	m_pose.pos.x() += (dir.x() * m_pose.cosf - dir.y() * m_pose.sinf).cast<8>();
-	m_pose.pos.y() += (dir.x() * m_pose.sinf + dir.y() * m_pose.cosf).cast<8>();
-	m_pose.pos.z() += dir.z();
-
-	// Limit z to reasonable values to not break the math
-	m_pose.pos.z() = max(intp8(0.5), min(intp8(25), m_pose.pos.z()));
+	m_pose.pos.x() += (dir.x() * m_pose.cosf - dir.y() * m_pose.sinf).cast<16>();
+	m_pose.pos.y() += (dir.x() * m_pose.sinf + dir.y() * m_pose.cosf).cast<16>();
+	m_pose.pos.z() += dir.z().cast<16>();
 
 	m_pose.phi += (angSpeed*(Keypad::Held(Keypad::LEFT) - Keypad::Held(Keypad::RIGHT))).cast<16>();
 
@@ -28,27 +25,27 @@ void FPSController::update()
 
 void CharacterController::update()
 {
-	Vec3p8 dir = {};
+	Vec3p12 dir = {};
 	// left/right : strafe/rotate
 	if(Keypad::Held(Keypad::L))
 	{
-		dir.x() = horSpeed * (Keypad::Held(Keypad::RIGHT) - Keypad::Held(Keypad::LEFT));
+		dir.x() = (horSpeed * (Keypad::Held(Keypad::RIGHT) - Keypad::Held(Keypad::LEFT))).cast<12>();
 	}
 	else
 	{
 		m_pose.phi += (angSpeed*(Keypad::Held(Keypad::LEFT) - Keypad::Held(Keypad::RIGHT))).cast<16>();
 	}
 	// up/down : forward/back
-	dir.y() = horSpeed * (Keypad::Held(Keypad::UP) - Keypad::Held(Keypad::DOWN));
-	dir.z() = horSpeed * (Keypad::Held(Keypad::A) - Keypad::Held(Keypad::B));
+	dir.y() = (horSpeed * (Keypad::Held(Keypad::UP) - Keypad::Held(Keypad::DOWN))).cast<12>();
+	dir.z() = (horSpeed * (Keypad::Held(Keypad::A) - Keypad::Held(Keypad::B))).cast<12>();
 
-	Vec2p8 disp;
-	disp.x() = (dir.x() * m_pose.cosf - dir.y() * m_pose.sinf).cast<8>();
-	disp.y() = (dir.y() * m_pose.cosf + dir.x() * m_pose.sinf).cast<8>();
+	Vec2p16 disp;
+	disp.x() = (dir.x() * m_pose.cosf - dir.y() * m_pose.sinf).cast<16>();
+	disp.y() = (dir.y() * m_pose.cosf + dir.x() * m_pose.sinf).cast<16>();
 
 	m_pose.pos.x() += disp.x();
 	m_pose.pos.y() += disp.y();
-	m_pose.pos.z() += dir.z();
+	m_pose.pos.z() += dir.z().cast<16>();
 
 
 	// Jumps

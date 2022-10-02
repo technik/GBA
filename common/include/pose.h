@@ -12,7 +12,7 @@ extern "C" {
 
 struct Pose
 {
-	math::Vec3p8 pos;
+	math::Vec3p16 pos;
 	math::intp16 phi{}; // Rotation around the z axis (normalized to 1 revolution).
 
 	// Cached state
@@ -21,6 +21,7 @@ struct Pose
 
 	void update()
 	{
+		phi.raw &= 0xffff;
 		cosf = math::intp12::castFromShiftedInteger<12>(lu_cos(phi.raw));
 		sinf = math::intp12::castFromShiftedInteger<12>(lu_sin(phi.raw));
 	}
@@ -56,21 +57,21 @@ public:
 	math::intp8 jump = math::intp8(0); // Jump velocity
 
 	// Speed controls
-	math::intp8 horSpeed = math::intp8(0.06125f);
+	math::intp16 horSpeed = math::intp16(0.06125f);
 	math::intp16 angSpeed = math::intp16(0.5f);
 };
 
 struct PoseFollower
 {
-	PoseFollower(Pose& target, math::Vec3p8 offset)
+	PoseFollower(Pose& target, math::Vec3p16 offset)
 		: m_target(target)
 		, m_offset(offset)
 	{
 		m_pose.phi = m_target.phi;
 		m_pose.pos.z() = m_target.pos.z() + m_offset.z();
 		
-		m_pose.pos.x() = m_target.pos.x() + (m_offset.x() * m_pose.cosf - m_offset.y() * m_pose.sinf).cast<8>();
-		m_pose.pos.y() = m_target.pos.x() + (m_offset.y() * m_pose.cosf + m_offset.x() * m_pose.sinf).cast<8>();
+		m_pose.pos.x() = m_target.pos.x() + (m_offset.x() * m_pose.cosf - m_offset.y() * m_pose.sinf).cast<16>();
+		m_pose.pos.y() = m_target.pos.x() + (m_offset.y() * m_pose.cosf + m_offset.x() * m_pose.sinf).cast<16>();
 	}
 
 	void update()
@@ -78,13 +79,13 @@ struct PoseFollower
 		m_pose.phi = m_target.phi;
 		m_pose.pos.z() = m_target.pos.z() + m_offset.z();
 		
-		m_pose.pos.x() = m_target.pos.x() + (m_offset.x() * m_pose.cosf - m_offset.y() * m_pose.sinf).cast<8>();
-		m_pose.pos.y() = m_target.pos.y() + (m_offset.y() * m_pose.cosf + m_offset.x() * m_pose.sinf).cast<8>();
+		m_pose.pos.x() = m_target.pos.x() + (m_offset.x() * m_pose.cosf - m_offset.y() * m_pose.sinf).cast<16>();
+		m_pose.pos.y() = m_target.pos.y() + (m_offset.y() * m_pose.cosf + m_offset.x() * m_pose.sinf).cast<16>();
 
 		m_pose.update();
 	}
 
 	Pose& m_target;
 	Pose m_pose;
-	math::Vec3p8 m_offset;
+	math::Vec3p16 m_offset;
 };

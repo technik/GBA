@@ -209,6 +209,7 @@ public:
 
 	static inline uint32_t pixel(uint32_t x, uint32_t y)
 	{
+		dbgAssert(x < Width&& y < Height);
 		return x + Width * y;
 	}
 

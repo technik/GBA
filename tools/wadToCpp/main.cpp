@@ -43,7 +43,9 @@ struct WADTemporaries
 {
     std::vector<uint8_t> rawWAD;
     std::vector<WAD::CompressedVertex> compressedVertices;
+    std::vector<WAD::CompressedNode> compressedNodes;
     std::vector<WAD::Vertex> vertices;
+    std::vector<WAD::Node> nodes;
 
     void decompressVertices()
     {
@@ -52,8 +54,28 @@ struct WADTemporaries
         for (auto v : compressedVertices)
         {
             auto& dst = vertices.emplace_back();
-            dst.x.raw = int(v.x.raw) << 8;
-            dst.y.raw = int(v.y.raw) << 8;
+            // This is effectively a division by 256, because the final number is .16
+            dst.m_x.raw = int(v.x.raw) << 8;
+            dst.m_y.raw = int(v.y.raw) << 8;
+        }
+    }
+
+    void decompressNodes()
+    {
+        nodes.reserve(compressedNodes.size()); // Allocate uncompressed vertex data
+
+        for (const auto& cNode : compressedNodes)
+        {
+            auto& dst = nodes.emplace_back();
+            // This is effectively a division by 256, because the final number is .16
+            dst.plane.origin.m_x.raw = int(cNode.x.raw) << 8;
+            dst.plane.origin.m_y.raw = int(cNode.y.raw) << 8;
+            dst.plane.dir.m_x.raw = int(cNode.dx.raw) << 8;
+            dst.plane.dir.m_y.raw = int(cNode.dy.raw) << 8;
+            dst.aabb[0] = cNode.aabb[0];
+            dst.aabb[1] = cNode.aabb[1];
+            dst.child[0] = cNode.child[0];
+            dst.child[1] = cNode.child[1];
         }
     }
 };
@@ -146,14 +168,14 @@ void adjustUnits(const WAD::LevelData& level, WADMetrics& metrics)
     auto vertices = const_cast<WAD::Vertex*>(level.vertices);
 
     // Compute bounding box and center the level around 0 for better use of our finite range
-    int minX = vertices[0].x.raw;
-    int minY = vertices[0].y.raw;
-    int maxX = vertices[0].x.raw;
-    int maxY = vertices[0].y.raw;
+    int minX = vertices[0].m_x.raw;
+    int minY = vertices[0].m_y.raw;
+    int maxX = vertices[0].m_x.raw;
+    int maxY = vertices[0].m_y.raw;
     for (int i = 0; i < metrics.numVertices; ++i)
     {
-        int x = vertices[i].x.raw;
-        int y = vertices[i].y.raw;
+        int x = vertices[i].m_x.raw;
+        int y = vertices[i].m_y.raw;
         minX = std::min(minX, x);
         maxX = std::max(maxX, x);
         minY = std::min(minY, y);
@@ -168,18 +190,19 @@ void adjustUnits(const WAD::LevelData& level, WADMetrics& metrics)
 
     for (int i = 0; i < metrics.numVertices; ++i)
     {
-        vertices[i].x.raw = (vertices[i].x.raw - x0) * 8;
-        vertices[i].y.raw = (vertices[i].y.raw - y0) * 8;
+        vertices[i].m_x.raw = (vertices[i].m_x.raw - x0) * 8;
+        vertices[i].m_y.raw = (vertices[i].m_y.raw - y0) * 8;
     }
 
     // Nodes
     auto nodes = const_cast<WAD::Node*>(level.nodes);
     for (int i = 0; i < metrics.numNodes; ++i)
     {
-        nodes[i].x.raw = (nodes[i].x.raw - x0) * 8;
-        nodes[i].y.raw = (nodes[i].y.raw - y0) * 8;
-        nodes[i].dx.raw = nodes[i].dx.raw * 8;
-        nodes[i].dy.raw = nodes[i].dy.raw * 8;
+        auto& plane = nodes[i].plane;
+        plane.origin.m_x.raw = (plane.origin.m_x.raw - x0) * 8;
+        plane.origin.m_y.raw = (plane.origin.m_y.raw - y0) * 8;
+        plane.dir.m_x.raw = plane.dir.m_x.raw * 8;
+        plane.dir.m_y.raw = plane.dir.m_y.raw * 8;
     }
 
     // TODO: AABBs and possibly texture offsets
@@ -288,8 +311,8 @@ bool loadWAD(WAD::LevelData& dstLevel, WADTemporaries& temporaryLevelData, WADMe
         // verticesLump.dataSize +, used preprocessed vertex data instead.
         segLumps->dataSize +
         ssectorLumps->dataSize +
-        nodeLumps->dataSize +
-        sectorLumps->dataSize;
+        nodeLumps->dataSize;// +
+        //sectorLumps->dataSize;
 
     // Load vertex data
     metrics.numVertices = verticesLump->dataSize / sizeof(WAD::CompressedVertex);
@@ -306,9 +329,11 @@ bool loadWAD(WAD::LevelData& dstLevel, WADTemporaries& temporaryLevelData, WADMe
     dstLevel.sideDefs = (const WAD::SideDef*)(&byteData[sideDefsLump->dataOffset]);
 
     // Load nodes
-    dstLevel.numNodes = nodeLumps->dataSize / sizeof(WAD::Node);
+    dstLevel.numNodes = nodeLumps->dataSize / sizeof(WAD::CompressedNode);
+    metrics.totalSize += dstLevel.numNodes * sizeof(WAD::Node);
+    temporaryLevelData.compressedNodes.resize(dstLevel.numNodes);
     metrics.numNodes = dstLevel.numNodes;
-    dstLevel.nodes = (const WAD::Node*)(&byteData[nodeLumps->dataOffset]);
+    memcpy(temporaryLevelData.compressedNodes.data(), &byteData[nodeLumps->dataOffset], nodeLumps->dataSize);
 
     // Load subsectors
     metrics.numSubsectors = ssectorLumps->dataSize / sizeof(WAD::SubSector);
@@ -347,7 +372,9 @@ int main(int _argc, const char** _argv)
         return -1;
     }
     temporaryLevelData.decompressVertices();
+    temporaryLevelData.decompressNodes();
     parsedWAD.vertices = temporaryLevelData.vertices.data();
+    parsedWAD.nodes = temporaryLevelData.nodes.data();
 
     // Translate units from "Doom compatible" to a common frame where we correct for Doom's 1.25 aspect ratio.
     adjustUnits(parsedWAD, metrics);
