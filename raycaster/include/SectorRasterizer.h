@@ -32,7 +32,7 @@ public:
     static void EndFrame();
 
     static inline uint16_t skyClr = BasicColor::SkyBlue.raw;
-    static inline uint16_t groundClr = BasicColor::DarkGreen.raw;
+    static inline uint16_t groundClr = BasicColor::DarkGrey.raw;
 
 private:
     inline static DisplayMode displayMode;
@@ -48,12 +48,12 @@ private:
     static void RenderSubsector(const WAD::LevelData& level, uint16_t ssIndex, const Pose& view, DepthBuffer& depthBuffer);
     static void RenderBSPNode(const WAD::LevelData& level, uint16_t nodeIndex, const Pose& view, DepthBuffer& depthBuffer);
     static void RenderWall(
-        const math::Vec2p12& ndcA, const math::Vec2p12& ndcB,
-        math::intp12 floorH, math::intp12 ceilingH,
+        const math::Vec2p16& ndcA, const math::Vec2p16& ndcB,
+        const math::intp16& floorH, const math::intp16& ceilingH,
         Color clr, DepthBuffer& depthBuffer);
     static void RenderPortal(const Pose& view,
-        const math::Vec2p12& ndcA, const math::Vec2p12& ndcB,
-        math::intp12 floorH, math::intp12 ceilingH,
+        const math::Vec2p16& ndcA, const math::Vec2p16& ndcB,
+        const math::intp16& floorH, const math::intp16& ceilingH,
         const WAD::Sector& backSector,
         Color clr, DepthBuffer& depthBuffer);
 };
