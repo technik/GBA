@@ -38,7 +38,7 @@ void SectorRasterizer::EndFrame()
     displayMode.Flip();
 }
 
-#define LEVEL 3
+#define LEVEL 2
 
 bool loadWAD(WAD::LevelData& dstLevel)
 {

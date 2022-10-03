@@ -240,11 +240,13 @@ void SectorRasterizer::RenderSubsector(const WAD::LevelData& level, uint16_t ssI
 
 		intp16 floorH = intp16::castFromShiftedInteger<8>(frontSector.floorhHeight.raw) - view.pos.m_z;
 		intp16 ceilingH = intp16::castFromShiftedInteger<8>(frontSector.ceilingHeight.raw) - view.pos.m_z;
+		Color topColor = segment.direction ? BasicColor::DarkGrey : skyClr;
+		Color bottomColor = segment.direction ? BasicColor::DarkGrey : groundClr;
 
 		if (lineDef.SideNum[1] == uint16_t(-1) // No back sector, must be an opaque wall
 			|| !(lineDef.flags & FlagTwoSided)) // Explicitly opaque
 		{
-			RenderWall(vA, vB, floorH, ceilingH, edgeClr[clrNdx], depthBuffer);
+			RenderWall(vA, vB, floorH, ceilingH, topColor, bottomColor, edgeClr[clrNdx], depthBuffer);
 			continue;
 		}
 
@@ -268,7 +270,7 @@ void SectorRasterizer::RenderSubsector(const WAD::LevelData& level, uint16_t ssI
 
 		// Regular portal
 		auto renderClr = segment.direction ? BasicColor::DarkGrey : edgeClr[clrNdx];
-		RenderPortal(view, vA, vB, floorH, ceilingH, backSector, renderClr, depthBuffer);
+		RenderPortal(view, vA, vB, floorH, ceilingH, backSector, topColor, bottomColor, renderClr, depthBuffer);
 	}
 }
 
@@ -331,6 +333,7 @@ void SectorRasterizer::RenderWorld(WAD::LevelData& level, const Camera& cam)
 void SectorRasterizer::RenderWall(
 	const Vec2p16& ndcA, const Vec2p16& ndcB,
 	const intp16& floorH, const intp16& ceilingH,
+	Color ceilColor, Color gndColor,
 	Color wallClr, DepthBuffer& depthBuffer)
 {
 	intp16 ssA = ndcA.x() * int(DisplayMode::Width/2) + int(DisplayMode::Width/2);
@@ -375,7 +378,7 @@ void SectorRasterizer::RenderWall(
 		for(int y = ceilingClip; y < min(y0,floorClip); ++y)
 		{
 			auto pixel = DisplayMode::pixel(x, y);
-			backbuffer[pixel] = skyClr;
+			backbuffer[pixel] = ceilColor.raw;
 		}
 
 		// Wall		
@@ -389,7 +392,7 @@ void SectorRasterizer::RenderWall(
 		for(int y = max(y1, ceilingClip); y < floorClip; ++y)
 		{
 			auto pixel = DisplayMode::pixel(x, y);
-			backbuffer[pixel] = groundClr;
+			backbuffer[pixel] = gndColor.raw;
 		}
 
 		depthBuffer.ceilingClip[x] = floorClip;
@@ -400,7 +403,7 @@ void SectorRasterizer::RenderPortal(const Pose& view,
 	const Vec2p16& ndcA, const Vec2p16& ndcB,
 	const intp16& floorH, const intp16& ceilingH,
 	const WAD::Sector& backSector,
-	Color wallClr, DepthBuffer& depthBuffer)
+	Color ceilColr, Color gndClr, Color wallClr, DepthBuffer& depthBuffer)
 {
 	// TODO: Use .12 precision here and move this into the clipping method instead?
 	intp16 ssA = ndcA.x() * int(DisplayMode::Width / 2) + int(DisplayMode::Width / 2);
@@ -464,7 +467,7 @@ void SectorRasterizer::RenderPortal(const Pose& view,
 		for (int y = ceilingClip; y < min(y0, floorClip); ++y)
 		{
 			auto pixel = DisplayMode::pixel(x, y);
-			backbuffer[pixel] = skyClr;
+			backbuffer[pixel] = ceilColr.raw;
 		}
 
 		// Draw the top section
@@ -490,7 +493,7 @@ void SectorRasterizer::RenderPortal(const Pose& view,
 		for (int y = max(y3, ceilingClip); y < floorClip; ++y)
 		{
 			auto pixel = DisplayMode::pixel(x, y);
-			backbuffer[pixel] = groundClr;
+			backbuffer[pixel] = gndClr.raw;
 		}
 	}
 }

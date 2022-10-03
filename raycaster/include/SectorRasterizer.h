@@ -31,8 +31,8 @@ public:
     static bool BeginFrame();
     static void EndFrame();
 
-    static inline uint16_t skyClr = BasicColor::SkyBlue.raw;
-    static inline uint16_t groundClr = BasicColor::DarkGrey.raw;
+    static inline Color skyClr = BasicColor::SkyBlue;
+    static inline Color groundClr = BasicColor::DarkGrey;
 
 private:
     inline static DisplayMode displayMode;
@@ -50,10 +50,11 @@ private:
     static void RenderWall(
         const math::Vec2p16& ndcA, const math::Vec2p16& ndcB,
         const math::intp16& floorH, const math::intp16& ceilingH,
-        Color clr, DepthBuffer& depthBuffer);
+        Color ceilColr, Color gndClr, Color clr,
+        DepthBuffer& depthBuffer);
     static void RenderPortal(const Pose& view,
         const math::Vec2p16& ndcA, const math::Vec2p16& ndcB,
         const math::intp16& floorH, const math::intp16& ceilingH,
         const WAD::Sector& backSector,
-        Color clr, DepthBuffer& depthBuffer);
+        Color ceilColr, Color gndClr, Color clr, DepthBuffer& depthBuffer);
 };
