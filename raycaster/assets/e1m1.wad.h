@@ -21,7 +21,7 @@ extern const uint32_t e1m1_WADSubSectors[];
 constexpr uint32_t e1m1_WADSectorsSize = 1300;
 extern const uint32_t e1m1_WADSectors[];
 
-constexpr uint32_t e1m1_WADNodesSize = 3129;
+constexpr uint32_t e1m1_WADNodesSize = 4023;
 extern const uint32_t e1m1_WADNodes[];
 
 void loadMap_e1m1_WAD(WAD::LevelData& dstLevel);

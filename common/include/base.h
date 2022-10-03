@@ -5,7 +5,7 @@
 #endif
 #ifdef _WIN32
 #include <cassert>
-#define FORCE_INLINE inline
+#define FORCE_INLINE
 #elif defined(GBA)
 #define FORCE_INLINE __attribute__((always_inline))
 #endif
@@ -22,7 +22,7 @@
 #define IWRAM_DATA
 #endif
 
-FORCE_INLINE void dbgAssert(bool x)
+FORCE_INLINE inline void dbgAssert(bool x)
 {
 #ifdef _WIN32
     assert(x);

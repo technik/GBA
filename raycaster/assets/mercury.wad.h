@@ -3,7 +3,7 @@
 #include <base.h>
 #include <WAD.h>
 
-constexpr uint32_t mercury_WADVerticesSize = 162;
+constexpr uint32_t mercury_WADVerticesSize = 324;
 extern const uint32_t mercury_WADVertices[];
 
 constexpr uint32_t mercury_WADLineDefsSize = 648;
@@ -21,7 +21,7 @@ extern const uint32_t mercury_WADSubSectors[];
 constexpr uint32_t mercury_WADSectorsSize = 286;
 extern const uint32_t mercury_WADSectors[];
 
-constexpr uint32_t mercury_WADNodesSize = 749;
+constexpr uint32_t mercury_WADNodesSize = 963;
 extern const uint32_t mercury_WADNodes[];
 
 void loadMap_mercury_WAD(WAD::LevelData& dstLevel);

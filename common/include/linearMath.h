@@ -98,7 +98,7 @@ namespace math
 		FORCE_INLINE constexpr explicit Fixed(T x)
 		{
 			raw = Store(x << shift);
-			dbgAssert((raw >> shift) == x);
+			//dbgAssert((raw >> shift) == x);
 		}
 		constexpr explicit Fixed(float x) : raw(Store(x* (1 << shift))) {}
 		FORCE_INLINE constexpr Fixed(const math::Fixed<Store, Shift>& _other)
@@ -280,7 +280,7 @@ namespace math
 		FORCE_INLINE constexpr explicit Fixed(T x)
 		{
 			raw = uint16_t(x<<shift);
-			dbgAssert((raw >> shift) == x);
+			//dbgAssert((raw >> shift) == x);
 		}
 		constexpr explicit Fixed(float x) : raw(uint16_t(x * (1<<shift))) {}
 		FORCE_INLINE constexpr Fixed(const math::Fixed<uint16_t,shift>& _other)
@@ -487,7 +487,7 @@ namespace math
 	}
 
 	// Explicit override for 16.16
-	FORCE_INLINE auto operator*(const Fixed<int32_t,16>& a, const Fixed<int32_t, 16>& b)
+	FORCE_INLINE inline auto operator*(const Fixed<int32_t,16>& a, const Fixed<int32_t, 16>& b)
 	{
 		Fixed<int32_t, 16> result;
 		result.raw = int32_t((int64_t(a.raw) * int64_t(b.raw)) >> 16);
