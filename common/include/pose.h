@@ -13,7 +13,7 @@ extern "C" {
 struct Pose
 {
 	math::Vec3p16 pos;
-	math::intp16 phi{}; // Rotation around the z axis (normalized to 1 revolution).
+	math::unorm16 phi{}; // Rotation around the z axis (normalized to 1 revolution).
 
 	// Cached state
 	math::intp12 sinf = math::intp12(0);
@@ -21,7 +21,6 @@ struct Pose
 
 	void update()
 	{
-		phi.raw &= 0xffff;
 		cosf = math::intp12::castFromShiftedInteger<12>(lu_cos(phi.raw));
 		sinf = math::intp12::castFromShiftedInteger<12>(lu_sin(phi.raw));
 	}
@@ -41,7 +40,7 @@ public:
 	// Speed controls
 	math::intp8 horSpeed = math::intp8(0.06125f);
 	math::intp8 verSpeed = math::intp8(0.06125f);
-	math::intp8 angSpeed = math::intp8(0.5f);
+	math::intp16 angSpeed = math::intp16(0.5f);
 };
 
 class CharacterController

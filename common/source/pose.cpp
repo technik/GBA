@@ -18,14 +18,14 @@ void FPSController::update()
 	m_pose.pos.y() += (dir.x() * m_pose.sinf + dir.y() * m_pose.cosf).cast<16>();
 	m_pose.pos.z() += dir.z().cast<16>();
 
-	m_pose.phi += (angSpeed*(Keypad::Held(Keypad::LEFT) - Keypad::Held(Keypad::RIGHT))).cast<16>();
+	m_pose.phi += unorm16::castFromShiftedInteger<16>((angSpeed*(Keypad::Held(Keypad::LEFT) - Keypad::Held(Keypad::RIGHT))).raw);
 
 	m_pose.update();
 }
 
 void CharacterController::update()
 {
-	Vec3p12 dir = {};
+	Vec2p12 dir = {};
 	// left/right : strafe/rotate
 	if(Keypad::Held(Keypad::L))
 	{
@@ -33,11 +33,10 @@ void CharacterController::update()
 	}
 	else
 	{
-		m_pose.phi += (angSpeed*(Keypad::Held(Keypad::LEFT) - Keypad::Held(Keypad::RIGHT))).cast<16>();
+		m_pose.phi += unorm16::castFromShiftedInteger<16>((angSpeed*(Keypad::Held(Keypad::LEFT) - Keypad::Held(Keypad::RIGHT))).raw);
 	}
 	// up/down : forward/back
 	dir.y() = (horSpeed * (Keypad::Held(Keypad::UP) - Keypad::Held(Keypad::DOWN))).cast<12>();
-	dir.z() = (horSpeed * (Keypad::Held(Keypad::A) - Keypad::Held(Keypad::B))).cast<12>();
 
 	Vec2p16 disp;
 	disp.x() = (dir.x() * m_pose.cosf - dir.y() * m_pose.sinf).cast<16>();
@@ -45,7 +44,7 @@ void CharacterController::update()
 
 	m_pose.pos.x() += disp.x();
 	m_pose.pos.y() += disp.y();
-	m_pose.pos.z() += dir.z().cast<16>();
+	m_pose.pos.z() += horSpeed * (Keypad::Held(Keypad::A) - Keypad::Held(Keypad::B));
 
 
 	// Jumps

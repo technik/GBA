@@ -36,29 +36,29 @@ Color edgeClr[] = {
 };
 
 // TODO: Optimize this with a LUT to avoid the BIOS call
-intp16 fastAtan2(intp16 x, intp16 y)
+unorm16 fastAtan2(intp16 x, intp16 y)
 {
 	// Map angle to the first quadrant
 	intp16 x1 = abs(x);
 	intp16 y1 = abs(y);
 
 	// Note: ArcTan takes a .14 fixed argument. To get the best precision, we perform the division shifts manually
-	intp16 atan16;
+	unorm16 atan16;
 	if (x1 >= abs(y1)) // Lower half of Q1, upper half of Q4
 	{
 		// .16f << 6 = .22f
 		// .14f = .22f / .8f
 		int ratio = ((y.raw << 6) / (x1.raw>>8)); // Note we used y with sign to get both the tangent of the first and second quadrants correctly
-		atan16 = intp16::castFromShiftedInteger<16>(ArcTan(ratio));
+		atan16 = unorm16::castFromShiftedInteger<16>(ArcTan(ratio) & 0xffff);
 	}
 	else // Upper half of Q1, lower half of Q4
 	{
 		// .14f = ( .16f << 6 ) / .8f
 		int ratio = ((x1.raw << 6) / (y1.raw>>8));
-		atan16 = 0.25_p16 - intp16::castFromShiftedInteger<16>(ArcTan(ratio));
-		atan16 = y > 0 ? atan16 : -atan16;
+		atan16 = 0.25_u16 - unorm16::castFromShiftedInteger<16>(ArcTan(ratio) & 0xffff);
+		atan16 = y > 0 ? atan16 : (0_u16 - atan16);
 	}
-	return (x.raw >= 0) ? atan16 : 0.5_p16 - atan16;
+	return (x.raw >= 0) ? atan16 : 0.5_u16 - atan16;
 }
 
 // Returns x in screen space, invDepth as y
@@ -105,22 +105,20 @@ intp16 PointToDist(const Vec2p16& p)
 
 // Clips a wall that's already in view space.
 // Returns whether the wall is visible.
-bool clipWall(const Vec2p16& v0, const Vec2p16& v1, intp16 camAngle, Vec2p12& ndcA, Vec2p12& ndcB)
+bool clipWall(const Vec2p16& v0, const Vec2p16& v1, unorm16 camAngle, Vec2p12& ndcA, Vec2p12& ndcB)
 {
 	// Compute endpoint angles
-	intp16 angle0 = fastAtan2(v0.x(), v0.y());
-	intp16 angle1 = fastAtan2(v1.x(), v1.y());
+	unorm16 angle0 = fastAtan2(v0.x(), v0.y());
+	unorm16 angle1 = fastAtan2(v1.x(), v1.y());
 
 	// Clip back facing walls
 	auto span = angle1 - angle0;
-	span.raw &= 0xffff;
-	dbgAssert(span >= 0_p16);
 	if (span <= 0.5_p16)
 	{
 		return false;
 	}
 
-	intp16 rw_angle = angle0; // Keep this for computing invDepth
+	unorm16 rw_angle = angle0; // Keep this for computing invDepth
 	angle0 -= camAngle;
 	angle1 -= camAngle;
 
@@ -129,14 +127,14 @@ bool clipWall(const Vec2p16& v0, const Vec2p16& v1, intp16 camAngle, Vec2p12& nd
 	// Clip angles to the visible view frustum
 	// Shifting by a quarter revolution gives us the angle to "y", the view direction
 #if FOV == 90
-	constexpr intp16 clipAngle = 0.125_p16; // atan(1.0) = fov/2. Corresponds to a fov of exactly 90 deg
+	constexpr unorm16 clipAngle = 0.125_u16; // atan(1.0) = fov/2. Corresponds to a fov of exactly 90 deg
 #elif FOV == 50
-	constexpr intp16 clipAngle = 0.07379180882521663_p16; // atan(0.5) = fov/2. Corresponds to a fov of about 50 deg
+	constexpr unorm16 clipAngle = 0.07379180882521663_u16; // atan(0.5) = fov/2. Corresponds to a fov of about 50 deg
 #elif FOV == 66
-	constexpr intp16 clipAngle = 0.0935835209054994_p16; // atan(0.5) = fov/2. Corresponds to a fov of about 50 deg
+	constexpr unorm16 clipAngle = 0.0935835209054994_u16; // atan(0.5) = fov/2. Corresponds to a fov of about 50 deg
 #endif
-	constexpr intp16 leftClip = 0.25_p16 + clipAngle;
-	constexpr intp16 rightClip = 0.25_p16 - clipAngle;
+	constexpr unorm16 leftClip = 0.25_u16 + clipAngle;
+	constexpr unorm16 rightClip = 0.25_u16 - clipAngle;
 	if (angle1 > leftClip) // Past the left side of the screen
 	{
 		return false;
@@ -179,22 +177,23 @@ bool clipWall(const Vec2p16& v0, const Vec2p16& v1, intp16 camAngle, Vec2p12& nd
 	intp16 dx = (v1.x() - v0.x()).cast<16>();
 	intp16 dy = (v1.y() - v0.y()).cast<16>();
 	// Angle normal to the plane, in world space
-	constexpr auto ang90deg = 0.25_p16;
-	intp16 wsNormalAngle = fastAtan2(dx, dy) + ang90deg;
+	constexpr auto ang90deg = 0.25_u16;
+	unorm16 wsNormalAngle = fastAtan2(dx, dy) + ang90deg;
 	// Angle from the shortest distance (aligned with the normal) to the reference angle
-	intp16 offsetAngle = abs(rw_angle - wsNormalAngle);
+	unorm16 offsetAngle = rw_angle - wsNormalAngle;
 	// Distance to the reference angle
 	intp16 hyp = PointToDist(v0);
 	// Project distance towards the normal
 	intp16 proj = intp16::castFromShiftedInteger<12>(lu_cos(offsetAngle.raw));
-	proj = max(proj, 0_p16);
 	intp16 distanceToPlane = hyp * proj;
+	if (distanceToPlane <= 0)
+		return false;
 
 	// Move clipped angle to world space and substract 
 	angle0 += camAngle;
 	angle1 += camAngle;
-	intp16 offset0 = angle0 - wsNormalAngle;
-	intp16 offset1 = angle1 - wsNormalAngle;
+	unorm16 offset0 = angle0 - wsNormalAngle;
+	unorm16 offset1 = angle1 - wsNormalAngle;
 
 	intp16 invD0 = intp16::castFromShiftedInteger<12>(max(0,lu_cos(offset0.raw))) / (distanceToPlane * sin0.cast<16>());
 	intp16 invD1 = intp16::castFromShiftedInteger<12>(max(0,lu_cos(offset1.raw))) / (distanceToPlane * sin1.cast<16>());
@@ -225,7 +224,7 @@ bool clipSegment(const Pose& view, const WAD::Vertex* vertices, const WAD::Seg& 
 	auto& v0 = vertices[segment.startVertex];
 	auto& v1 = vertices[segment.endVertex];
 
-	auto pos16 = Vec2p16(view.pos.m_y.cast<16>(), view.pos.m_y.cast<16>());
+	auto pos16 = Vec2p16(view.pos.m_x.cast<16>(), view.pos.m_y.cast<16>());
 	// Project to view space
 	auto vsA = v0 - pos16;
 	auto vsB = v1 - pos16;
