@@ -3,10 +3,11 @@
 // Sector rasterizer performance
 //
 
-#include <Camera.h>
 #include <cstring>
+#include <Camera.h>
 #include <raycaster.h>
 
+#include <container.h>
 #include <Color.h>
 #include <Device.h>
 #include <linearMath.h>
@@ -34,6 +35,9 @@ Color edgeClr[] = {
 	BasicColor::DarkGrey,
 	BasicColor::DarkGreen
 };
+
+static constexpr uint32_t kMaxVisPlanes = 128;
+static StaticVector<SectorRasterizer::VisPlane, kMaxVisPlanes> g_visPlanes;
 
 // TODO: Optimize this with a LUT to avoid the BIOS call
 unorm16 fastAtan2(intp16 x, intp16 y)
@@ -327,6 +331,7 @@ void SectorRasterizer::RenderWorld(WAD::LevelData& level, const Camera& cam)
 	// Since we always render front to back, we just need to keep track of whether a column has already been drawn or not.
 	DepthBuffer depthBuffer;
 	depthBuffer.Clear();
+	g_visPlanes.clear();
 
 	// Traverse the BSP (in a random order for now)
 	// Always start at the last node

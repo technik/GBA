@@ -8,7 +8,7 @@ class StaticVector
 {
 public:
     constexpr uint32_t capacity() const { return N; }
-    uint32_t size() const { returnm_size; }
+    uint32_t size() const { return m_size; }
 
     T& operator[](uint32_t i) {
         dbgAssert(i < m_size);
@@ -19,6 +19,8 @@ public:
         return m_data[i];
     }
 
+    void clear() { m_size = 0; }
+    bool full() const { m_size == N; }
     bool empty() const { return m_size == 0; }
 
     T* data() { return m_data; }

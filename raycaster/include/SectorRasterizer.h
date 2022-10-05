@@ -26,6 +26,25 @@ class SectorRasterizer
 public:
     using DisplayMode = Mode5Display;
 
+    // Render structures
+    struct VisPlane
+    {
+        static constexpr uint32_t kMaxWidth = DisplayMode::Width;
+        // TODO: In theory, visplanes can't span more than half a screen height, so maybe the limit should be 512?
+        static_assert(DisplayMode::Width < 256, "VisPlane heights may not fit in a byte");
+        math::intp16 height;
+        math::intp16 lightLevel;
+        int32_t textureNdx;
+        int16_t minX;
+        int16_t maxX;
+        int32_t padding;
+        uint8_t top[kMaxWidth];
+        uint8_t bottom[kMaxWidth];
+    };
+
+    static void Merge(VisPlane& dst, const VisPlane& src);
+    static bool CanMerge(const VisPlane& a, const VisPlane& b);
+
     static void Init();
     static void RenderWorld(WAD::LevelData& level, const Camera& cam);
     static bool BeginFrame();
