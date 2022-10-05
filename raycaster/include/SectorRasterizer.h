@@ -50,7 +50,7 @@ private:
     static void RenderWall(
         const math::Vec2p16& ndcA, const math::Vec2p16& ndcB,
         const math::intp16& floorH, const math::intp16& ceilingH,
-        Color ceilColr, Color gndClr, Color clr,
+        Color ceilColr, Color gndClr, const math::intp16& lightLevel,
         DepthBuffer& depthBuffer);
     static void RenderPortal(const Pose& view,
         const math::Vec2p16& ndcA, const math::Vec2p16& ndcB,

@@ -169,7 +169,7 @@ bool clipWall(const Vec2p16& v0, const Vec2p16& v1, unorm16 camAngle, Vec2p16& n
 	// Project distance towards the normal
 	intp16 proj = intp16::castFromShiftedInteger<12>(lu_cos(offsetAngle.raw));
 	intp16 distanceToPlane = hyp * proj;
-	if (distanceToPlane <= 0)
+	if (distanceToPlane <= 0.01_p16)
 		return false;
 
 	// Move clipped angle to world space and substract 
@@ -236,6 +236,11 @@ void SectorRasterizer::RenderSubsector(const WAD::LevelData& level, uint16_t ssI
 		auto& frontSide = level.sideDefs[lineDef.SideNum[0]];
 		auto& frontSector = level.sectors[frontSide.sector];
 
+		bool isHor = segment.angle == 0_p16 || segment.angle == 0.5_p16;
+		bool isVer = segment.angle == 0.25_p16 || segment.angle == 0.75_p16;
+
+		intp16 wallLight = 20 * (isHor ? 0.625_p16 : isVer ? 1_p16 : 0.825_p16);
+
 		intp16 floorH = intp16::castFromShiftedInteger<8>(frontSector.floorhHeight.raw) - view.pos.m_z;
 		intp16 ceilingH = intp16::castFromShiftedInteger<8>(frontSector.ceilingHeight.raw) - view.pos.m_z;
 		Color topColor = BasicColor::DarkGrey;
@@ -245,7 +250,7 @@ void SectorRasterizer::RenderSubsector(const WAD::LevelData& level, uint16_t ssI
 		if (lineDef.SideNum[1] == uint16_t(-1) // No back sector, must be an opaque wall
 			|| !(lineDef.flags & FlagTwoSided)) // Explicitly opaque
 		{
-			RenderWall(vA, vB, floorH, ceilingH, topColor, bottomColor, edgeClr[clrNdx], depthBuffer);
+			RenderWall(vA, vB, floorH, ceilingH, topColor, bottomColor, wallLight, depthBuffer);
 			continue;
 		}
 
@@ -268,7 +273,7 @@ void SectorRasterizer::RenderSubsector(const WAD::LevelData& level, uint16_t ssI
 		}
 
 		// Regular portal
-		auto renderClr = segment.direction ? BasicColor::DarkGrey : edgeClr[clrNdx];
+		auto renderClr = segment.direction ? BasicColor::DarkGrey : Color(wallLight.raw>>11, wallLight.raw >> 11, wallLight.raw >> 11);
 		RenderPortal(view, vA, vB, floorH, ceilingH, backSector, topColor, bottomColor, renderClr, depthBuffer);
 	}
 }
@@ -333,7 +338,7 @@ void SectorRasterizer::RenderWall(
 	const Vec2p16& ndcA, const Vec2p16& ndcB,
 	const intp16& floorH, const intp16& ceilingH,
 	Color ceilColor, Color gndColor,
-	Color wallClr, DepthBuffer& depthBuffer)
+	const intp16& lightLevel, DepthBuffer& depthBuffer)
 {
 	intp16 ssA = ndcA.x() * int(DisplayMode::Width/2) + int(DisplayMode::Width/2);
 	intp16 ssB = ndcB.x() * int(DisplayMode::Width/2) + int(DisplayMode::Width/2);
@@ -356,6 +361,10 @@ void SectorRasterizer::RenderWall(
 	int y1A = (DisplayMode::Height / 2 - hFloorA).floor();
 	
 	x1 = std::min<int32_t>(x1, DisplayMode::Width-1);
+
+	intp16 lightA = (min(1_p16, ndcA.y()) * lightLevel);
+	intp16 lightB = (min(1_p16, ndcB.y()) * lightLevel);
+	intp16 dLight = (lightB - lightA) / (x1 - x0);
 
 	uint16_t* backbuffer = (uint16_t*)DisplayMode::backBuffer();
 	for(int x = std::max<int32_t>(0,x0); x < x1; ++x)
@@ -380,6 +389,8 @@ void SectorRasterizer::RenderWall(
 			backbuffer[pixel] = ceilColor.raw;
 		}
 
+		int light = min(31, (lightA + (x - x0) * dLight).raw >> 11);
+		Color wallClr = Color(light, light, light);
 		// Wall		
 		for(int y = max(y0, ceilingClip); y < min(y1, floorClip); ++y)
 		{
