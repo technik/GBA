@@ -74,8 +74,6 @@ intp16 PointToDist(const Vec2p16& p)
 		y = temp;
 	}
 
-	// .16f << 6 = .22f
-		// .14f = .22f / .8f
 	auto ratio14 = (y / x).cast<14>(); // Note we used y with sign to get both the tangent of the first and second quadrants correctly
 	intp16 atan16 = intp16::castFromShiftedInteger<16>(ArcTan(ratio14.raw));
 
@@ -240,7 +238,8 @@ void SectorRasterizer::RenderSubsector(const WAD::LevelData& level, uint16_t ssI
 
 		intp16 floorH = intp16::castFromShiftedInteger<8>(frontSector.floorhHeight.raw) - view.pos.m_z;
 		intp16 ceilingH = intp16::castFromShiftedInteger<8>(frontSector.ceilingHeight.raw) - view.pos.m_z;
-		Color topColor = segment.direction ? BasicColor::DarkGrey : skyClr;
+		Color topColor = BasicColor::DarkGrey;
+		//Color topColor = segment.direction ? BasicColor::DarkGrey : skyClr;
 		Color bottomColor = segment.direction ? BasicColor::DarkGrey : groundClr;
 
 		if (lineDef.SideNum[1] == uint16_t(-1) // No back sector, must be an opaque wall
