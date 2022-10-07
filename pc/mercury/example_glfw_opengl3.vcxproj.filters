@@ -61,6 +61,9 @@
     <ClCompile Include="..\..\raycaster\assets\e1m1.wad.cpp">
       <Filter>assets</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\common\include\mercuryLUT.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\backends\imgui_impl_opengl3_loader.h">

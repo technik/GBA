@@ -36,7 +36,7 @@ GFXLIBS		:= libgfx.a
 LIBS		:= -ltonc -lgfx
 
 BUILD		:= build
-SRCDIRS		:= source ../common/source ../common/source/gfx ../common/source/tools assets
+SRCDIRS		:= source ../common/source ../common/include ../common/source/gfx ../common/source/tools assets
 DATADIRS	:= data
 INCDIRS		:= source include ../common/include assets
 LIBDIRS		:= $(DEVKITPRO)/libtonc

@@ -25,8 +25,16 @@ class SectorRasterizer
 {
 public:
     using DisplayMode = Mode5Display;
+    static constexpr int32_t ScreenWidth = DisplayMode::Width;
+    static constexpr int32_t ScreenHeight = DisplayMode::Height;
 
     // Render structures
+    struct ClipRange
+    {
+        uint8_t begin;
+        uint8_t end;
+    };
+
     struct VisPlane
     {
         static constexpr uint32_t kMaxWidth = DisplayMode::Width;
@@ -64,6 +72,9 @@ private:
         void Clear();
     };
 
+    static bool clipWall(const math::Vec2p16& v0, const math::Vec2p16& v1, math::unorm16 camAngle, math::Vec2p16& ndcA, math::Vec2p16& ndcB);
+    static bool clipSegment(const Pose& view, const WAD::Vertex* vertices, const WAD::Seg& segment, math::Vec2p16& ndcA, math::Vec2p16& ndcB);
+    static bool clipSolidRanges(math::intp16& first, math::intp16& last);
     static void RenderSubsector(const WAD::LevelData& level, uint16_t ssIndex, const Pose& view, DepthBuffer& depthBuffer);
     static void RenderBSPNode(const WAD::LevelData& level, uint16_t nodeIndex, const Pose& view, DepthBuffer& depthBuffer);
     static void RenderWall(

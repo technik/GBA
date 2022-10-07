@@ -15,12 +15,17 @@
 
 #include <gfx/palette.h>
 
+#include <fastMath.h>
+
 using namespace math;
 using namespace gfx;
 
 //#define FOV 90
 //#define FOV 50
 #define FOV 66
+
+static constexpr uint32_t kMaxClipRanges = 32;
+StaticVector<SectorRasterizer::ClipRange, kMaxClipRanges> g_solidRanges;
 
 Color edgeClr[] = {
 	BasicColor::Red,
@@ -35,9 +40,6 @@ Color edgeClr[] = {
 	BasicColor::DarkGrey,
 	BasicColor::DarkGreen
 };
-
-static constexpr uint32_t kMaxVisPlanes = 128;
-static StaticVector<SectorRasterizer::VisPlane, kMaxVisPlanes> g_visPlanes;
 
 // TODO: Optimize this with a LUT to avoid the BIOS call
 unorm16 fastAtan2(intp16 x, intp16 y)
@@ -85,9 +87,94 @@ intp16 PointToDist(const Vec2p16& p)
 	return x / cosT;
 }
 
+bool SectorRasterizer::clipSolidRanges(intp16& first, intp16& last)
+{
+	ClipRange* next = nullptr;
+	ClipRange* start = nullptr;
+
+	// Find the first range that touches the range
+	//  (adjacent pixels are touching).
+	/*
+	start = g_solidRanges.data();
+	while (start->end < first - 1)
+		start++;
+
+	if (first < start->first)
+	{
+		if (last < start->first - 1)
+		{
+			// Post is entirely visible (above start),
+			//  so insert a new clippost.
+			R_StoreWallRange(first, last);
+			next = newend;
+			newend++;
+
+			while (next != start)
+			{
+				*next = *(next - 1);
+				next--;
+			}
+			next->first = first;
+			next->last = last;
+			return;
+		}
+
+		// There is a fragment above *start.
+		R_StoreWallRange(first, start->first - 1);
+		// Now adjust the clip size.
+		start->first = first;
+	}
+
+	// Bottom contained in start?
+	if (last <= start->last)
+		return;
+
+	next = start;
+	while (last >= (next + 1)->first - 1)
+	{
+		// There is a fragment between two posts.
+		R_StoreWallRange(next->last + 1, (next + 1)->first - 1);
+		next++;
+
+		if (last <= next->last)
+		{
+			// Bottom is contained in next.
+			// Adjust the clip size.
+			start->last = next->last;
+			goto crunch;
+		}
+	}
+
+	// There is a fragment after *next.
+	R_StoreWallRange(next->last + 1, last);
+	// Adjust the clip size.
+	start->last = last;
+
+	// Remove start+1 to next from the clip list,
+	// because start now covers their area.
+crunch:
+	if (next == start)
+	{
+		// Post just extended past the bottom of one post.
+		return;
+	}
+
+
+	while (next != newend)
+	{
+		next++;
+		++start;
+		// Remove a post.
+		*start = *next;
+	}
+
+	newend = start + 1;*/
+	return true;
+}
+
 // Clips a wall that's already in view space.
 // Returns whether the wall is visible.
-bool clipWall(const Vec2p16& v0, const Vec2p16& v1, unorm16 camAngle, Vec2p16& ndcA, Vec2p16& ndcB)
+bool SectorRasterizer::clipWall(const Vec2p16& v0, const Vec2p16& v1, unorm16 camAngle, Vec2p16& ndcA, Vec2p16& ndcB)
 {
 	// Compute endpoint angles
 	unorm16 angle0 = fastAtan2(v0.x(), v0.y());
@@ -142,6 +229,19 @@ bool clipWall(const Vec2p16& v0, const Vec2p16& v1, unorm16 camAngle, Vec2p16& n
 	if (angle0 <= angle1)
 		return false;
 
+#if FOV == 66 // Multiply by two to compensate for the 0.5 tan
+	ndcA.x() = 2 * math::Cotan(angle0);
+	ndcB.x() = 2 * math::Cotan(angle1);
+#else
+	dbgAssert(false); // Unimplemented FOV. Need to divide by tan(fov/2)
+#endif
+
+	// Clip against solid ranges
+	if (!clipSolidRanges(ndcA.x(), ndcB.x()))
+	{
+		return false;
+	}
+
 	// Shift to improve numerical precision
 	// This works because the internal LUT does a shift>>7 before indexing.
 	angle0.raw += 1 << 6;
@@ -150,14 +250,6 @@ bool clipWall(const Vec2p16& v0, const Vec2p16& v1, unorm16 camAngle, Vec2p16& n
 	// Reconstruct clipped vertices
 	auto sin0 = intp16::castFromShiftedInteger<12>(lu_sin(angle0.raw));
 	auto sin1 = intp16::castFromShiftedInteger<12>(lu_sin(angle1.raw));
-	auto cos0 = intp16::castFromShiftedInteger<12>(lu_cos(angle0.raw));
-	auto cos1 = intp16::castFromShiftedInteger<12>(lu_cos(angle1.raw));
-#if FOV == 66 // Multiply by two to compensate for the 0.5 tan
-	ndcA.x() = 2*cos0/sin0;
-	ndcB.x() = 2*cos1/sin1;
-#else
-	dbgAssert(false); // Unimplemented FOV. Need to divide by tan(fov/2)
-#endif
 
 	// Depth calculation
 	// We could safely cast down to .8 without loss because maps are grid aligned to .5 anyway.
@@ -189,6 +281,7 @@ bool clipWall(const Vec2p16& v0, const Vec2p16& v1, unorm16 camAngle, Vec2p16& n
 
 	dbgAssert(ndcA.y() >= 0_p16);
 	dbgAssert(ndcB.y() >= 0_p16);
+
 	return true;
 }
 
@@ -205,7 +298,7 @@ void clear(uint16_t* buffer, uint16_t topClr, uint16_t bottomClr, int area)
 // The clipped vertices have the following components:
 // x: screen space x, in the range [-1,1]
 // y: inverse distance to the camera plane.
-bool clipSegment(const Pose& view, const WAD::Vertex* vertices, const WAD::Seg& segment, Vec2p16& ndcA, Vec2p16& ndcB)
+bool SectorRasterizer::clipSegment(const Pose& view, const WAD::Vertex* vertices, const WAD::Seg& segment, Vec2p16& ndcA, Vec2p16& ndcB)
 {
 	// Reconstruct segment vertices
 	auto& v0 = vertices[segment.startVertex];
@@ -228,8 +321,8 @@ void SectorRasterizer::RenderSubsector(const WAD::LevelData& level, uint16_t ssI
 	{
 		auto& segment = level.segments[i];
 
-		Vec2p16 vA, vB;
-		if (!clipSegment(view, level.vertices, segment, vA, vB))
+		Vec2p16 ndcA, ndcB;
+		if (!clipSegment(view, level.vertices, segment, ndcA, ndcB))
 		{
 			continue; // Ignore non-visible segments
 		}
@@ -254,20 +347,12 @@ void SectorRasterizer::RenderSubsector(const WAD::LevelData& level, uint16_t ssI
 		if (lineDef.SideNum[1] == uint16_t(-1) // No back sector, must be an opaque wall
 			|| !(lineDef.flags & FlagTwoSided)) // Explicitly opaque
 		{
-			RenderWall(vA, vB, floorH, ceilingH, topColor, bottomColor, wallLight, depthBuffer);
+			RenderWall(ndcA, ndcB, floorH, ceilingH, topColor, bottomColor, wallLight, depthBuffer);
 			continue;
 		}
 
 		auto& backSide = level.sideDefs[lineDef.SideNum[1]];
 		auto& backSector = level.sectors[backSide.sector];
-
-		// TODO: Closed door optimization
-		//if (backSector.ceilingHeight <= frontSector.floorhHeight
-		//	|| backSector.floorhHeight >= frontSector.ceilingHeight)
-		//{
-		//	RenderWall(cam, vA, vB, floorH, ceilingH, edgeClr[clrNdx], depthBuffer);
-		//	continue;
-		//}
 
 		// Invisible portal
 		if (backSector.floorhHeight == frontSector.floorhHeight
@@ -278,7 +363,7 @@ void SectorRasterizer::RenderSubsector(const WAD::LevelData& level, uint16_t ssI
 
 		// Regular portal
 		auto renderClr = segment.direction ? BasicColor::DarkGrey : Color(wallLight.raw>>11, wallLight.raw >> 11, wallLight.raw >> 11);
-		RenderPortal(view, vA, vB, floorH, ceilingH, backSector, topColor, bottomColor, renderClr, depthBuffer);
+		RenderPortal(view, ndcA, ndcB, floorH, ceilingH, backSector, topColor, bottomColor, renderClr, depthBuffer);
 	}
 }
 
@@ -331,7 +416,12 @@ void SectorRasterizer::RenderWorld(WAD::LevelData& level, const Camera& cam)
 	// Since we always render front to back, we just need to keep track of whether a column has already been drawn or not.
 	DepthBuffer depthBuffer;
 	depthBuffer.Clear();
-	g_visPlanes.clear();
+
+	g_solidRanges.resize(2);
+	g_solidRanges[0].begin = 0;
+	g_solidRanges[0].end = 0;
+	g_solidRanges[1].begin = ScreenWidth;
+	g_solidRanges[1].end = ScreenWidth;
 
 	// Traverse the BSP (in a random order for now)
 	// Always start at the last node
@@ -349,8 +439,8 @@ void SectorRasterizer::RenderWall(
 	intp16 ssB = ndcB.x() * int(DisplayMode::Width/2) + int(DisplayMode::Width/2);
 
 	// No intersection with the view frustum
-	int32_t x0 = ssA.floor();
-	int32_t x1 = ssB.floor() + 1;
+	int32_t x0 = (ssA + 0.5_p16).floor();
+	int32_t x1 = (ssB + 0.5_p16).floor();
 	if((x0 >= int32_t(DisplayMode::Width)) || (x1 < 0) || x0 >= x1)
 	{
 		return;
@@ -360,19 +450,20 @@ void SectorRasterizer::RenderWall(
 	intp16 hFloorB = floorH * ndcB.y() * int(DisplayMode::Width/2);
 	intp16 hCeilingA = ceilingH * ndcA.y() * int(DisplayMode::Width/2);
 	intp16 hCeilingB = ceilingH * ndcB.y() * int(DisplayMode::Width/2);
-	intp16 mFloor = (hFloorB - hFloorA) / (x1 - x0);
-	intp16 mCeil = (hCeilingB - hCeilingA) / (x1 - x0);
+	intp16 mFloor = (hFloorB - hFloorA) / (ssB - ssA);
+	intp16 mCeil = (hCeilingB - hCeilingA) / (ssB - ssA);
 	int y0A = (DisplayMode::Height / 2 - hCeilingA).floor();
 	int y1A = (DisplayMode::Height / 2 - hFloorA).floor();
 	
-	x1 = std::min<int32_t>(x1, DisplayMode::Width-1);
 
 	intp16 lightA = (min(1_p16, ndcA.y()) * lightLevel);
 	intp16 lightB = (min(1_p16, ndcB.y()) * lightLevel);
-	intp16 dLight = (lightB - lightA) / (x1 - x0);
+	intp16 dLight = (lightB - lightA) / (ssB - ssA);
+
+	x1 = std::min<int32_t>(x1, DisplayMode::Width-1);
 
 	uint16_t* backbuffer = (uint16_t*)DisplayMode::backBuffer();
-	for(int x = std::max<int32_t>(0,x0); x < x1; ++x)
+	for(int x = std::max<int32_t>(0,x0); x <= x1; ++x)
 	{		
 		int floorDY = (mFloor * (x - x0)).floor();
 		int ceilDY = (mCeil * (x - x0)).floor();
