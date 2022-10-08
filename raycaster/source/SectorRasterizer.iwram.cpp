@@ -198,9 +198,9 @@ bool SectorRasterizer::clipWall(const Vec2p16& v0, const Vec2p16& v1, unorm16 ca
 #if FOV == 90
 	constexpr unorm16 clipAngle = 0.125_u16; // atan(1.0) = fov/2. Corresponds to a fov of exactly 90 deg
 #elif FOV == 50
-	constexpr unorm16 clipAngle = 0.07379180882521663_u16; // atan(0.5) = fov/2. Corresponds to a fov of about 50 deg
+	constexpr unorm16 clipAngle = 0.07379180882521663_u16; // atan(0.5) = fov/2. Corresponds to a fov of about 53.13 deg
 #elif FOV == 66
-	constexpr unorm16 clipAngle = 0.0935835209054994_u16; // atan(0.5) = fov/2. Corresponds to a fov of about 50 deg
+	constexpr unorm16 clipAngle = 0.0935835209054994_u16; // atan(2/3) = fov/2. Corresponds to a fov of about 67.38 deg
 #endif
 	constexpr unorm16 leftClip = 0.25_u16 + clipAngle;
 	constexpr unorm16 rightClip = 0.25_u16 - clipAngle;
@@ -230,26 +230,25 @@ bool SectorRasterizer::clipWall(const Vec2p16& v0, const Vec2p16& v1, unorm16 ca
 		return false;
 
 #if FOV == 66 // Multiply by two to compensate for the 0.5 tan
+	ndcA.x() = 3 * math::Cotan(angle0) / 2;
+	ndcB.x() = 3 * math::Cotan(angle1) / 2;
+#elif FOV == 50
 	ndcA.x() = 2 * math::Cotan(angle0);
 	ndcB.x() = 2 * math::Cotan(angle1);
 #else
 	dbgAssert(false); // Unimplemented FOV. Need to divide by tan(fov/2)
 #endif
+	auto ndx = ndcA.x() * (DisplayMode::Width / 2) +0.5_p16;
+	int x0 = ndx.floor();
+	int x1 = (ndcB.x() * (DisplayMode::Width / 2) + 0.5_p16).floor();
+	if (x0 >= x1)
+		return false;
 
 	// Clip against solid ranges
 	if (!clipSolidRanges(ndcA.x(), ndcB.x()))
 	{
 		return false;
 	}
-
-	// Shift to improve numerical precision
-	// This works because the internal LUT does a shift>>7 before indexing.
-	angle0.raw += 1 << 6;
-	angle1.raw += 1 << 6;
-
-	// Reconstruct clipped vertices
-	auto sin0 = intp16::castFromShiftedInteger<12>(lu_sin(angle0.raw));
-	auto sin1 = intp16::castFromShiftedInteger<12>(lu_sin(angle1.raw));
 
 	// Depth calculation
 	// We could safely cast down to .8 without loss because maps are grid aligned to .5 anyway.
@@ -263,10 +262,17 @@ bool SectorRasterizer::clipWall(const Vec2p16& v0, const Vec2p16& v1, unorm16 ca
 	// Distance to the reference angle
 	intp16 hyp = PointToDist(v0);
 	// Project distance towards the normal
-	intp16 proj = intp16::castFromShiftedInteger<12>(lu_cos(offsetAngle.raw));
+	intp16 proj = Cos(offsetAngle);
 	intp16 distanceToPlane = hyp * proj;
 	if (distanceToPlane <= 0.01_p16)
 		return false;
+
+	//dbgAssert(distanceToPlane > 0_p16);
+	// Reconstruct clipped vertices
+	// Shift to improve numerical precision
+	// This works because the internal LUT does a shift>>7 before indexing.
+	auto sin0 = Sin(angle0);
+	auto sin1 = Sin(angle1);
 
 	// Move clipped angle to world space and substract 
 	angle0 += camAngle;

@@ -508,6 +508,16 @@ namespace math
 		return result;
 	}
 
+	template<std::integral T>
+	FORCE_INLINE constexpr auto operator*(
+		const Fixed<int32_t, 16>& a,
+		T b)
+	{
+		Fixed<int32_t, 16> result;
+		result.raw = a.raw * b;
+		return result;
+	}
+
     template<
         class StoreA, size_t shiftA,
         std::integral T>
