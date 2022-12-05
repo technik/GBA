@@ -1,0 +1,86 @@
+Before
+
+9830 * 256 / 16768
+
+9090 * 256 / 16768
+
+return intp8
+
+9225
+
+Integer raycast interface
+
+9427
+
+intp8 rayDir
+
+8060
+
+Backtrack float conversion
+6450 * 256
+
+5793 * 256
+
+4821 * 256
+
+Profiler x64
+
+16022,10503
+
+No float conversions: 16020,10503
+
+16019,4952
+
+With minimap
+16203, 4952
+
+// Using DMA
+16203, 1202
+
+// Writing directly to memory::
+15735
+
+
+429 loc
+ No constexpr constructor: 389 loc
+
+
+ 15766 * 64 / 16768
+
+
+ Moved raycaster to IWRAM
+
+ 14600 * 64
+
+ precompute width rcp
+
+ 14568 ^ 64
+
+ // LUT x division 12402
+
+ constexpr division 14543
+
+ make ndxX incremental 14498
+
+ Move vline to IWRAM: 7114
+
+ Optimizing vline: 5998
+
+ Move render to IWRAM: 5136 <- Final perf before changing video mode
+ --------------------------------------------
+
+ Mode 3 full res starts at 10994 * 64 cycles/frame, with VBlank enabled
+ Note: Sometimes the render hasn't finished drawing the minimap while the display reaches that part of the screen.
+ 	Rendering to a separate display would be required for consistent results.
+
+ Move raydir to incremental 10964
+
+ Back to Mode4 rendering: 5158 * 64
+
+ Make minimap a sprite: 5059 * 64
+
+ Constant fill colors: 5054 * 64 = 19.29ms
+
+ Vertical textures 5101 * 64
+
+ Incremental rayDir 5100

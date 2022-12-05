@@ -164,7 +164,6 @@ bool Mode5Display::Init()
     }
 
     // Allocate the back buffer
-    s_backBuffer.resize(Width * Height);
     InitBuffers(m_backBufferTexture);
 
     return true;
@@ -219,7 +218,7 @@ void Mode5Display::Flip()
     // Copy our back buffer to the GPU
     glBindTexture(GL_TEXTURE_2D, m_backBufferTexture);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_R16UI, Width, Height, 0, GL_RED_INTEGER, GL_UNSIGNED_SHORT, s_backBuffer.data());
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R16UI, Width, Height, 0, GL_RED_INTEGER, GL_UNSIGNED_SHORT, backBuffer());
     
     // Render a full screen triangle that samples from it
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);

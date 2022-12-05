@@ -4,8 +4,24 @@
 #include <cstdint>
 #include "vector.h"
 
+#ifndef GBA
+// Statically allocated global memory
+static constexpr uint32_t TOTAL_MEMORY_SIZE = 0x10000000;
+inline static uint8_t g_RawMemory[TOTAL_MEMORY_SIZE] = {};
+#endif
+
 namespace IO
 {
+	template<class T, uint32_t _address>
+	T* GlobalMemory()
+	{
+#ifdef GBA
+		return reinterpret_cast<T*>(_address);
+#else
+		return reinterpret_cast<T*>(&g_RawMemory[_address]);
+#endif
+	}
+
     // IO Memory registers
     template<class T, uint32_t _address>
     class IORegister
@@ -15,7 +31,8 @@ namespace IO
 		~IORegister() = delete;
 
         static constexpr std::size_t address = _address;
-        static auto& Get() { return *reinterpret_cast<IORegister*>(address); }
+
+        static auto& Get() { return *GlobalMemory<IORegister,address>(); }
 		
         static auto& Value() { return Get().value; }
 
@@ -26,7 +43,8 @@ namespace IO
     struct AffineTxRegister
     {
         static constexpr uint32_t address = _address;
-        static auto& Get() { return *reinterpret_cast<AffineTxRegister*>(address); }
+
+        static auto& Get() { return *GlobalMemory<AffineTxRegister,address>(); }
 
         volatile int16_t A, B, C, D;
         volatile math::Vec2p8 refPoint;
@@ -148,20 +166,12 @@ namespace DMA
 		// Cancels any pending transfer on this channel
 		void clear()
 		{
-#ifndef _WIN32
 			control = 0; // Clear enable bit
-#endif // _WIN32
 		}
 
 		// Note count is in the number of uint16_t chunks to fill
 		void Fill(uint16_t* dst, const volatile uint16_t src, uint32_t count)
 		{
-#ifdef _WIN32
-			for (int i = 0; i < count; ++i)
-			{
-				dst[i] = src;
-			}
-#else
 			// Stop any previous DMA transfers
 			clear();
 
@@ -172,18 +182,18 @@ namespace DMA
 
 			// Config and dispatch the copy
 			control = uint16_t(ChunkSize::Dma16Bit) | uint16_t(SrcAddrAdjust::Fixed) | uint16_t(TimingMode::Now) | DmaEnable;
+
+#ifdef _WIN32 // Emulate DMA behavior
+			for (int i = 0; i < count; ++i)
+			{
+				dst[i] = src;
+			}
 #endif
 		}
 
 		// Note count is in the number of uint32_t chunks to fill
 		void Fill(uint32_t* dst, const volatile uint32_t src, uint32_t count)
 		{
-#ifdef _WIN32
-			for (int i = 0; i < count; ++i)
-			{
-				dst[i] = src;
-			}
-#else
 			// Stop any previous DMA transfers
 			clear();
 
@@ -194,18 +204,18 @@ namespace DMA
 
 			// Config and dispatch the copy
 			control = uint16_t(ChunkSize::Dma32Bit) | uint16_t(SrcAddrAdjust::Fixed) | uint16_t(TimingMode::Now) | DmaEnable;
+
+#ifdef _WIN32 // Emulate DMA behavior
+			for (int i = 0; i < count; ++i)
+			{
+				dst[i] = src;
+			}
 #endif
 		}
 
 		// Note count is in the number of uint32_t chunks to copy
 		void Copy(uint32_t* dst, const uint32_t* src, uint32_t count)
 		{
-#ifdef _WIN32
-			for (int i = 0; i < count; ++i)
-			{
-				dst[i] = src[i];
-			}
-#else
 			// Stop any previous DMA transfers
 			clear();
 
@@ -216,18 +226,18 @@ namespace DMA
 
 			// Config and dispatch the copy
 			control = uint16_t(ChunkSize::Dma32Bit) | uint16_t(TimingMode::Now) | DmaEnable;
+
+#ifdef _WIN32 // Emulate Hardware DMA
+			for (int i = 0; i < count; ++i)
+			{
+				dst[i] = src[i];
+			}
 #endif
 		}
 
 		// Note count is in the number of uint16_t chunks to copy
 		void Copy(uint16_t* dst, const uint16_t* src, uint32_t count)
 		{
-#ifdef _WIN32
-			for (int i = 0; i < count; ++i)
-			{
-				dst[i] = src[i];
-			}
-#else
 			// Stop any previous DMA transfers
 			clear();
 
@@ -238,24 +248,29 @@ namespace DMA
 
 			// Config and dispatch the copy
 			control = uint16_t(ChunkSize::Dma16Bit) | uint16_t(TimingMode::Now) | DmaEnable;
+#ifdef _WIN32 // Emulate Hardware DMA
+			for (int i = 0; i < count; ++i)
+			{
+				dst[i] = src[i];
+			}
 #endif
 		}
 	};
 
 	inline Channel& Channel0() {
-		return *reinterpret_cast<Channel*>(IO::DMA0SAD::address);
+		return *IO::GlobalMemory<Channel,IO::DMA0SAD::address>();
 	}
 
 	inline Channel& Channel1() {
-		return *reinterpret_cast<Channel*>(IO::DMA1SAD::address);
+		return *IO::GlobalMemory<Channel, IO::DMA1SAD::address>();
 	}
 
 	inline Channel& Channel2() {
-		return *reinterpret_cast<Channel*>(IO::DMA2SAD::address);
+		return *IO::GlobalMemory<Channel, IO::DMA2SAD::address>();
 	}
 
 	inline Channel& Channel3() {
-		return *reinterpret_cast<Channel*>(IO::DMA3SAD::address);
+		return *IO::GlobalMemory<Channel, IO::DMA3SAD::address>();
 	}
 }
 

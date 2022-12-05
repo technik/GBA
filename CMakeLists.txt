@@ -35,9 +35,9 @@ GroupSources(pc pc)
 
 include_directories(common/include)
 include_directories(pc/include)
-include_directories(raycaster/include)
-include_directories(raycaster/assets)
-add_executable(pcRT pc/rt/main.cpp ${COMMON_FILES} raycaster/source/SectorRasterizer.iwram.cpp raycaster/source/SectorRasterizer.cpp raycaster/assets/mercury.wad.cpp raycaster/assets/test.wad.cpp)
+include_directories(triangles/include)
+include_directories(triangles/assets)
+add_executable(pcRT pc/rt/main.cpp ${COMMON_FILES} triangles/source/SectorRasterizer.iwram.cpp triangles/source/SectorRasterizer.cpp triangles/assets/mercury.wad.cpp triangles/assets/test.wad.cpp)
 
 add_executable(lutGenerator tools/lutGenerator/main.cpp)
 set_target_properties(lutGenerator PROPERTIES FOLDER tools)
