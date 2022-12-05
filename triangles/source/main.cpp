@@ -33,26 +33,6 @@ using namespace gfx;
 
 TextSystem text;
 
-// No need to place this method in fast memory
-void Mode4Renderer::Init()
-{
-	Mode4Display displayMode;
-	displayMode.Init();
-
-	// Initialize the palette
-	sPaletteStart = BackgroundPalette::Allocator::alloc(8);
-	BackgroundPalette::color(sPaletteStart + 0).raw = BasicColor::SkyBlue.raw;
-	BackgroundPalette::color(sPaletteStart + 1).raw = BasicColor::MidGrey.raw;
-	// Wall colors
-	BackgroundPalette::color(sPaletteStart + 2).raw = BasicColor::Green.raw;
-	BackgroundPalette::color(sPaletteStart + 3).raw = BasicColor::DarkGreen.raw;
-	BackgroundPalette::color(sPaletteStart + 4).raw = BasicColor::Black.raw;
-	BackgroundPalette::color(sPaletteStart + 5).raw = BasicColor::DarkGrey.raw;
-	BackgroundPalette::color(sPaletteStart + 6).raw = BasicColor::LightGrey.raw;
-	// Player color
-	BackgroundPalette::color(sPaletteStart + 7).raw = BasicColor::Yellow.raw;
-}
-
 void InitSystems()
 {
 	Display().enableSprites();
