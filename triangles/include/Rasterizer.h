@@ -27,6 +27,10 @@ public:
     static bool BeginFrame();
     static void EndFrame();
 
+    static void DrawLine(uint16_t* buffer, int stride, int16_t color, math::Vec2p16 a, math::Vec2p16 b, int xEnd, int yEnd);
+    static void DrawHorizontalLine(uint16_t* buffer, int stride, int16_t color, int row, int xStart, int xEnd);
+    static void DrawVerticalLine(uint16_t* buffer, int stride, int16_t color, int col, int y0, int y1);
+
     static inline Color skyClr = BasicColor::SkyBlue;
     static inline Color groundClr = BasicColor::DarkGrey;
 

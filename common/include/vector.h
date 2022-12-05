@@ -45,8 +45,8 @@ namespace math {
 		}
 
 		// Accessors
-		FORCE_INLINE  auto x() const { return m_x; }
-		FORCE_INLINE  auto y() const { return m_y; }
+		FORCE_INLINE  auto& x() const { return m_x; }
+		FORCE_INLINE  auto& y() const { return m_y; }
 		
 		FORCE_INLINE  auto& x() { return m_x; }
 		FORCE_INLINE  auto& y() { return m_y; }

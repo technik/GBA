@@ -108,6 +108,15 @@ namespace math
 
 		FORCE_INLINE constexpr store_type floor() const { return raw >> shift; }
 
+		// Only valid for positive numbers
+		FORCE_INLINE constexpr Fixed fract() const
+		{
+			static_assert(shift >= 0);
+			Fixed<store_type, shift> result;
+			result.raw = raw & ((1 << shift) - 1);
+			return result;
+		}
+
 		FORCE_INLINE explicit operator float() const { return float(raw) / (1 << shift); }
 
 		// Cast without rounding
@@ -242,7 +251,7 @@ namespace math
 		FORCE_INLINE void operator+=(T x)
 		{
 			const auto shifted = x * (1 << shift);
-			assert(shifted / (1 << shift) == x); // Overflow!
+			dbgAssert(shifted / (1 << shift) == x); // Overflow!
 			raw += shifted;
 		}
 
@@ -255,7 +264,7 @@ namespace math
 		FORCE_INLINE void operator-=(T x)
 		{
 			const auto shifted = x * (1 << shift);
-			assert(shifted / (1 << shift) == x); // Overflow!
+			dbgAssert(shifted / (1 << shift) == x); // Overflow!
 			raw -= shifted;
 		}
 
