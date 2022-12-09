@@ -46,10 +46,35 @@ void Rasterizer::EndFrame()
     displayMode.Flip();
 }
 
-void Rasterizer::RenderWorld(const Camera& cam)
+void Rasterizer::RenderWorld(const Camera& cam, const Mat44p16& projMtx)
 {
-	clear(Display().backBuffer(), skyClr.raw, groundClr.raw, displayMode.Area);
+	//clear(Display().backBuffer(), skyClr.raw, groundClr.raw, displayMode.Area);
 
+	const Vec3p16 vertices[3] = {
+		{-0.5_p16, -0.5_p16, -2_p16},
+		{ 0.5_p16, -0.5_p16, -2_p16},
+		{ 0_p16,    0.5_p16, -2_p16},
+	};
+
+	Vec2p16 ssVertices[3];
+	for (int i = 0; i < 3; ++i)
+	{
+		Vec3p16 csVtx = projectPosition(projMtx, vertices[i]);
+		ssVertices[i] = { csVtx.x() * 80 + 80, csVtx.y() * 60 + 60 };
+	}
+
+	for (int i = 0; i < 3; ++i)
+		DrawLine(
+			Display().backBuffer(),
+			displayMode.Width,
+			BasicColor::Yellow.raw,
+			ssVertices[i],
+			ssVertices[(i+1)%3],
+			displayMode.Width,
+			displayMode.Height
+		);
+
+	/*
 	Vec2p16 start = { 64_p16, 64_p16 };
 	Vec2p16 end[16] = {
 		{ 96_p16, 56_p16 },
@@ -80,6 +105,7 @@ void Rasterizer::RenderWorld(const Camera& cam)
 			displayMode.Width,
 			displayMode.Height
 		);
+	*/
 }
 
 void Rasterizer::DrawHorizontalLine(uint16_t* buffer, int stride, int16_t color, int row, int xStart, int xEnd)

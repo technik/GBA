@@ -5,6 +5,7 @@
 //   on hardware now.
 #include <Display.h>
 #include <Camera.h>
+#include <matrix.h>
 #include <vector.h>
 #include <Color.h>
 #include <WAD.h>
@@ -23,7 +24,7 @@ public:
     static constexpr int32_t ScreenHeight = DisplayMode::Height;
 
     static void Init();
-    static void RenderWorld(const Camera& cam);
+    static void RenderWorld(const Camera& cam, const math::Mat44p16& projMtx);
     static bool BeginFrame();
     static void EndFrame();
 

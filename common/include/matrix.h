@@ -17,7 +17,8 @@ namespace math {
 		T m[M][N];
 
 		// Constructors
-		Matrix() = default;
+		T& operator()(uint32_t i, uint32_t j) { return m[i][j]; }
+		const T& operator()(uint32_t i, uint32_t j) const { return m[i][j]; }
 
 		static constexpr Matrix Zero()
 		{
@@ -31,18 +32,6 @@ namespace math {
 			for(int32_t i = 0; i < min(numRows,numCols); ++i)
 				result.m[i][i] = 1;
 			return result;
-		}
-
-		// Assignment and copy construction
-		constexpr Matrix(const Matrix<T,M,N>& other)
-		{
-			for(uint32_t i = 0; i < M; ++i)
-			{
-				for(uint32_t j = 0; j < N; ++j)
-				{
-					m[i][j] = other.m[i][j];
-				}
-			}
 		}
 
 		auto& operator=(const Matrix<T,M,N>& other)
@@ -81,6 +70,10 @@ namespace math {
 	using Mat22 = Matrix<T,2,2>;
 	template<class T>
 	using Mat33 = Matrix<T,3,3>;
+	template<class T>
+	using Mat34 = Matrix<T, 3, 4>;
+	template<class T>
+	using Mat44 = Matrix<T, 4, 4>;
 
 	using Mat22f = Mat22<float>;
 	using Mat33f = Mat33<float>;
@@ -93,5 +86,89 @@ namespace math {
 	
 	using Mat22p16 = Mat22<intp16>;
 	using Mat33p16 = Mat33<intp16>;
+	using Mat34p16 = Mat34<intp16>;
+	using Mat44p16 = Mat44<intp16>;
+
+	// Maps depth from 0 (z=-inf) to 1 (z=-n)
+	inline Mat44p16 projectionMatrix(
+		intp16 xFocalLength, // yFocalLength / aspectRatio
+		intp16 yFocalLength, // 1 / std::tan(yFovRad / 2)
+		intp16 n) // Near clip
+	{
+		// Precomputations
+		auto B = 2 * n;
+		// P * (0,0,-n,1) = (0,0,-n,-n) = (0,0,n,n)
+		// P.z/w = 1;
+		// P * (0,0,-i,1) = (0,0,-n,-i); z/w = 0
+		return {
+			xFocalLength,  0_p16, 0_p16, 0_p16,
+			0_p16, -yFocalLength, 0_p16, 0_p16,
+			0_p16,         0_p16, 0_p16,     n,
+			0_p16,         0_p16,-1_p16, 0_p16
+			};
+	}
+
+	// Assumes 4th row of b is (0,0,0,1)
+	inline Mat44p16 operator*(const Mat44p16& a, const Mat34p16& b)
+	{
+		Mat44p16 result;
+		for (int i = 0; i < 4; ++i)
+		{
+			for (int j = 0; j < 3; ++j)
+			{
+				result(i, j) =
+					a(i, 0) * b(0, j) +
+					a(i, 1) * b(1, j) +
+					a(i, 2) * b(2, j);
+			}
+			result(i, 3) =
+				a(i, 0) * b(0, 3) +
+				a(i, 1) * b(1, 3) +
+				a(i, 2) * b(2, 3) +
+				a(i, 3);
+		}
+		return result;
+	}
+
+	// Assumes 4th row of a and b is (0,0,0,1)
+	inline Mat34p16 operator*(const Mat34p16& a, const Mat34p16& b)
+	{
+		Mat34p16 result;
+		for (int i = 0; i < 3; ++i)
+		{
+			for (int j = 0; j < 3; ++j)
+			{
+				result(i, j) =
+					a(i, 0) * b(0, j) +
+					a(i, 1) * b(1, j) +
+					a(i, 2) * b(2, j);
+			}
+			result(i, 3) =
+				a(i, 0) * b(0, 3) +
+				a(i, 1) * b(1, 3) +
+				a(i, 2) * b(2, 3) +
+				a(i, 3);
+		}
+		return result;
+	}
+
+	inline Vec3p16 projectPosition(const Mat44p16& proj, const Vec3p16& pos)
+	{
+		Vec3p16 result;
+		for (int i = 0; i < 3; ++i)
+		{
+			result(i) =
+				proj(i, 0) * pos.x() +
+				proj(i, 1) * pos.y() +
+				proj(i, 2) * pos.z() +
+				proj(i, 3);
+		}
+		intp16 w =
+			proj(3, 0) * pos.x() +
+			proj(3, 1) * pos.y() +
+			proj(3, 2) * pos.z() +
+			proj(3, 3);
+		return {result.x() / w, result.y() / w, result.z() / w };
+	}
 
 } // namespace math

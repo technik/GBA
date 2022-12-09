@@ -24,6 +24,7 @@
 #include <raycaster.h>
 #include <Rasterizer.h>
 #include <Camera.h>
+#include <matrix.h>
 
 // Levels
 #include <test.wad.h>
@@ -71,6 +72,12 @@ int main()
 	playerController.horSpeed = 0.06125_p16;
 	playerController.angSpeed = 0.01_p16;
 
+	// FOV = 66 deg
+	auto xFocalLen = 1.5398649638145827_p16; // 1/tan(radians(66)/2)
+	auto yFocalLen = 2.309797445721874_p16; // 1/tan(radians(66)/2) * 240/160
+
+	auto proj = math::projectionMatrix(xFocalLen, yFocalLen, intp16(1/128.0));
+
 	// Unlock the display and start rendering
 	Display().EndBlank();
 	bool vBlank = true;
@@ -90,7 +97,7 @@ int main()
 		}
 
 		// -- Render --
-		Rasterizer::RenderWorld(camera);
+		Rasterizer::RenderWorld(camera, proj);
 #ifdef GBA
 		frameCounter.render(text);
 

@@ -98,6 +98,9 @@ namespace math {
 			return *this;
 		}
 
+		T& operator()(int i) { return (&m_x)[i]; }
+		const T& operator()(int i) const { return (&m_x)[i]; }
+
 		// Accessors
 		const T& x() const { return m_x; }
 		const T& y() const { return m_y; }
