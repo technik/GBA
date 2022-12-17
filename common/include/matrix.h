@@ -168,7 +168,7 @@ namespace math {
 			proj(3, 1) * pos.y() +
 			proj(3, 2) * pos.z() +
 			proj(3, 3);
-		return {result.x() / w, result.y() / w, result.z() / w };
+		return { result.x() / w, result.y() / w, result.z() / w };
 	}
 
 } // namespace math

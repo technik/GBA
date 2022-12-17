@@ -83,6 +83,7 @@ int main()
 	bool vBlank = true;
 
 	// main loop
+	int tx = 0;
 	while (1)
 	{
 		Timer1().reset<Timer::e64>(); // Set high precision profiler
@@ -91,13 +92,25 @@ int main()
 		playerController.update();
 		// We're actually controlling the camera
 
+		intp16 sx = intp16::castFromShiftedInteger<12>(lu_sin(tx));
+		intp16 cx = intp16::castFromShiftedInteger<12>(lu_sin(tx));
+		tx += 100;
+
+		math::Mat34p16 modelMtx = {
+			cx, 0_p16, -sx, 0_p16,
+			0_p16, 1_p16, 0_p16, 0_p16,
+			sx, 0_p16, cx, -4_p16
+		};
+
+		auto mvp = proj * modelMtx;
+
 		if (!Rasterizer::BeginFrame())
 		{
 			return 0; // Exit the app
 		}
 
 		// -- Render --
-		Rasterizer::RenderWorld(camera, proj);
+		Rasterizer::RenderWorld(camera, mvp);
 #ifdef GBA
 		frameCounter.render(text);
 

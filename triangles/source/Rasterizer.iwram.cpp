@@ -85,3 +85,133 @@ intp16 PointToDist(const Vec2p16& p)
 	intp16 cosT = intp16::castFromShiftedInteger<12>(lu_cos(atan16.raw));
 	return x / cosT;
 }
+
+// Follow Bresenham's algorithm for line rasterization
+void Rasterizer::DrawLine(uint16_t* buffer, int stride, int16_t color, math::Vec2p16 a, math::Vec2p16 b, int xEnd, int yEnd)
+{
+	if (b.x() < a.x())
+	{
+		DrawLine(buffer, stride, color, b, a, xEnd, yEnd);
+		return;
+	}
+
+	// Compute deltas
+	auto dx = b.x() - a.x();
+	auto dy = b.y() - a.y();
+
+	if (dx == 0)
+	{
+		if (dy > 0)
+			DrawVerticalLine(buffer, stride, color, a.x().floor(), a.y().floor(), b.y().floor() + 1);
+		else
+			DrawVerticalLine(buffer, stride, color, a.x().floor(), b.y().floor(), a.y().floor() + 1);
+		return;
+	}
+	if (dy == 0)
+	{
+		DrawHorizontalLine(buffer, stride, color, a.y().floor(), a.x().floor(), b.x().floor() + 1);
+		return;
+	}
+
+	intp16 m = dy / dx; // Slope
+
+	// Clamp to the screen
+	if (a.x() < 0)
+	{
+		a.y() -= a.x() * m;
+		a.x() = 0_p16;
+	}
+
+	while (a.y() < 0)
+	{
+		a.x() += 1_p16;
+		a.y() += m;
+	}
+
+	// Where to start drawing
+	int col = a.x().floor();
+	int row = a.y().floor();
+	int rowStart = stride * a.y().floor();
+	int endCol = math::min<int>(xEnd, b.x().floor());
+	int endRow = math::min<int>(yEnd, b.y().floor());
+
+	// Shift pixel centers to integer coordinates
+	a.x() -= 0.5_p16;
+	a.y() -= 0.5_p16;
+	b.x() -= 0.5_p16;
+	b.y() -= 0.5_p16;
+
+	if (dy <= 0) // First quadrant
+	{
+		if (dx <= -dy) // 2nd octant
+		{
+			a.x() = a.x().fract();
+			m = dx / dy;
+			while (row >= endRow && col < xEnd)
+			{
+				buffer[col + rowStart] = color;
+				a.x() += m;
+				rowStart -= stride;
+				--row;
+				if (a.x() < 0)
+				{
+					a.x() += 1;
+					col++;
+				}
+			}
+		}
+		else // 1st octant
+		{
+			a.y() = a.y().fract();
+			while (col <= endCol && row >= 0)
+			{
+				buffer[col + rowStart] = color;
+				a.y() += m;
+				++col;
+				if (a.y() < 0)
+				{
+					a.y() += 1;
+					row--;
+					rowStart -= stride;
+				}
+			}
+		}
+	}
+	else // 4th quadrant
+	{
+		if (dx <= dy) // 7th octant
+		{
+			a.x() = a.x().fract();
+			m = dx / dy;
+			while (row <= endRow && col < xEnd)
+			{
+				buffer[col + rowStart] = color;
+				a.x() += m;
+				rowStart += stride;
+				++row;
+				if (a.x() >= 1)
+				{
+					a.x() -= 1;
+					col++;
+				}
+			}
+		}
+		else // 8th octant
+		{
+			a.y() = a.y().fract();
+			while (col <= endCol && row < yEnd)
+			{
+				buffer[col + rowStart] = color;
+				a.y() += m;
+				++col;
+				if (a.y() >= 1)
+				{
+					a.y() -= 1;
+					row++;
+					rowStart += stride;
+				}
+			}
+		}
+	}
+
+}
