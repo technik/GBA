@@ -50,17 +50,20 @@ void Rasterizer::RenderWorld(const Camera& cam, const Mat44p16& projMtx)
 {
 	clear(Display().backBuffer(), skyClr.raw, groundClr.raw, displayMode.Area);
 
-	const Vec3p16 vertices[3] = {
-		{-0.5_p16, -0.5_p16, 0_p16},
-		{ 0.5_p16, -0.5_p16, 0_p16},
-		{ 0_p16,    0.5_p16, 0_p16},
+	const Vec3p8 vertices[3] = {
+		{-0.5_p8, 2.5_p8, -0.5_p8},
+		{ 0.5_p8, 2.5_p8, -0.5_p8},
+		{ 0_p8,   2.5_p8, 0.5_p8},
 	};
 
 	Vec2p16 ssVertices[3];
 	for (int i = 0; i < 3; ++i)
 	{
-		Vec3p16 csVtx = projectPosition(projMtx, vertices[i]);
-		ssVertices[i] = { csVtx.x() * 80 + 80, csVtx.y() * 60 + 60 };
+		Vec3p8 csVtx = projectPosition(vertices[i]);
+		ssVertices[i] = { 
+			(csVtx.x() * 80 + 80).cast<16>(),
+			(csVtx.y() * 60 + 60).cast<16>()
+		};
 	}
 
 	for (int i = 0; i < 3; ++i)

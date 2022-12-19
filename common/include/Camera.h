@@ -4,6 +4,8 @@
 #include <linearMath.h>
 #include <numbers>
 #include <pose.h>
+#include <vector.h>
+#include <matrix.h>
 
 // Game camera
 struct Camera
@@ -60,4 +62,47 @@ struct Camera
 
 	int32_t m_halfClipWidth, m_halfClipHeight;
 	Pose m_pose;
+};
+
+class YawPitchCamera
+{
+	math::Vec3p8 pos{};
+	math::unorm16 yaw{};
+	math::unorm16 pitch{};
+
+	math::Mat33p12 rotMtx;
+
+	void update()
+	{
+		math::intp12 yaw_cosf = math::intp12::castFromShiftedInteger<12>(lu_cos(yaw.raw));
+		math::intp12 yaw_sinf = math::intp12::castFromShiftedInteger<12>(lu_sin(yaw.raw));
+		math::intp12 pit_cosf = math::intp12::castFromShiftedInteger<12>(lu_cos(yaw.raw));
+		math::intp12 pit_sinf = math::intp12::castFromShiftedInteger<12>(lu_sin(yaw.raw));
+
+		rotMtx(0, 0) = yaw_cosf;
+		rotMtx(1, 0) = (yaw_sinf * pit_cosf).cast<12>();
+		rotMtx(2, 0) = (yaw_sinf * pit_sinf).cast<12>();
+		rotMtx(0, 1) = -yaw_sinf;
+		rotMtx(1, 1) = (yaw_cosf * pit_cosf).cast<12>();
+		rotMtx(2, 1) = (yaw_cosf * pit_sinf).cast<12>();
+		rotMtx(0, 2) = {};
+		rotMtx(1, 2) = -pit_sinf;
+		rotMtx(2, 2) = pit_cosf;
+	}
+
+	math::Vec3p8 transformPos(const math::Vec3p8 x) const
+	{
+		math::Vec3p8 relPos = x - pos;
+		return transformDir(relPos);
+	}
+
+	math::Vec3p8 transformDir(const math::Vec3p8 x) const
+	{
+		math::Vec3p8 result;
+		// Precomputed
+		result(0) = (rotMtx(0, 0) * x(0) + rotMtx(0, 1) * x(1)).cast<8>();
+		result(1) = (rotMtx(1, 0) * x(0) + rotMtx(1, 1) * x(1) + rotMtx(1, 2) * x(2)).cast<8>();
+		result(2) = (rotMtx(2, 0) * x(0) + rotMtx(2, 1) * x(1) + rotMtx(2, 2) * x(2)).cast<8>();
+		return result;
+	}
 };

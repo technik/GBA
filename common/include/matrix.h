@@ -171,4 +171,28 @@ namespace math {
 		return { result.x() / w, result.y() / w, result.z() / w };
 	}
 
+	// Returns a position into clip space, already divided by the homogeneous coordinate.
+	// Assumes:
+	// - positive pos.x is right
+	// - positive pos.y is forward
+	// - positive pos.z is up
+	// Returns a new position in clip space where
+	// - positive x is to the right [-1,1], with 0 at the center of the screen
+	// - positive y is downward [-1,1], with 0 at the center of the screen
+	// - positive z is into the screen [0,1]
+	// Other assumptions:
+	// - Aspect ratio 3:2
+	// - Horizontal fov = 2*atan(0.5)
+	// - Near clip: 1/128
+	// - Far clip: 256+near
+	inline Vec3p8 projectPosition(const Vec3p8& pos)
+	{
+		Vec3p8 result;
+		// TODO: InvDepth
+		result.x() = (pos.x() * 2) / pos.y();
+		result.y() = -(pos.z() * 3) / pos.y();
+		result.z() = result.y() / 256;
+		return result;
+	}
+
 } // namespace math
