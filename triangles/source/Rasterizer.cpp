@@ -46,7 +46,7 @@ void Rasterizer::EndFrame()
     displayMode.Flip();
 }
 
-void Rasterizer::RenderWorld(const Camera& cam, const Mat44p16& projMtx)
+void Rasterizer::RenderWorld(const YawPitchCamera& cam)
 {
 	clear(Display().backBuffer(), skyClr.raw, groundClr.raw, displayMode.Area);
 
@@ -59,7 +59,8 @@ void Rasterizer::RenderWorld(const Camera& cam, const Mat44p16& projMtx)
 	Vec2p16 ssVertices[3];
 	for (int i = 0; i < 3; ++i)
 	{
-		Vec3p8 csVtx = projectPosition(vertices[i]);
+		Vec3p8 vsVtx = cam.transformPos(vertices[i]);
+		Vec3p8 csVtx = vsVtx.y() == 0 ? Vec3p8{} : projectPosition(vsVtx);
 		ssVertices[i] = { 
 			(csVtx.x() * 80 + 80).cast<16>(),
 			(csVtx.y() * 60 + 60).cast<16>()

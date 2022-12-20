@@ -64,6 +64,9 @@
     <ClCompile Include="..\..\common\include\mercuryLUT.cpp">
       <Filter>sources</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\common\source\Camera.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\backends\imgui_impl_opengl3_loader.h">

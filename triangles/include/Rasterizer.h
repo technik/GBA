@@ -24,7 +24,7 @@ public:
     static constexpr int32_t ScreenHeight = DisplayMode::Height;
 
     static void Init();
-    static void RenderWorld(const Camera& cam, const math::Mat44p16& projMtx);
+    static void RenderWorld(const YawPitchCamera& cam);
     static bool BeginFrame();
     static void EndFrame();
 

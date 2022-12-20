@@ -63,14 +63,10 @@ int main()
 	FrameCounter frameCounter(text);
 
 	// -- Init game state ---
-	auto camera = Camera(Rasterizer::DisplayMode::Width, Rasterizer::DisplayMode::Height, Vec3p16(0_p16, 0_p16, 1.7_p16));
+	auto camera = YawPitchCamera();
 
-	camera.m_halfClipHeight = Rasterizer::DisplayMode::Height / 2;
-	camera.m_halfClipWidth = Rasterizer::DisplayMode::Width / 2;
-
-	auto playerController = CharacterController(camera.m_pose);
-	playerController.horSpeed = 0.06125_p16;
-	playerController.angSpeed = 0.01_p16;
+	auto horSpeed = 0.06125_p16;
+	auto angSpeed = 0.01_p16;
 
 	// FOV = 66 deg
 	auto xFocalLen = 1.5398649638145827_p16; // 1/tan(radians(66)/2)
@@ -89,20 +85,9 @@ int main()
 		Timer1().reset<Timer::e64>(); // Set high precision profiler
 		// Next frame logic
 		Keypad::Update();
-		playerController.update();
+		camera.update(horSpeed, angSpeed);
+		camera.refreshRot();
 		// We're actually controlling the camera
-
-		intp16 sx = intp16::castFromShiftedInteger<12>(lu_sin(tx));
-		intp16 cx = intp16::castFromShiftedInteger<12>(lu_sin(tx));
-		tx += 100;
-
-		math::Mat34p16 modelMtx = {
-			cx, 0_p16, -sx, 0_p16,
-			0_p16, 1_p16, 0_p16, 0_p16,
-			sx, 0_p16, cx, -4_p16
-		};
-
-		auto mvp = proj * modelMtx;
 
 		if (!Rasterizer::BeginFrame())
 		{
@@ -110,7 +95,7 @@ int main()
 		}
 
 		// -- Render --
-		Rasterizer::RenderWorld(camera, mvp);
+		Rasterizer::RenderWorld(camera);
 #ifdef GBA
 		frameCounter.render(text);
 

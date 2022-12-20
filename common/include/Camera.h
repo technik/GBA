@@ -49,8 +49,8 @@ struct Camera
 		relPos.x() = worldPos.x() - camX;
 		relPos.y() = worldPos.y() - camY;
 		math::Vec2p12 viewSpace;
-		viewSpace.x() = (relPos.x() * m_pose.cosf + relPos.y() * m_pose.sinf).cast<12>();
-		viewSpace.y() = (relPos.y() * m_pose.cosf - relPos.x() * m_pose.sinf).cast<12>();
+		viewSpace.x() = (relPos.x() * m_pose.cosf - relPos.y() * m_pose.sinf).cast<12>();
+		viewSpace.y() = (relPos.y() * m_pose.cosf + relPos.x() * m_pose.sinf).cast<12>();
 		// Project x onto the screen
 		math::intp12 invDepth = viewSpace.y().raw ? math::intp12(1) / viewSpace.y() : math::intp12(0);
 		math::Vec3p8 result;
@@ -66,27 +66,33 @@ struct Camera
 
 class YawPitchCamera
 {
+public:
 	math::Vec3p8 pos{};
 	math::unorm16 yaw{};
 	math::unorm16 pitch{};
 
+	math::intp12 yaw_cosf;
+	math::intp12 yaw_sinf;
+	math::intp12 pit_cosf;
+	math::intp12 pit_sinf;
+
 	math::Mat33p12 rotMtx;
 
-	void update()
+	void refreshRot()
 	{
-		math::intp12 yaw_cosf = math::intp12::castFromShiftedInteger<12>(lu_cos(yaw.raw));
-		math::intp12 yaw_sinf = math::intp12::castFromShiftedInteger<12>(lu_sin(yaw.raw));
-		math::intp12 pit_cosf = math::intp12::castFromShiftedInteger<12>(lu_cos(yaw.raw));
-		math::intp12 pit_sinf = math::intp12::castFromShiftedInteger<12>(lu_sin(yaw.raw));
+		yaw_cosf = math::intp12::castFromShiftedInteger<12>(lu_cos(yaw.raw));
+		yaw_sinf = math::intp12::castFromShiftedInteger<12>(lu_sin(yaw.raw));
+		pit_cosf = math::intp12::castFromShiftedInteger<12>(lu_cos(pitch.raw));
+		pit_sinf = math::intp12::castFromShiftedInteger<12>(lu_sin(pitch.raw));
 
 		rotMtx(0, 0) = yaw_cosf;
-		rotMtx(1, 0) = (yaw_sinf * pit_cosf).cast<12>();
+		rotMtx(1, 0) = -(yaw_sinf * pit_cosf).cast<12>();
 		rotMtx(2, 0) = (yaw_sinf * pit_sinf).cast<12>();
-		rotMtx(0, 1) = -yaw_sinf;
+		rotMtx(0, 1) = yaw_sinf;
 		rotMtx(1, 1) = (yaw_cosf * pit_cosf).cast<12>();
-		rotMtx(2, 1) = (yaw_cosf * pit_sinf).cast<12>();
+		rotMtx(2, 1) = -(yaw_cosf * pit_sinf).cast<12>();
 		rotMtx(0, 2) = {};
-		rotMtx(1, 2) = -pit_sinf;
+		rotMtx(1, 2) = pit_sinf;
 		rotMtx(2, 2) = pit_cosf;
 	}
 
@@ -105,4 +111,6 @@ class YawPitchCamera
 		result(2) = (rotMtx(2, 0) * x(0) + rotMtx(2, 1) * x(1) + rotMtx(2, 2) * x(2)).cast<8>();
 		return result;
 	}
+
+	void update(const math::intp16& horSpeed, const math::intp16& andSpeed);
 };
