@@ -16,6 +16,12 @@ extern "C" {
 }
 #endif // GBA
 
+// Op syntax: void Op(int x, int y) const
+template<class Op>
+void rasterLine(const Op& op, const math::Vec2p16 a, const math::Vec2p16 b)
+{
+}
+
 class Rasterizer
 {
 public:

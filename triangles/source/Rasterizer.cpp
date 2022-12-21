@@ -60,10 +60,10 @@ void Rasterizer::RenderWorld(const YawPitchCamera& cam)
 	for (int i = 0; i < 3; ++i)
 	{
 		Vec3p8 vsVtx = cam.transformPos(vertices[i]);
-		Vec3p8 csVtx = vsVtx.y() == 0 ? Vec3p8{} : projectPosition(vsVtx);
+		Vec3p8 csVtx = vsVtx.y == 0 ? Vec3p8{} : projectPosition(vsVtx);
 		ssVertices[i] = { 
-			(csVtx.x() * 80 + 80).cast<16>(),
-			(csVtx.y() * 60 + 60).cast<16>()
+			(csVtx.x * 80 + 80).cast<16>(),
+			(csVtx.y * 60 + 60).cast<16>()
 		};
 	}
 

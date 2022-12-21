@@ -90,7 +90,7 @@ void Mode4Renderer::RenderWorld(const Camera& cam)
 	Vec2p8 viewDir = { -sinPhi, cosPhi };
 
 	// TODO: We can leverage the fact that we're now multiplying by col only and transform the in-loop multiplication into an addition.
-	// On top of that, sideDir.x() * ndcX can really be extracted and transformed into two separate additions too.
+	// On top of that, sideDir.x * ndcX can really be extracted and transformed into two separate additions too.
 	// This should remove two two muls and to casts per loop.
 	constexpr intp8 widthRCP = intp8(4.f/(Mode4Display::Width-1));
 	auto backbuffer = DisplayControl::Get().backBuffer();
@@ -101,14 +101,14 @@ void Mode4Renderer::RenderWorld(const Camera& cam)
 	const int16_t wallDColorLight =(6 | (6<<8)) + colorOffset;
 
 	Vec2p8 rayDir0 = viewDir - sideDir;
-	Vec2p12 dRay = { (sideDir.x() * widthRCP).cast<12>(), (sideDir.y() * widthRCP).cast<12>() };
+	Vec2p12 dRay = { (sideDir.x * widthRCP).cast<12>(), (sideDir.y * widthRCP).cast<12>() };
 
 	for(int col = 0; col < Mode4Display::Width/2; col++)
 	{
 		// Compute a ray direction for this column
 		Vec2p8 rayDir = { 
-			rayDir0.x() + (col * dRay.x()).cast<8>(),
-			rayDir0.y() + (col * dRay.y()).cast<8>()
+			rayDir0.x + (col * dRay.x).cast<8>(),
+			rayDir0.y + (col * dRay.y).cast<8>()
 		};
 
 		int cellVal;
@@ -128,8 +128,8 @@ void Mode4Renderer::RenderWorld(const Camera& cam)
 		if(drawEnd > Mode4Display::Height) drawEnd = Mode4Display::Height;
 
 		// Wall textures
-		Vec2p8 hitPoint = Vec2p8(cam.m_pose.pos.x(), cam.m_pose.pos.y()) + Vec2p8((hitDistance * rayDir.x()).cast<8>(), (hitDistance * rayDir.y()).cast<8>());
-		int texX = ((side ? hitPoint.x() : hitPoint.y()).raw >> 4) & 0xf;
+		Vec2p8 hitPoint = Vec2p8(cam.m_pose.pos.x, cam.m_pose.pos.y) + Vec2p8((hitDistance * rayDir.x).cast<8>(), (hitDistance * rayDir.y).cast<8>());
+		int texX = ((side ? hitPoint.x : hitPoint.y).raw >> 4) & 0xf;
 
 		auto texClr = side ? wallDColorDark : wallDColorLight;
 
@@ -149,8 +149,8 @@ void DrawMinimapMode3(Color* backBuffer, Vec3p8 centerPos)
 	auto dst = &backBuffer[pixelOffset];
 
 	// Minimap center
-	int tileX = centerPos.x().floor();
-	int tileY = centerPos.y().floor();
+	int tileX = centerPos.x.floor();
+	int tileY = centerPos.y.floor();
 
 	for(int y = 0; y < kMapRows; y++)
 	{
@@ -178,14 +178,14 @@ void RenderMode3(const Camera& cam)
 	Vec2p8 viewDir = { -sinPhi, cosPhi };
 
 	// TODO: We can leverage the fact that we're now multiplying by col only and transform the in-loop multiplication into an addition.
-	// On top of that, sideDir.x() * ndcX can really be extracted and transformed into two separate additions too.
+	// On top of that, sideDir.x * ndcX can really be extracted and transformed into two separate additions too.
 	// This should remove two two muls and to casts per loop.
 	constexpr intp8 widthRCP = intp8(2.f/Mode3Display::Width);
 
 	//intp8 ndcX = -1_p8;
 
 	Vec2p8 rayDir = viewDir - sideDir;
-	Vec2p8 dRay = { (sideDir.x() * widthRCP).cast<8>(), (sideDir.y() * widthRCP).cast<8>() };
+	Vec2p8 dRay = { (sideDir.x * widthRCP).cast<8>(), (sideDir.y * widthRCP).cast<8>() };
 
 	for(int col = 0; col < Mode3Display::Width; col++)
 	{

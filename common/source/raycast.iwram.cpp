@@ -11,49 +11,49 @@ using namespace math;
 intp8 rayCast(Vec3p8 rayStart, Vec2p8 rayDir, int& hitVal, int& side, const uint8_t* map, int yStride)
 {
 	// length of ray from one y-side to next y-side
-	int tileX = rayStart.x().floor();
+	int tileX = rayStart.x.floor();
 	int stepX; // what direction to step in y-direction (either +1 or -1)
 	intp8 deltaDistX;
 	intp8 sideDistX = intp8(1<<20); // length of ray from current position to next y-side
 
-	if(rayDir.x() != 0)
+	if(rayDir.x != 0)
 	{
 		// Because we know rayDir.x is always between 0 and 2, we can be smart and approximate the division with a LUT
-		deltaDistX = abs(1_p8 / rayDir.x());
-		//uint rcpX = abs(rayDir.x().raw) >> 1; // Equivalent to multiplying by 128 so it fits between 0 and 256, and casting to int.
+		deltaDistX = abs(1_p8 / rayDir.x);
+		//uint rcpX = abs(rayDir.x.raw) >> 1; // Equivalent to multiplying by 128 so it fits between 0 and 256, and casting to int.
 		// 128 / (128x) = 1/x
 		//deltaDistX = intp8::castFromShiftedInteger<16>(lu_div(rcpX) * 128);
 
-		if (rayDir.x() < 0_p8)
+		if (rayDir.x < 0_p8)
 		{
 			stepX = -1;
-			sideDistX = ((rayStart.x() - tileX) * deltaDistX).cast<8>();
+			sideDistX = ((rayStart.x - tileX) * deltaDistX).cast<8>();
 		}
 		else
 		{
 			stepX = 1;
-			sideDistX = ((tileX + 1 - rayStart.x()) * deltaDistX).cast<8>();
+			sideDistX = ((tileX + 1 - rayStart.x) * deltaDistX).cast<8>();
 		}
 	}
 
 	// length of ray from one y-side to next y-side
-	int tileY = rayStart.y().floor();
+	int tileY = rayStart.y.floor();
 	int stepY; // what direction to step in y-direction (either +1 or -1)
 	intp8 deltaDistY;
 	intp8 sideDistY = intp8(1<<20); // length of ray from current position to next y-side
 
-	if(rayDir.y() != 0)
+	if(rayDir.y != 0)
 	{
-		deltaDistY = abs(1_p8 / rayDir.y());
-		if (rayDir.y() < 0_p8)
+		deltaDistY = abs(1_p8 / rayDir.y);
+		if (rayDir.y < 0_p8)
 		{
 			stepY = -1;
-			sideDistY = ((rayStart.y() - tileY) * deltaDistY).cast<8>();
+			sideDistY = ((rayStart.y - tileY) * deltaDistY).cast<8>();
 		}
 		else
 		{
 			stepY = 1;
-			sideDistY = ((tileY + 1 - rayStart.y()) * deltaDistY).cast<8>();
+			sideDistY = ((tileY + 1 - rayStart.y) * deltaDistY).cast<8>();
 		}
 	}
 

@@ -158,17 +158,17 @@ namespace math {
 		for (int i = 0; i < 3; ++i)
 		{
 			result(i) =
-				proj(i, 0) * pos.x() +
-				proj(i, 1) * pos.y() +
-				proj(i, 2) * pos.z() +
+				proj(i, 0) * pos.x +
+				proj(i, 1) * pos.y +
+				proj(i, 2) * pos.z +
 				proj(i, 3);
 		}
 		intp16 w =
-			proj(3, 0) * pos.x() +
-			proj(3, 1) * pos.y() +
-			proj(3, 2) * pos.z() +
+			proj(3, 0) * pos.x +
+			proj(3, 1) * pos.y +
+			proj(3, 2) * pos.z +
 			proj(3, 3);
-		return { result.x() / w, result.y() / w, result.z() / w };
+		return { result.x / w, result.y / w, result.z / w };
 	}
 
 	// Returns a position into clip space, already divided by the homogeneous coordinate.
@@ -189,9 +189,9 @@ namespace math {
 	{
 		Vec3p8 result;
 		// TODO: InvDepth
-		result.x() = (pos.x() * 2) / pos.y();
-		result.y() = -(pos.z() * 3) / pos.y();
-		result.z() = result.y() / 256;
+		result.x = (pos.x * 2) / pos.y;
+		result.y = -(pos.z * 3) / pos.y;
+		result.z = result.y / 256;
 		return result;
 	}
 

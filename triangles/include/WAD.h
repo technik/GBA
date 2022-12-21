@@ -68,10 +68,10 @@ namespace WAD
 
         bool contains(const math::Vec3p8& pos) const
         {
-            return (pos.m_x.raw >= left.raw)
-                && (pos.m_x.raw <= right.raw)
-                && (pos.m_y.raw <= top.raw)
-                && (pos.m_y.raw >= bottom.raw);
+            return (pos.x.raw >= left.raw)
+                && (pos.x.raw <= right.raw)
+                && (pos.y.raw <= top.raw)
+                && (pos.y.raw >= bottom.raw);
         }
     };
 

@@ -67,19 +67,19 @@ struct PoseFollower
 		, m_offset(offset)
 	{
 		m_pose.phi = m_target.phi;
-		m_pose.pos.z() = m_target.pos.z() + m_offset.z();
+		m_pose.pos.z = m_target.pos.z + m_offset.z;
 		
-		m_pose.pos.x() = m_target.pos.x() + (m_offset.x() * m_pose.cosf - m_offset.y() * m_pose.sinf).cast<16>();
-		m_pose.pos.y() = m_target.pos.x() + (m_offset.y() * m_pose.cosf + m_offset.x() * m_pose.sinf).cast<16>();
+		m_pose.pos.x = m_target.pos.x + (m_offset.x * m_pose.cosf - m_offset.y * m_pose.sinf).cast<16>();
+		m_pose.pos.y = m_target.pos.x + (m_offset.y * m_pose.cosf + m_offset.x * m_pose.sinf).cast<16>();
 	}
 
 	void update()
 	{
 		m_pose.phi = m_target.phi;
-		m_pose.pos.z() = m_target.pos.z() + m_offset.z();
+		m_pose.pos.z = m_target.pos.z + m_offset.z;
 		
-		m_pose.pos.x() = m_target.pos.x() + (m_offset.x() * m_pose.cosf - m_offset.y() * m_pose.sinf).cast<16>();
-		m_pose.pos.y() = m_target.pos.y() + (m_offset.y() * m_pose.cosf + m_offset.x() * m_pose.sinf).cast<16>();
+		m_pose.pos.x = m_target.pos.x + (m_offset.x * m_pose.cosf - m_offset.y * m_pose.sinf).cast<16>();
+		m_pose.pos.y = m_target.pos.y + (m_offset.y * m_pose.cosf + m_offset.x * m_pose.sinf).cast<16>();
 
 		m_pose.update();
 	}
