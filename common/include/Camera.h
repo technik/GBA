@@ -96,6 +96,11 @@ public:
 		rotMtx(2, 2) = pit_cosf;
 	}
 
+	//math::Mat34p16 worldView(const math::Mat34p16& worldMtx)
+	//{
+	//	//Mat34p16 result;
+	//}
+
 	math::Vec3p8 transformPos(const math::Vec3p8 x) const
 	{
 		math::Vec3p8 relPos = x - pos;

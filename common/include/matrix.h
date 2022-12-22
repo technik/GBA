@@ -14,11 +14,10 @@ namespace math {
 		static constexpr uint32_t numCols = N;
 		static constexpr uint32_t numElements = M*N;
 
-		T m[M][N];
 
 		// Constructors
-		T& operator()(uint32_t i, uint32_t j) { return m[i][j]; }
-		const T& operator()(uint32_t i, uint32_t j) const { return m[i][j]; }
+		T& operator()(uint32_t i, uint32_t j) { return m[j][i]; }
+		const T& operator()(uint32_t i, uint32_t j) const { return m[j][i]; }
 
 		static constexpr Matrix Zero()
 		{
@@ -40,7 +39,7 @@ namespace math {
 			{
 				for(uint32_t j = 0; j < N; ++j)
 				{
-					m[i][j] = other.m[i][j];
+					m(i,j) = other.m(i,j);
 				}
 			}
 			return *this;
@@ -52,11 +51,15 @@ namespace math {
 			{
 				for(uint32_t j = 0; j < N; ++j)
 				{
-					m[i][j] = other.m[i][j];
+					m(i,j) = other.m(i,j);
 				}
 			}
 			return *this;
 		}
+
+	private:
+		// Column major to allow direct access to columns
+		T m[N][M];
 	};
 
 	// Affine transforms as expected by the hardware registers
@@ -83,30 +86,13 @@ namespace math {
 	
 	using Mat22p12 = Mat22<intp12>;
 	using Mat33p12 = Mat33<intp12>;
+	using Mat34p12 = Mat34<intp12>;
+	using Mat44p12 = Mat44<intp12>;
 	
 	using Mat22p16 = Mat22<intp16>;
 	using Mat33p16 = Mat33<intp16>;
 	using Mat34p16 = Mat34<intp16>;
 	using Mat44p16 = Mat44<intp16>;
-
-	// Maps depth from 0 (z=-inf) to 1 (z=-n)
-	inline Mat44p16 projectionMatrix(
-		intp16 xFocalLength, // yFocalLength / aspectRatio
-		intp16 yFocalLength, // 1 / std::tan(yFovRad / 2)
-		intp16 n) // Near clip
-	{
-		// Precomputations
-		auto B = 2 * n;
-		// P * (0,0,-n,1) = (0,0,-n,-n) = (0,0,n,n)
-		// P.z/w = 1;
-		// P * (0,0,-i,1) = (0,0,-n,-i); z/w = 0
-		return {
-			xFocalLength,  0_p16, 0_p16, 0_p16,
-			0_p16, -yFocalLength, 0_p16, 0_p16,
-			0_p16,         0_p16, 0_p16,     n,
-			0_p16,         0_p16,-1_p16, 0_p16
-			};
-	}
 
 	// Assumes 4th row of b is (0,0,0,1)
 	inline Mat44p16 operator*(const Mat44p16& a, const Mat34p16& b)

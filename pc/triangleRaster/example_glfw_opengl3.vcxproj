@@ -164,6 +164,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\common\include\mercuryLUT.cpp" />
     <ClCompile Include="..\..\common\source\Camera.cpp" />
+    <ClCompile Include="..\..\common\source\Draw.cpp" />
     <ClCompile Include="..\..\triangles\assets\e1m1.wad.cpp" />
     <ClCompile Include="..\..\triangles\assets\mercury.wad.cpp" />
     <ClCompile Include="..\..\triangles\assets\portaltest.wad.cpp" />

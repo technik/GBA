@@ -7,6 +7,7 @@
 
 #include <Color.h>
 #include <Device.h>
+#include <Draw.h>
 #include <linearMath.h>
 
 #include <gfx/palette.h>
@@ -20,14 +21,6 @@
 
 using namespace math;
 using namespace gfx;
-
-void clear(uint16_t* buffer, uint16_t topClr, uint16_t bottomClr, int area)
-{
-	DMA::Channel0().Fill(&buffer[0 * area / 4], topClr, area / 4);
-	DMA::Channel0().Fill(&buffer[1 * area / 4], topClr, area / 4);
-	DMA::Channel0().Fill(&buffer[2 * area / 4], bottomClr, area / 4);
-	DMA::Channel0().Fill(&buffer[3 * area / 4], bottomClr, area / 4);
-}
 
 // No need to place this method in fast memory
 void Rasterizer::Init()
@@ -44,72 +37,6 @@ bool Rasterizer::BeginFrame()
 void Rasterizer::EndFrame()
 {
     displayMode.Flip();
-}
-
-void Rasterizer::RenderWorld(const YawPitchCamera& cam)
-{
-	clear(Display().backBuffer(), skyClr.raw, groundClr.raw, displayMode.Area);
-
-	const Vec3p8 vertices[3] = {
-		{-0.5_p8, 2.5_p8, -0.5_p8},
-		{ 0.5_p8, 2.5_p8, -0.5_p8},
-		{ 0_p8,   2.5_p8, 0.5_p8},
-	};
-
-	Vec2p16 ssVertices[3];
-	for (int i = 0; i < 3; ++i)
-	{
-		Vec3p8 vsVtx = cam.transformPos(vertices[i]);
-		Vec3p8 csVtx = vsVtx.y == 0 ? Vec3p8{} : projectPosition(vsVtx);
-		ssVertices[i] = { 
-			(csVtx.x * 80 + 80).cast<16>(),
-			(csVtx.y * 60 + 60).cast<16>()
-		};
-	}
-
-	for (int i = 0; i < 3; ++i)
-		DrawLine(
-			Display().backBuffer(),
-			displayMode.Width,
-			BasicColor::Yellow.raw,
-			ssVertices[i],
-			ssVertices[(i+1)%3],
-			displayMode.Width,
-			displayMode.Height
-		);
-
-	/*
-	Vec2p16 start = { 64_p16, 64_p16 };
-	Vec2p16 end[16] = {
-		{ 96_p16, 56_p16 },
-		{ 72_p16, 32_p16 },
-		{ 56_p16, 32_p16 },
-		{ 32_p16, 56_p16 },
-		{ 32_p16, 72_p16 },
-		{ 56_p16, 96_p16 },
-		{ 72_p16, 96_p16 },
-		{ 96_p16, 72_p16 },
-		{ 64_p16, 96_p16 },
-		{ 96_p16, 64_p16 },
-		{ 64_p16, 32_p16 },
-		{ 32_p16, 64_p16 },
-		{ 88_p16, 88_p16 },
-		{ 40_p16, 88_p16 },
-		{ 40_p16, 40_p16 },
-		{ 88_p16, 40_p16 }
-	};
-
-	for(int i = 0; i < 16; ++i)
-		DrawLine(
-			Display().backBuffer(),
-			displayMode.Width,
-			BasicColor::Yellow.raw,
-			start,
-			end[i],
-			displayMode.Width,
-			displayMode.Height
-		);
-	*/
 }
 
 void Rasterizer::DrawHorizontalLine(uint16_t* buffer, int stride, int16_t color, int row, int xStart, int xEnd)

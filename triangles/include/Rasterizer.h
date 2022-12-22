@@ -119,7 +119,6 @@ public:
     static constexpr int32_t ScreenHeight = DisplayMode::Height;
 
     static void Init();
-    static void RenderWorld(const YawPitchCamera& cam);
     static bool BeginFrame();
     static void EndFrame();
 

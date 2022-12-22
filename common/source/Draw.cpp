@@ -2,7 +2,7 @@
 
 using namespace math;
 
-void rasterTriangle(uint16_t* dst, Vec2i scissor, uint16_t color, const math::Vec2p8 v[3])
+void rasterTriangle(uint16_t* dst, math::Vec2i scissor, uint16_t color, const math::Vec2p8 v[3])
 {
 	// Locate boundaries
 	auto x0 = v[0].x;

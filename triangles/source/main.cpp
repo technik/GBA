@@ -10,6 +10,7 @@
 #include <Color.h>
 #include <Device.h>
 #include <Display.h>
+#include <Draw.h>
 #include <Keypad.h>
 #include <linearMath.h>
 #include <raycast.h>
@@ -50,6 +51,89 @@ void InitSystems()
 
 volatile uint32_t timerT2 = 0;
 
+struct Mesh
+{
+	Vec3p8* vertices;
+	uint16_t* indices;
+	Color* faceColors;
+	uint16_t numTris;
+	uint16_t numVertices;
+};
+
+void DrawIndexedMesh(const YawPitchCamera& cam, const Mat34p16& worldMtx, const Mesh& mesh)
+{
+	constexpr int MAX_VERTICES = 16;
+	dbgAssert(mesh.numVertices <= MAX_VERTICES);
+
+	// Concat matrices
+	//Mat34p16 worldView = cam.worldView(worldMtx);
+	//
+	//Vec3p8 vertices
+}
+
+
+void DrawPyramid(const YawPitchCamera& cam)
+{
+	const Vec3p8 vertices[5] = {
+		{-0.5_p8,-0.5_p8, 0.5_p8},
+		{-0.5_p8, 0.5_p8, 0.5_p8},
+		{ 0.5_p8, 0.5_p8, 0.5_p8},
+		{ 0.5_p8,-0.5_p8, 0.5_p8},
+		{ 0.0_p8, 0.0_p8, 0.5_p8}
+	};
+
+	const uint16_t indices[12] = {
+		1, 0, 4,
+		0, 3, 4,
+		3, 2, 4,
+		2, 1, 4
+	};
+
+	const Color faceColors[4] = {
+		BasicColor::Red,
+		BasicColor::Green,
+		BasicColor::Blue,
+		BasicColor::Yellow
+	};
+}
+
+void clearBg(uint16_t* buffer, uint16_t topClr, uint16_t bottomClr, int area)
+{
+	DMA::Channel0().Fill(&buffer[0 * area / 4], topClr, area / 4);
+	DMA::Channel0().Fill(&buffer[1 * area / 4], topClr, area / 4);
+	DMA::Channel0().Fill(&buffer[2 * area / 4], bottomClr, area / 4);
+	DMA::Channel0().Fill(&buffer[3 * area / 4], bottomClr, area / 4);
+}
+
+void RenderWorld(const YawPitchCamera& cam)
+{
+	clearBg(Display().backBuffer(), Rasterizer::skyClr.raw, Rasterizer::groundClr.raw, Mode5Display::Area);
+
+	const Vec3p8 vertices[3] = {
+		{-0.5_p8, 2.5_p8, -0.5_p8},
+		{ 0.5_p8, 2.5_p8, -0.5_p8},
+		{ 0_p8,   2.5_p8, 0.5_p8},
+	};
+
+	Vec2p16 ssVertices[3];
+	Vec2p8 ssVertices8[3];
+	for (int i = 0; i < 3; ++i)
+	{
+		Vec3p8 vsVtx = cam.transformPos(vertices[i]);
+		Vec3p8 csVtx = vsVtx.y == 0 ? Vec3p8{} : projectPosition(vsVtx);
+		ssVertices8[i] = {
+			(csVtx.x * 80 + 80),
+			(csVtx.y * 64 + 64)
+		};
+		ssVertices[i] = {
+			ssVertices8[i].x.cast<16>(),
+			ssVertices8[i].y.cast<16>()
+		};
+	}
+
+	rasterTriangle(Display().backBuffer(), { 160, 128 }, BasicColor::Green.raw, ssVertices8);
+}
+
 int main()
 {
 	// Full resolution, paletized color mode.
@@ -67,12 +151,6 @@ int main()
 
 	auto horSpeed = 0.06125_p16;
 	auto angSpeed = 0.01_p16;
-
-	// FOV = 66 deg
-	auto xFocalLen = 1.5398649638145827_p16; // 1/tan(radians(66)/2)
-	auto yFocalLen = 2.309797445721874_p16; // 1/tan(radians(66)/2) * 240/160
-
-	auto proj = math::projectionMatrix(xFocalLen, yFocalLen, intp16(1/128.0));
 
 	// Unlock the display and start rendering
 	Display().EndBlank();
@@ -95,7 +173,7 @@ int main()
 		}
 
 		// -- Render --
-		Rasterizer::RenderWorld(camera);
+		RenderWorld(camera);
 #ifdef GBA
 		frameCounter.render(text);
 
