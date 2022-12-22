@@ -14,10 +14,26 @@ namespace math {
 		static constexpr uint32_t numCols = N;
 		static constexpr uint32_t numElements = M*N;
 
-
 		// Constructors
-		T& operator()(uint32_t i, uint32_t j) { return m[j][i]; }
-		const T& operator()(uint32_t i, uint32_t j) const { return m[j][i]; }
+		T& operator()(uint32_t i, uint32_t j) { return m_cols[j](i); }
+		const T& operator()(uint32_t i, uint32_t j) const { return m_cols[j](i); }
+
+		template<int Col>
+		auto& col() { return m_cols[Col]; }
+
+		template<int Col>
+		const auto& col() const { return m_cols[Col]; }
+
+		// Partial access
+		template<size_t NumCols>
+		Matrix<T,M,NumCols>& left() {
+			return reinterpret_cast<Matrix<T, M, NumCols>&>(*this);
+		}
+
+		template<size_t NumCols>
+		const Matrix<T, M, NumCols>& left() const {
+			return reinterpret_cast<Matrix<T, M, NumCols>&>(*this);
+		}
 
 		static constexpr Matrix Zero()
 		{
@@ -29,7 +45,7 @@ namespace math {
 		{
 			Matrix result {};
 			for(int32_t i = 0; i < min(numRows,numCols); ++i)
-				result.m[i][i] = 1;
+				result.m_cols[i](i) = 1;
 			return result;
 		}
 
@@ -39,7 +55,7 @@ namespace math {
 			{
 				for(uint32_t j = 0; j < N; ++j)
 				{
-					m(i,j) = other.m(i,j);
+					(*this)(i, j) = other(i, j);
 				}
 			}
 			return *this;
@@ -51,7 +67,7 @@ namespace math {
 			{
 				for(uint32_t j = 0; j < N; ++j)
 				{
-					m(i,j) = other.m(i,j);
+					(*this)(i,j) = other(i,j);
 				}
 			}
 			return *this;
@@ -59,7 +75,7 @@ namespace math {
 
 	private:
 		// Column major to allow direct access to columns
-		T m[N][M];
+		Vector<T, M> m_cols[N];
 	};
 
 	// Affine transforms as expected by the hardware registers

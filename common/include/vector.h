@@ -9,24 +9,31 @@
 
 namespace math {
 
+	template<class T, size_t N>
+	struct Vector;
+
+	template<class T> using Vec2 = Vector<T, 2>;
+	template<class T> using Vec3 = Vector<T, 3>;
+	template<class T> using Vec4 = Vector<T, 4>;
+
 	template<class T>
-	struct Vec2 final
+	struct Vector<T,2> final
 	{
 		T x;
 		T y;
 
 		// Constructors
-		Vec2() = default;
-		constexpr explicit Vec2(T _x) : x(_x), y(_x)
+		Vector() = default;
+		constexpr explicit Vector(T _x) : x(_x), y(_x)
 		{
 		}
 
-		constexpr Vec2(T _x, T _y) : x(_x),y(_y)
+		constexpr Vector(T _x, T _y) : x(_x),y(_y)
 		{
 		}
 
 		// Assignment and copy construction
-		constexpr Vec2(const Vec2<T>& other) : x(other.x), y(other.y)
+		constexpr Vector(const Vec2<T>& other) : x(other.x), y(other.y)
 		{
 		}
 
@@ -43,24 +50,27 @@ namespace math {
 			y = other.y;
 			return *this;
 		}
+
+		T& operator()(int i) { return (&x)[i]; }
+		const T& operator()(int i) const { return (&x)[i]; }
 	};
 
 	template<class T>
-	struct Vec3 final
+	struct Vector<T,3> final
 	{
 		T x;
 		T y;
 		T z;
 
 		// Constructors
-		Vec3() = default;
-		constexpr explicit Vec3(T _x)
+		Vector() = default;
+		constexpr explicit Vector(T _x)
 		{
 			x = _x;
 			y = _x;
 			z = _x;
 		}
-		constexpr Vec3(T _x, T _y, T _z)
+		constexpr Vector(T _x, T _y, T _z)
 		{
 			x = _x;
 			y = _y;
@@ -68,7 +78,7 @@ namespace math {
 		}
 
 		// Assignment and copy construction
-		constexpr Vec3(const Vec3<T>& other)
+		constexpr Vector(const Vec3<T>& other)
 		{
 			x = other.x;
 			y = other.y;
@@ -83,6 +93,57 @@ namespace math {
 			return *this;
 		}
 		
+		auto& operator=(const Vec3<T>& other) volatile
+		{
+			x = other.x;
+			y = other.y;
+			z = other.z;
+			return *this;
+		}
+
+		T& operator()(int i) { return (&x)[i]; }
+		const T& operator()(int i) const { return (&x)[i]; }
+	};
+
+	template<class T>
+	struct Vector<T, 4> final
+	{
+		T x;
+		T y;
+		T z;
+		T w;
+
+		// Constructors
+		Vector() = default;
+		constexpr explicit Vector(T _x)
+		{
+			x = _x;
+			y = _x;
+			z = _x;
+		}
+		constexpr Vector(T _x, T _y, T _z)
+		{
+			x = _x;
+			y = _y;
+			z = _z;
+		}
+
+		// Assignment and copy construction
+		constexpr Vector(const Vec3<T>& other)
+		{
+			x = other.x;
+			y = other.y;
+			z = other.z;
+		}
+
+		auto& operator=(const Vec3<T>& other)
+		{
+			x = other.x;
+			y = other.y;
+			z = other.z;
+			return *this;
+		}
+
 		auto& operator=(const Vec3<T>& other) volatile
 		{
 			x = other.x;
