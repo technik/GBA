@@ -2,6 +2,7 @@
 
 using namespace math;
 
+// Scanline raster of a solid color triangle
 void rasterTriangle(uint16_t* dst, math::Vec2i scissor, uint16_t color, const math::Vec2p8 v[3])
 {
 	// Back face culling
@@ -27,12 +28,13 @@ void rasterTriangle(uint16_t* dst, math::Vec2i scissor, uint16_t color, const ma
 
 	// Parse bounding rectangle looking for intersections
 	math::Vec2p8 p;
+
 	for (auto y = yStart; y < yEnd; y += 1)
 	{
-		p.y = intp8(y);
+		p.y = intp8(y) + 0.5_p8;
 		for (auto x = xStart; x < xEnd; x += 1)
 		{
-			p.x = intp8(x);
+			p.x = intp8(x) + 0.5_p8;
 
 			if (cross(p - v[0], e0) > 0)
 			{
