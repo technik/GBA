@@ -28,12 +28,12 @@ void rasterTriangle(uint16_t* dst, math::Vec2i scissor, uint16_t color, const ma
 	auto yEnd = math::min(intp8(scissor.y), math::max(y0, math::max(y1, y2)) - 0.5_p8).floor() + 1;
 
 	// Parse bounding rectangle looking for intersections
-	for (auto y = yStart; y < yEnd; ++y)
+	for (auto y = yStart; y < yEnd; y += 1)
 	{
 		p.y = intp8(y);
-		for (auto x = xStart; x < xEnd; ++x)
+		for (auto x = xStart; x < xEnd; x += 1)
 		{
-			p.x = intp8(x) + 0.5_p8;
+			p.x = intp8(x);
 
 			if (cross(p - v[0], e0) > 0)
 				if (cross(p - v[1], e1) > 0)
