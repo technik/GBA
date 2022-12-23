@@ -70,9 +70,21 @@ namespace math
 	}
 
 	template<class T>
+	FORCE_INLINE constexpr auto max3(T a, T b, T c)
+	{
+		return max(a, max(b, c));
+	}
+
+	template<class T>
 	FORCE_INLINE constexpr auto min(T a, T b)
 	{	
 		return a < b ? a : b;
+	}
+
+	template<class T>
+	FORCE_INLINE constexpr auto min3(T a, T b, T c)
+	{
+		return min(a, min(b, c));
 	}
 
 	template<class T>
