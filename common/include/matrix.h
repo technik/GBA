@@ -193,7 +193,7 @@ namespace math {
 		// TODO: InvDepth
 		result.x = (pos.x * 2) / pos.y;
 		result.y = -(pos.z * 3) / pos.y;
-		result.z = result.y / 256;
+		result.z = pos.y / 256;
 		return result;
 	}
 

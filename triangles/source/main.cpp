@@ -53,32 +53,55 @@ volatile uint32_t timerT2 = 0;
 
 struct Mesh
 {
-	Vec3p8* vertices;
-	uint16_t* indices;
-	Color* faceColors;
+	const Vec3p8* vertices;
+	const uint16_t* indices;
+	const Color* faceColors;
 	uint16_t numTris;
 	uint16_t numVertices;
 };
 
-void DrawIndexedMesh(const YawPitchCamera& cam, const Mat34p16& worldMtx, const Mesh& mesh)
+void DrawStaticIndexedMesh(const YawPitchCamera& cam, const Mesh& mesh)
 {
 	constexpr int MAX_VERTICES = 16;
 	dbgAssert(mesh.numVertices <= MAX_VERTICES);
 
-	// Concat matrices
-	//Mat34p16 worldView = cam.worldView(worldMtx);
-	//
-	//Vec3p8 vertices
+	// Transform vertices to screen space
+	Vec2p8 projVertices[MAX_VERTICES];
+	for (int i = 0; i < mesh.numVertices; ++i)
+	{
+		Vec3p8 vsVtx = cam.transformPos(mesh.vertices[i]);
+		Vec3p8 csVtx = vsVtx.y == 0 ? Vec3p8{} : projectPosition(vsVtx);
+		projVertices[i] = {
+			(csVtx.x * 80 + 80),
+			(csVtx.y * 64 + 64)
+		};
+	}
+
+	// Draw triangles
+	int baseIndex = 0;
+	for (int i = 0; i < mesh.numTris; ++i)
+	{
+		Vec2p8 vertices[3] =
+		{
+			projVertices[mesh.indices[baseIndex++]],
+			projVertices[mesh.indices[baseIndex++]],
+			projVertices[mesh.indices[baseIndex++]]
+		};
+		rasterTriangle(
+			Display().backBuffer(), { 160, 128 },
+			mesh.faceColors[i].raw,
+			vertices);
+	}
 }
 
-
+// Draws a floorless pyramid as static geometry (no local world transform)
 void DrawPyramid(const YawPitchCamera& cam)
 {
 	const Vec3p8 vertices[5] = {
-		{-0.5_p8,-0.5_p8, 0.5_p8},
-		{-0.5_p8, 0.5_p8, 0.5_p8},
-		{ 0.5_p8, 0.5_p8, 0.5_p8},
-		{ 0.5_p8,-0.5_p8, 0.5_p8},
+		{-0.5_p8,-0.5_p8, -0.5_p8},
+		{-0.5_p8, 0.5_p8, -0.5_p8},
+		{ 0.5_p8, 0.5_p8, -0.5_p8},
+		{ 0.5_p8,-0.5_p8, -0.5_p8},
 		{ 0.0_p8, 0.0_p8, 0.5_p8}
 	};
 
@@ -95,6 +118,16 @@ void DrawPyramid(const YawPitchCamera& cam)
 		BasicColor::Blue,
 		BasicColor::Yellow
 	};
+
+	const Mesh pyramid = {
+		vertices,
+		indices,
+		faceColors,
+		4,
+		5
+	};
+
+	DrawStaticIndexedMesh(cam, pyramid);
 }
 
 void clearBg(uint16_t* buffer, uint16_t topClr, uint16_t bottomClr, int area)
@@ -109,29 +142,7 @@ void RenderWorld(const YawPitchCamera& cam)
 {
 	clearBg(Display().backBuffer(), Rasterizer::skyClr.raw, Rasterizer::groundClr.raw, Mode5Display::Area);
 
-	const Vec3p8 vertices[3] = {
-		{-0.5_p8, 2.5_p8, -0.5_p8},
-		{ 0.5_p8, 2.5_p8, -0.5_p8},
-		{ 0_p8,   2.5_p8, 0.5_p8},
-	};
-
-	Vec2p16 ssVertices[3];
-	Vec2p8 ssVertices8[3];
-	for (int i = 0; i < 3; ++i)
-	{
-		Vec3p8 vsVtx = cam.transformPos(vertices[i]);
-		Vec3p8 csVtx = vsVtx.y == 0 ? Vec3p8{} : projectPosition(vsVtx);
-		ssVertices8[i] = {
-			(csVtx.x * 80 + 80),
-			(csVtx.y * 64 + 64)
-		};
-		ssVertices[i] = {
-			ssVertices8[i].x.cast<16>(),
-			ssVertices8[i].y.cast<16>()
-		};
-	}
-
-	rasterTriangle(Display().backBuffer(), { 160, 128 }, BasicColor::Green.raw, ssVertices8);
+	DrawPyramid(cam);
 }
 
 int main()
@@ -148,9 +159,10 @@ int main()
 
 	// -- Init game state ---
 	auto camera = YawPitchCamera();
+	camera.pos = Vec3p8(0_p8, -4_p8, 0_p8);
 
 	auto horSpeed = 0.06125_p16;
-	auto angSpeed = 0.01_p16;
+	auto angSpeed = 0.001_p16;
 
 	// Unlock the display and start rendering
 	Display().EndBlank();
