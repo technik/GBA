@@ -159,7 +159,7 @@ int main()
 
 	// -- Init game state ---
 	auto camera = YawPitchCamera();
-	camera.pos = Vec3p8(0_p8, -4_p8, 0_p8);
+	camera.pos = Vec3p8(0_p8, -2_p8, 0_p8);
 
 	auto horSpeed = 0.06125_p16;
 	auto angSpeed = 0.001_p16;
@@ -172,7 +172,7 @@ int main()
 	int tx = 0;
 	while (1)
 	{
-		Timer1().reset<Timer::e64>(); // Set high precision profiler
+		Timer1().reset<Timer::e256>(); // Set high precision profiler
 		// Next frame logic
 		Keypad::Update();
 		camera.update(horSpeed, angSpeed);
