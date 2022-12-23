@@ -4,6 +4,15 @@ using namespace math;
 
 void rasterTriangle(uint16_t* dst, math::Vec2i scissor, uint16_t color, const math::Vec2p8 v[3])
 {
+	// Back face culling
+	auto e0 = v[1]-v[0];
+	auto e1 = v[2]-v[1];
+	auto e2 = v[0]-v[2];
+	math::Vec2p8 p;
+
+	if (cross(e0, e1) > 0)
+		return;
+
 	// Locate boundaries
 	auto x0 = v[0].x;
 	auto x1 = v[1].x;
@@ -18,12 +27,8 @@ void rasterTriangle(uint16_t* dst, math::Vec2i scissor, uint16_t color, const ma
 	auto yStart = math::max(0_p8, math::min(y0,math::min(y1,y2))).floor();
 	auto yEnd = math::min(intp8(scissor.y), math::max(y0,math::max(y1,y2))).floor() + 1;
 
-	// Parse bounding rectangle looking for intersections
-	auto e0 = v[1]-v[0];
-	auto e1 = v[2]-v[1];
-	auto e2 = v[0]-v[2];
-	math::Vec2p8 p;
 
+	// Parse bounding rectangle looking for intersections
 	for(auto y = yStart; y < yEnd; ++y)
 	{
 		p.y = intp8(y) + 0.5_p8;

@@ -76,7 +76,10 @@ void rasterLine(const Op& op, const math::Vec2p16& a, const math::Vec2p16& b)
     // Force drawing lines in one of the first 4 octants
     if (a.y > b.y)
     {
-        std::swap(a, b);
+        // Swap vectors
+        auto tmp = a;
+        a = b;
+        b = tmp;
     }
 
     int x0 = a.x.floor();
