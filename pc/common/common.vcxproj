@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\common\source\Display.cpp" />
     <ClCompile Include="..\..\common\source\Draw.cpp" />
+    <ClCompile Include="..\..\common\source\draw.iwram.cpp" />
     <ClCompile Include="..\..\common\source\font.bmp.cpp" />
     <ClCompile Include="..\..\common\source\gfx\armGfx.iwram.cpp" />
     <ClCompile Include="..\..\common\source\gfx\tile.cpp" />

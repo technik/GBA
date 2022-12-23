@@ -54,6 +54,9 @@
     <ClCompile Include="..\..\common\source\Display.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\common\source\draw.iwram.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\common\include\base.h">

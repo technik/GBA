@@ -140,7 +140,7 @@ void clearBg(uint16_t* buffer, uint16_t topClr, uint16_t bottomClr, int area)
 
 void RenderWorld(const YawPitchCamera& cam)
 {
-	clearBg(Display().backBuffer(), Rasterizer::skyClr.raw, Rasterizer::groundClr.raw, Mode5Display::Area);
+	//
 
 	DrawPyramid(cam);
 }
@@ -185,6 +185,9 @@ int main()
 		}
 
 		// -- Render --
+		clearBg(Display().backBuffer(), Rasterizer::skyClr.raw, Rasterizer::groundClr.raw, Mode5Display::Area);
+
+		Timer1().reset<Timer::e64>(); // Set high precision profiler
 		RenderWorld(camera);
 #ifdef GBA
 		frameCounter.render(text);
