@@ -10,7 +10,7 @@ void rasterTriangle(uint16_t* dst, math::Vec2i scissor, uint16_t color, const ma
 	auto e2 = v[0]-v[2];
 	math::Vec2p8 p;
 
-	if (cross(e0, e1) > 0)
+	if (cross(e0, e1) >= 0)
 		return;
 
 	// Locate boundaries
