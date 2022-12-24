@@ -27,25 +27,37 @@ void rasterTriangle(uint16_t* dst, math::Vec2i scissor, uint16_t color, const ma
 	auto yEnd = math::min(intp8(scissor.y), math::max3(y0, y1, y2) - 0.5_p8).floor();
 
 	// Parse bounding rectangle looking for intersections
-	math::Vec2p8 p;
+	math::Vec2p8 p = { intp8(xStart) + 0.5_p8, intp8(yStart) + 0.5_p8};
+
+	// Cross products of the first pixel center within the bounding box
+	auto cy0 = cross(p - v[0], e0).cast<8>();
+	auto cy1 = cross(p - v[1], e1).cast<8>();
+	auto cy2 = cross(p - v[2], e2).cast<8>();
 
 	for (auto y = yStart; y < yEnd; y += 1)
 	{
+		// Reset cross products at the start of the line
+		auto cx0 = cy0;
+		auto cx1 = cy1;
+		auto cx2 = cy2;
+
 		p.y = intp8(y) + 0.5_p8;
 		for (auto x = xStart; x < xEnd; x += 1)
 		{
 			p.x = intp8(x) + 0.5_p8;
 
-			if (cross(p - v[0], e0) > 0)
+			if ((cx0 > 0) && (cx1 > 0) && (cx2 > 0))
 			{
-				if (cross(p - v[1], e1) > 0)
-				{
-					if (cross(p - v[2], e2) > 0)
-					{
-						dst[x + y * scissor.x] = color;
-					}
-				}
+				dst[x + y * scissor.x] = color;
 			}
+
+			cx0 += e0.y;
+			cx1 += e1.y;
+			cx2 += e2.y;
 		}
+
+		cy0 -= e0.x;
+		cy1 -= e1.x;
+		cy2 -= e2.x;
 	}
 }

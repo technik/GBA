@@ -49,6 +49,9 @@ void InitSystems()
 #endif
 }
 
+void TriangulateScreen()
+{}
+
 volatile uint32_t timerT2 = 0;
 
 struct Mesh
