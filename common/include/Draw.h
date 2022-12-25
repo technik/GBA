@@ -30,5 +30,6 @@ inline void rect(uint16_t* dst, uint16_t color, uint32_t x0, uint32_t x1, uint32
 }
 
 void rasterTriangle(uint16_t* dst, math::Vec2i scissor, uint16_t color, const math::Vec2p8 v[3]);
+void rasterTriangleExp(uint16_t* dst, math::Vec2i scissor, uint16_t color, const math::Vec2p8 v[3]);
 
 void Gradient(uint16_t* dst);
