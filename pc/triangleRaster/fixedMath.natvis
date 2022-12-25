@@ -5,4 +5,9 @@
 		<Item Name="Value">(float(raw))/256</Item>
 		</Expand>
 	</Type>
+	<Type Name="math::Fixed&lt;int,16&gt;">
+		<Expand>
+			<Item Name="Value">(float(raw))/(1&lt;&lt;16)</Item>
+		</Expand>
+	</Type>
 </AutoVisualizer>
