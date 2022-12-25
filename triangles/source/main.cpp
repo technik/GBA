@@ -94,6 +94,10 @@ void DrawStaticIndexedMesh(const YawPitchCamera& cam, const Mesh& mesh)
 			Display().backBuffer(), { 160, 128 },
 			mesh.faceColors[i].raw,
 			vertices);
+		rasterTriangleExp(
+			Display().backBuffer(), { 160, 128 },
+			BasicColor::Black.raw,
+			vertices);
 	}
 }
 

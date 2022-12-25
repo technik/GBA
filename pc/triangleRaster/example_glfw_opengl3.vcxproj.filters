@@ -103,4 +103,7 @@
   <ItemGroup>
     <None Include="..\README.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="fixedMath.natvis" />
+  </ItemGroup>
 </Project>

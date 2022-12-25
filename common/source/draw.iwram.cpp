@@ -99,7 +99,9 @@ void rasterTriangleExp(uint16_t* dst, math::Vec2i scissor, uint16_t color, const
 			// Scan the edge
 			int x0 = (v[i].x - 0.5_p8).floor();
 			for(int row = y0; row < y1; ++row)
-			{ }
+			{
+				dst[x0 + row * scissor.x] = color;
+			}
 		} else if(edge[i].y < 0) { // Upward edge, right edge
 			//
 		}else { // Horizontal edge
