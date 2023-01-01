@@ -27,14 +27,11 @@ namespace math {
 
     // Maps pseudorandom noise to the [0,1) interval, resulting in a uniform distribution of numbers.
     template<class T>
-    T scalarNoise(int32_t n, int32_t seed)
-    {
-        static_assert(false, "Unimplemented type");
-    }
+    T scalarNoise(int32_t n, int32_t seed);
 
     // Maps pseudorandom noise to the [0,1) interval, resulting in a uniform distribution of numbers.
     template<>
-    inline intp8 scalarNoise(int32_t n, int32_t seed = 0)
+    inline intp8 scalarNoise(int32_t n, int32_t seed)
     {
         intp8 x;
         x.raw = Squirrel3(n, seed) & ((1<<8)-1);
@@ -43,7 +40,7 @@ namespace math {
 
     // Maps pseudorandom noise to the [0,1) interval, resulting in a uniform distribution of numbers.
     template<>
-    inline intp12 scalarNoise(int32_t n, int32_t seed = 0)
+    inline intp12 scalarNoise(int32_t n, int32_t seed)
     {
         intp12 x;
         x.raw = Squirrel3(n, seed) & ((1 << 12) - 1);
@@ -52,7 +49,7 @@ namespace math {
 
     // Maps pseudorandom noise to the [0,1) interval, resulting in a uniform distribution of numbers.
     template<>
-    inline intp16 scalarNoise(int32_t n, int32_t seed = 0)
+    inline intp16 scalarNoise(int32_t n, int32_t seed)
     {
         intp16 x;
         x.raw = Squirrel3(n, seed) & ((1 << 16) - 1);

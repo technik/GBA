@@ -13,6 +13,7 @@
 #include <Draw.h>
 #include <Keypad.h>
 #include <linearMath.h>
+#include <noise.h>
 #include <raycast.h>
 #include <Text.h>
 #include <Timer.h>
@@ -137,6 +138,53 @@ void DrawPyramid(const YawPitchCamera& cam)
 	DrawStaticIndexedMesh(cam, pyramid);
 }
 
+void DrawTestScreen()
+{
+	Vec2p8 vertices[12] = {
+		{   1.5_p8,   1.5_p8 },
+		{  32.5_p8,   1.5_p8 },
+		{  64.0_p8,   1.5_p8 },
+		{ 158.5_p8,   1.5_p8 },
+		{   1.5_p8,  64.0_p8 },
+		{  96.0_p8,  64.0_p8 },
+		{ 127.5_p8,  64.0_p8 },
+		{ 158.5_p8,  64.0_p8 },
+		{   1.5_p8, 126.5_p8 },
+		{  32.5_p8, 126.5_p8 },
+		{  64.0_p8, 126.5_p8 },
+		{ 158.5_p8, 126.5_p8 },
+	};
+
+	const uint16_t indices[12 * 3] = {
+		 4, 1, 0,
+		 4, 2, 1,
+		 4, 3, 2,
+		 4, 5, 3,
+		 5, 6, 3,
+		 6, 7, 3,
+		11, 7, 6,
+		11, 6, 5,
+		11, 5, 4,
+		10,11, 4,
+		 9,10, 4,
+		 8, 9, 4
+	};
+
+	for (int i = 0; i < 12; ++i)
+	{
+		Vec2p8 triVerts[3] = {
+			vertices[indices[3*i+0]],
+			vertices[indices[3*i+1]],
+			vertices[indices[3*i+2]],
+		};
+
+		rasterTriangle(
+			Display().backBuffer(), { 160, 128 },
+			Squirrel3(i),
+			triVerts);
+	}
+}
+
 void clearBg(uint16_t* buffer, uint16_t topClr, uint16_t bottomClr, int area)
 {
 	DMA::Channel0().Fill(&buffer[0 * area / 4], topClr, area / 4);
@@ -147,9 +195,9 @@ void clearBg(uint16_t* buffer, uint16_t topClr, uint16_t bottomClr, int area)
 
 void RenderWorld(const YawPitchCamera& cam)
 {
-	//
+	DrawTestScreen();
 
-	DrawPyramid(cam);
+	//DrawPyramid(cam);
 }
 
 int main()
@@ -192,7 +240,7 @@ int main()
 		}
 
 		// -- Render --
-		clearBg(Display().backBuffer(), Rasterizer::skyClr.raw, Rasterizer::groundClr.raw, Mode5Display::Area);
+		//clearBg(Display().backBuffer(), Rasterizer::skyClr.raw, Rasterizer::groundClr.raw, Mode5Display::Area);
 
 		Timer1().reset<Timer::e64>(); // Set high precision profiler
 		RenderWorld(camera);
