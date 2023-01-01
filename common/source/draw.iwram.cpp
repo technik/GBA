@@ -102,16 +102,19 @@ void rasterTriangleExp(uint16_t* dst, math::Vec2i scissor, uint16_t color, const
 			yEnd = max(yEnd, y1); // Adjust the triangle boundaries to contain this edge
 
 			int x0 = (v[i].x).floor() + (((v[i].x).fract() <= 0.5_p8) ? 0 : 1);
+			const auto dx = edge[i].x;
+			const auto dy = edge[i].y;
 			// Scan the edge
 			if(edge[i].x > 0) // Edge leaning right
 			{
-				auto rOff = ((x0 + 0.5_p8 - v[i].x) * edge[i].y - edge[i].x * (y0 + 0.5_p8 - v0y)).round<8>();
+				auto crossEdge = ((x0 + 0.5_p8 - v[i].x) * dy - dx * (y0 + 0.5_p8 - v0y));
+				auto rOff = crossEdge.round<8>();
 				for (int row = y0; row < y1; ++row)
 				{
 					while (rOff < 0 && x0 < xMax)
 					{
 						x0++;
-						rOff += edge[i].y;
+						rOff += dy;
 					}
 					// while
 					if (rOff >= 0)
@@ -119,18 +122,18 @@ void rasterTriangleExp(uint16_t* dst, math::Vec2i scissor, uint16_t color, const
 						leftEdge[row] = x0;
 						dst[x0 + row * scissor.x] = color;
 					}
-					rOff -= edge[i].x;
+					rOff -= dx;
 				}
 			}
 			else if(edge[i].x < 0) // Edge leaning left
 			{
-				auto rOff = ((x0 + 0.5_p8 - v[i].x) * edge[i].y - edge[i].x * (y0 + 0.5_p8 - v0y)).round<8>();
+				auto rOff = ((x0 + 0.5_p8 - v[i].x) * dy - dx * (y0 + 0.5_p8 - v0y)).round<8>();
 				for (int row = y0; row < y1; ++row)
 				{
 					while (rOff >= 0 && x0 >= xMin)
 					{
 						x0--;
-						rOff -= edge[i].y;
+						rOff -= dy;
 					}
 					// while
 					if (rOff < 0)
@@ -138,7 +141,7 @@ void rasterTriangleExp(uint16_t* dst, math::Vec2i scissor, uint16_t color, const
 						leftEdge[row] = x0+1;
 						dst[x0+1 + row * scissor.x] = color;
 					}
-					rOff -= edge[i].x;
+					rOff -= dx;
 				}
 			}
 			else // Vertical edge

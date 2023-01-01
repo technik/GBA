@@ -206,7 +206,7 @@ namespace math
 				{
 					// Dividing, need to round
 					constexpr size_t diff = shift - resultShift;
-					size_t half = raw >= 0 ? (1 << (diff - 1)) : -(1 << (diff - 1));
+					int half = raw >= 0 ? (1 << (diff - 1)) : -(1 << (diff - 1));
 					result.raw = (raw + half) / (1 << diff);
 				}
 				else
