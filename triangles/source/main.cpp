@@ -140,19 +140,22 @@ void DrawPyramid(const YawPitchCamera& cam)
 
 void DrawTestScreen()
 {
-	Vec2p8 vertices[12] = {
-		{   1.5_p8,   1.5_p8 },
-		{  32.5_p8,   1.5_p8 },
-		{  64.0_p8,   1.5_p8 },
-		{ 158.5_p8,   1.5_p8 },
-		{   1.5_p8,  64.0_p8 },
-		{  96.0_p8,  64.0_p8 },
-		{ 127.5_p8,  64.0_p8 },
-		{ 158.5_p8,  64.0_p8 },
-		{   1.5_p8, 126.5_p8 },
-		{  32.5_p8, 126.5_p8 },
-		{  64.0_p8, 126.5_p8 },
-		{ 158.5_p8, 126.5_p8 },
+	constexpr intp8 xOffset = 0_p8;
+	constexpr intp8 yOffset = 0_p8;
+
+	constexpr Vec2p8 vertices[12] = {
+		{   1.5_p8 + xOffset,   1.5_p8 + yOffset },
+		{  32.5_p8 + xOffset,   1.5_p8 + yOffset },
+		{  64.0_p8 + xOffset,   1.5_p8 + yOffset },
+		{ 158.5_p8 + xOffset,   1.5_p8 + yOffset },
+		{   1.5_p8 + xOffset,  64.0_p8 + yOffset },
+		{  96.0_p8 + xOffset,  64.0_p8 + yOffset },
+		{ 127.5_p8 + xOffset,  64.0_p8 + yOffset },
+		{ 158.5_p8 + xOffset,  64.0_p8 + yOffset },
+		{   1.5_p8 + xOffset, 126.5_p8 + yOffset },
+		{  32.5_p8 + xOffset, 126.5_p8 + yOffset },
+		{  64.0_p8 + xOffset, 126.5_p8 + yOffset },
+		{ 158.5_p8 + xOffset, 126.5_p8 + yOffset },
 	};
 
 	const uint16_t indices[12 * 3] = {
@@ -178,7 +181,11 @@ void DrawTestScreen()
 			vertices[indices[3*i+2]],
 		};
 
-		rasterTriangle(
+		//rasterTriangle(
+		//	Display().backBuffer(), { 160, 128 },
+		//	Squirrel3(i),
+		//	triVerts);
+		rasterTriangleExp(
 			Display().backBuffer(), { 160, 128 },
 			Squirrel3(i),
 			triVerts);

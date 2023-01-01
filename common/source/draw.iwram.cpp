@@ -87,13 +87,15 @@ void rasterTriangleExp(uint16_t* dst, math::Vec2i scissor, uint16_t color, const
 	for (int i = 0; i < 3; ++i)
 	{
 		if (edge[i].y > 0) { // Downward edge, left edge
+
 			// Find the first row at or below the top vertex
-			intp8 y0fract = v[i].y + 0.5_p8;
-			int y0 = (y0fract).floor();
+			const auto v0y = v[i].y;
+			int y0 = (v0y).floor() + (((v0y).fract() <= 0.5_p8) ? 0 : 1);
 			yStart = min(yStart, y0); // Adjust the triangle boundaries to contain this edge
 
 			// Find the first row guaranteed to be past the bottom vertex
-			int y1 = (y0fract + edge[i].y).floor() + 1;
+			const auto v1y = v0y + edge[i].y;
+			int y1 = (v1y).floor() + (((v1y).fract() <= 0.5_p8) ? 0 : 1);
 			yEnd = max(yEnd, y1); // Adjust the triangle boundaries to contain this edge
 
 			// Scan the edge
