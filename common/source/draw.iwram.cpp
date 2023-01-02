@@ -177,7 +177,6 @@ void rasterTriangleExp(uint16_t* dst, math::Vec2i scissor, uint16_t color, const
 					if (rOff > 0)
 					{
 						rightEdge[row] = x1+1;
-						//dst[x1 + row * scissor.x] = color;
 					}
 
 					rOff -= dx;
@@ -198,7 +197,6 @@ void rasterTriangleExp(uint16_t* dst, math::Vec2i scissor, uint16_t color, const
 					if (rOff < 0)
 					{
 						rightEdge[row] = x1;
-						//dst[x1 - 1 + row * scissor.x] = color;
 					}
 
 					rOff -= dx;
@@ -211,9 +209,7 @@ void rasterTriangleExp(uint16_t* dst, math::Vec2i scissor, uint16_t color, const
 					rightEdge[row] = x1;
 				}
 			}
-		}else { // Horizontal edge
-			// Nothing to do here, really
-		}
+		} // Nothing to do for horizontal edges
 	}
 
 	// Fill in the rows
