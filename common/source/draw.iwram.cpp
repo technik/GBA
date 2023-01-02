@@ -89,7 +89,9 @@ void rasterTriangleExp(uint16_t* dst, math::Vec2i scissor, uint16_t color, const
 
 	for (int i = 0; i < 3; ++i)
 	{
-		if (edge[i].y > 0) { // Downward edge, left edge
+		const auto dx = edge[i].x;
+		const auto dy = edge[i].y;
+		if (dy > 0) { // Downward edge, left edge
 
 			// Find the first row at or below the top vertex
 			const auto v0y = v[i].y;
@@ -97,15 +99,13 @@ void rasterTriangleExp(uint16_t* dst, math::Vec2i scissor, uint16_t color, const
 			yStart = min(yStart, y0); // Adjust the triangle boundaries to contain this edge
 
 			// Find the first row guaranteed to be past the bottom vertex
-			const auto v1y = v0y + edge[i].y;
+			const auto v1y = v0y + dy;
 			int y1 = (v1y).floor() + (((v1y).fract() <= 0.5_p8) ? 0 : 1);
 			yEnd = max(yEnd, y1); // Adjust the triangle boundaries to contain this edge
 
 			int x0 = (v[i].x).floor() + (((v[i].x).fract() <= 0.5_p8) ? 0 : 1);
-			const auto dx = edge[i].x;
-			const auto dy = edge[i].y;
 			// Scan the edge
-			if(edge[i].x > 0) // Edge leaning right
+			if(dx > 0) // Edge leaning right
 			{
 				auto crossEdge = ((x0 + 0.5_p8 - v[i].x) * dy - dx * (y0 + 0.5_p8 - v0y));
 				auto rOff = crossEdge.round<8>();
@@ -125,7 +125,7 @@ void rasterTriangleExp(uint16_t* dst, math::Vec2i scissor, uint16_t color, const
 					rOff -= dx;
 				}
 			}
-			else if(edge[i].x < 0) // Edge leaning left
+			else if(dx < 0) // Edge leaning left
 			{
 				auto rOff = ((x0 + 0.5_p8 - v[i].x) * dy - dx * (y0 + 0.5_p8 - v0y)).round<8>();
 				for (int row = y0; row < y1; ++row)
@@ -135,7 +135,6 @@ void rasterTriangleExp(uint16_t* dst, math::Vec2i scissor, uint16_t color, const
 						x0--;
 						rOff -= dy;
 					}
-					// while
 					if (rOff < 0)
 					{
 						leftEdge[row] = x0+1;
@@ -152,10 +151,70 @@ void rasterTriangleExp(uint16_t* dst, math::Vec2i scissor, uint16_t color, const
 					dst[x0 + row * scissor.x] = color;
 				}
 			}
-		} else if(edge[i].y < 0) { // Upward edge, right edge
-			//
+		} else if(dy < 0) { // Upward edge, right edge
+			// Find the first row at or below the top vertex
+			const auto v0y = v[i].y;
+			const auto v1y = v0y + dy;
+			int y1 = (v1y).floor() + (((v1y).fract() <= 0.5_p8) ? 0 : 1);
+			// 
+			// Find the first row guaranteed to be below the bottom vertex
+			int y0 = (v0y).floor() + (((v0y).fract() <= 0.5_p8) ? 0 : 1);
+
+			// Scan the edge top to bottom
+			const auto v0x = v[i].x;
+			const auto v1x = v0x + dx;
+			int x1 = (v1x).floor() + (((v1x).fract() <= 0.5_p8) ? 0 : 1);
+
+			if (dx > 0) // Edge leaning right
+			{
+				auto crossEdge = ((x1 + 0.5_p8 - v1x) * dy - dx * (y1 + 0.5_p8 - v1y));
+				auto rOff = crossEdge.round<8>();
+				for (int row = y1; row < y0; ++row)
+				{
+					// Find the 
+					while (rOff <= 0 && x1 >= xMin)
+					{
+						x1--;
+						rOff -= dy;
+					}
+					if (rOff > 0)
+					{
+						rightEdge[row] = x1+1;
+						dst[x1 + row * scissor.x] = color;
+					}
+
+					rOff -= dx;
+				}
+			}
+			else if (dx < 0) // Edge leaning left
+			{
+				//auto rOff = ((x0 + 0.5_p8 - v[i].x) * dy - dx * (y0 + 0.5_p8 - v0y)).round<8>();
+				//for (int row = y0; row < y1; ++row)
+				//{
+				//	while (rOff >= 0 && x0 >= xMin)
+				//	{
+				//		x0--;
+				//		rOff -= dy;
+				//	}
+				//	// while
+				//	if (rOff < 0)
+				//	{
+				//		leftEdge[row] = x0 + 1;
+				//		dst[x0 + 1 + row * scissor.x] = color;
+				//	}
+				//	rOff -= dx;
+				//}
+			}
+			else // Vertical edge
+			{
+				for (int row = y1; row < y0; ++row)
+				{
+					rightEdge[row] = x1;
+					dst[x1 + row * scissor.x] = color;
+				}
+			}
 		}else { // Horizontal edge
-			//
+			// Nothing to do here, really
 		}
 	}
 
