@@ -120,7 +120,6 @@ void rasterTriangleExp(uint16_t* dst, math::Vec2i scissor, uint16_t color, const
 					if (rOff >= 0)
 					{
 						leftEdge[row] = x0;
-						//dst[x0 + row * scissor.x] = color;
 					}
 					rOff -= dx;
 				}
@@ -138,7 +137,6 @@ void rasterTriangleExp(uint16_t* dst, math::Vec2i scissor, uint16_t color, const
 					if (rOff < 0)
 					{
 						leftEdge[row] = x0+1;
-						//dst[x0+1 + row * scissor.x] = color;
 					}
 					rOff -= dx;
 				}
@@ -148,7 +146,6 @@ void rasterTriangleExp(uint16_t* dst, math::Vec2i scissor, uint16_t color, const
 				for(int row = y0; row < y1; ++row)
 				{
 					leftEdge[row] = x0;
-					//dst[x0 + row * scissor.x] = color;
 				}
 			}
 		} else if(dy < 0) { // Upward edge, right edge
@@ -212,7 +209,6 @@ void rasterTriangleExp(uint16_t* dst, math::Vec2i scissor, uint16_t color, const
 				for (int row = y1; row < y0; ++row)
 				{
 					rightEdge[row] = x1;
-					//dst[x1 + row * scissor.x] = color;
 				}
 			}
 		}else { // Horizontal edge
@@ -221,11 +217,15 @@ void rasterTriangleExp(uint16_t* dst, math::Vec2i scissor, uint16_t color, const
 	}
 
 	// Fill in the rows
+	auto rowPtr = &dst[yStart * scissor.x];
 	for (int row = yStart; row < yEnd; ++row)
 	{
 		auto x0 = leftEdge[row];
 		auto x1 = rightEdge[row];
 		for (int x = x0; x < x1; ++x)
-			dst[x + row * scissor.x] = color;
+		{
+			rowPtr[x] = color;
+		}
+		rowPtr = &rowPtr[scissor.x];
 	}
 }
