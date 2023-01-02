@@ -120,7 +120,7 @@ void rasterTriangleExp(uint16_t* dst, math::Vec2i scissor, uint16_t color, const
 					if (rOff >= 0)
 					{
 						leftEdge[row] = x0;
-						dst[x0 + row * scissor.x] = color;
+						//dst[x0 + row * scissor.x] = color;
 					}
 					rOff -= dx;
 				}
@@ -138,7 +138,7 @@ void rasterTriangleExp(uint16_t* dst, math::Vec2i scissor, uint16_t color, const
 					if (rOff < 0)
 					{
 						leftEdge[row] = x0+1;
-						dst[x0+1 + row * scissor.x] = color;
+						//dst[x0+1 + row * scissor.x] = color;
 					}
 					rOff -= dx;
 				}
@@ -148,7 +148,7 @@ void rasterTriangleExp(uint16_t* dst, math::Vec2i scissor, uint16_t color, const
 				for(int row = y0; row < y1; ++row)
 				{
 					leftEdge[row] = x0;
-					dst[x0 + row * scissor.x] = color;
+					//dst[x0 + row * scissor.x] = color;
 				}
 			}
 		} else if(dy < 0) { // Upward edge, right edge
@@ -180,7 +180,7 @@ void rasterTriangleExp(uint16_t* dst, math::Vec2i scissor, uint16_t color, const
 					if (rOff > 0)
 					{
 						rightEdge[row] = x1+1;
-						dst[x1 + row * scissor.x] = color;
+						//dst[x1 + row * scissor.x] = color;
 					}
 
 					rOff -= dx;
@@ -188,29 +188,31 @@ void rasterTriangleExp(uint16_t* dst, math::Vec2i scissor, uint16_t color, const
 			}
 			else if (dx < 0) // Edge leaning left
 			{
-				//auto rOff = ((x0 + 0.5_p8 - v[i].x) * dy - dx * (y0 + 0.5_p8 - v0y)).round<8>();
-				//for (int row = y0; row < y1; ++row)
-				//{
-				//	while (rOff >= 0 && x0 >= xMin)
-				//	{
-				//		x0--;
-				//		rOff -= dy;
-				//	}
-				//	// while
-				//	if (rOff < 0)
-				//	{
-				//		leftEdge[row] = x0 + 1;
-				//		dst[x0 + 1 + row * scissor.x] = color;
-				//	}
-				//	rOff -= dx;
-				//}
+				auto crossEdge = ((x1 + 0.5_p8 - v1x) * dy - dx * (y1 + 0.5_p8 - v1y));
+				auto rOff = crossEdge.round<8>();
+				for (int row = y1; row < y0; ++row)
+				{
+					// Find the 
+					while (rOff >= 0 && x1 < xMax)
+					{
+						x1++;
+						rOff += dy;
+					}
+					if (rOff < 0)
+					{
+						rightEdge[row] = x1;
+						//dst[x1 - 1 + row * scissor.x] = color;
+					}
+
+					rOff -= dx;
+				}
 			}
 			else // Vertical edge
 			{
 				for (int row = y1; row < y0; ++row)
 				{
 					rightEdge[row] = x1;
-					dst[x1 + row * scissor.x] = color;
+					//dst[x1 + row * scissor.x] = color;
 				}
 			}
 		}else { // Horizontal edge
