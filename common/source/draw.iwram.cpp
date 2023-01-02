@@ -79,8 +79,8 @@ void rasterTriangleExp(uint16_t* dst, math::Vec2i scissor, uint16_t color, const
 		return;
 
 	// Classify edges as left or right, and scan through them
-	int8_t leftEdge[160];
-	int8_t rightEdge[160];
+	int16_t leftEdge[160];
+	int16_t rightEdge[160];
 
 	int yStart = 128;
 	int yEnd = -1;
@@ -220,51 +220,12 @@ void rasterTriangleExp(uint16_t* dst, math::Vec2i scissor, uint16_t color, const
 		}
 	}
 
-	// Locate boundaries
-	auto x0 = v[0].x;
-	auto x1 = v[1].x;
-	auto x2 = v[2].x;
-	auto xStart = math::max(0_p8, math::min3(x0, x1, x2) - 0.5_p8).floor();
-	auto xEnd = math::min(intp8(scissor.x), math::max3(x0, x1, x2) - 0.5_p8).floor();
-
-	auto y0 = v[0].y;
-	auto y1 = v[1].y;
-	auto y2 = v[2].y;
-	//auto yStart = math::max(0_p8, math::min3(y0, y1, y2) - 0.5_p8).floor();
-	//auto yEnd = math::min(intp8(scissor.y), math::max3(y0, y1, y2) - 0.5_p8).floor();
-
-	// Parse bounding rectangle looking for intersections
-	math::Vec2p8 p = { intp8(xStart) + 0.5_p8, intp8(yStart) + 0.5_p8 };
-
-	// Cross products of the first pixel center within the bounding box
-	auto cy0 = cross(p - v[0], edge[0]).cast<8>();
-	auto cy1 = cross(p - v[1], edge[1]).cast<8>();
-	auto cy2 = cross(p - v[2], edge[2]).cast<8>();
-
-	for (auto y = yStart; y < yEnd; y += 1)
+	// Fill in the rows
+	for (int row = yStart; row < yEnd; ++row)
 	{
-		// Reset cross products at the start of the line
-		auto cx0 = cy0;
-		auto cx1 = cy1;
-		auto cx2 = cy2;
-
-		p.y = intp8(y) + 0.5_p8;
-		for (auto x = xStart; x < xEnd; x += 1)
-		{
-			p.x = intp8(x) + 0.5_p8;
-
-			if ((cx0 > 0) && (cx1 > 0) && (cx2 > 0))
-			{
-				//dst[x + y * scissor.x] = color;
-			}
-
-			cx0 += edge[0].y;
-			cx1 += edge[1].y;
-			cx2 += edge[2].y;
-		}
-
-		cy0 -= edge[0].x;
-		cy1 -= edge[1].x;
-		cy2 -= edge[2].x;
+		auto x0 = leftEdge[row];
+		auto x1 = rightEdge[row];
+		for (int x = x0; x < x1; ++x)
+			dst[x + row * scissor.x] = color;
 	}
 }
