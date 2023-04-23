@@ -216,6 +216,13 @@ namespace math {
 		return a.x*b.y - a.y*b.x;
 	}
 
+	template<>
+	constexpr inline auto cross(const Vec2p8& a, const Vec2p8& b)
+	{
+		// Pre shifting to avoid overflow
+		return a.x.round<4>() * b.y.round<4>() - a.y.round<4>() * b.x.round<4>();
+	}
+
 	template<class T, class K>
 	constexpr inline auto operator*(const Vec2<T>& v, K x)
 	{

@@ -214,11 +214,11 @@ void rasterTriangleExp(uint16_t* dst, math::Vec2i scissor, uint16_t color, const
 
 	// Fill in the rows
 	auto rowPtr = &dst[yStart * scissor.x];
-	for (int row = yStart; row < yEnd; ++row)
+	for (int row = max(0,yStart); row < min(128,yEnd); ++row)
 	{
 		auto x0 = leftEdge[row];
 		auto x1 = rightEdge[row];
-		for (int x = x0; x < x1; ++x)
+		for (int x = max(0,x0); x < min(160,x1); ++x)
 		{
 			rowPtr[x] = color;
 		}

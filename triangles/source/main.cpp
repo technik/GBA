@@ -91,15 +91,18 @@ void DrawStaticIndexedMesh(const YawPitchCamera& cam, const Mesh& mesh)
 			projVertices[mesh.indices[baseIndex++]],
 			projVertices[mesh.indices[baseIndex++]]
 		};
+#if 0
 		rasterTriangle(
 			Display().backBuffer(), { 160, 128 },
 			mesh.faceColors[i].raw,
 			vertices);
+#else
 		rasterTriangleExp(
 			Display().backBuffer(), { 160, 128 },
-			BasicColor::Black.raw,
+			mesh.faceColors[i].raw,
 			vertices);
 	}
+#endif
 }
 
 // Draws a floorless pyramid as static geometry (no local world transform)
@@ -202,9 +205,9 @@ void clearBg(uint16_t* buffer, uint16_t topClr, uint16_t bottomClr, int area)
 
 void RenderWorld(const YawPitchCamera& cam)
 {
-	DrawTestScreen();
+	//DrawTestScreen();
 
-	//DrawPyramid(cam);
+	DrawPyramid(cam);
 }
 
 int main()
@@ -234,7 +237,7 @@ int main()
 	int tx = 0;
 	while (1)
 	{
-		Timer1().reset<Timer::e256>(); // Set high precision profiler
+		Timer1().reset<Timer::e64>(); // Set high precision profiler
 		// Next frame logic
 		Keypad::Update();
 		camera.update(horSpeed, angSpeed);
@@ -247,7 +250,7 @@ int main()
 		}
 
 		// -- Render --
-		//clearBg(Display().backBuffer(), Rasterizer::skyClr.raw, Rasterizer::groundClr.raw, Mode5Display::Area);
+		clearBg(Display().backBuffer(), Rasterizer::skyClr.raw, Rasterizer::groundClr.raw, Mode5Display::Area);
 
 		Timer1().reset<Timer::e64>(); // Set high precision profiler
 		RenderWorld(camera);
