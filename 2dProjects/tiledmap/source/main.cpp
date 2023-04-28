@@ -48,7 +48,24 @@ void InitGraphics()
 
 	// Set up mode 0, 256x256 tiles, 256 color palette
 	Display().SetMode<0, DisplayControl::BG0>();
-	Display().setupBackground(0,0,4,DisplayControl::TiledBGSize::e256x256);
+	Display().setupBackground(0,0,8,DisplayControl::TiledBGSize::e256x256);
+}
+
+void loadMapTileSet()
+{
+	auto& bgTiles = gfx::TileBank::GetBank(0);
+	bgTiles.GetDTile(0).fill(2); // Fill tile 0 with green
+	bgTiles.GetDTile(1).fill(3); // Fill tile 1 with blue
+}
+
+void loadMapData()
+{
+	auto bgMap = (uint16_t*)gfx::TileBank::GetBank(1).memory();
+	for(int i = 0; i < 8; ++i)
+	{
+		auto x = 2*i + 32*i;
+		bgMap[x] = 1;
+	}
 }
 
 int main()
@@ -57,6 +74,8 @@ int main()
 	Display().StartBlank();
 
 	InitGraphics();
+	loadMapTileSet();
+	loadMapData();
 
 	// Unlock the display and start rendering
 	Display().EndBlank();
