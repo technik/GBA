@@ -48,6 +48,7 @@ void InitGraphics()
 
 	// Set up mode 0, 256x256 tiles, 256 color palette
 	Display().SetMode<0, DisplayControl::BG0>();
+	Display().setupBackground(0,0,4,DisplayControl::TiledBGSize::e256x256);
 }
 
 int main()

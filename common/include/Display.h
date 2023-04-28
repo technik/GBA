@@ -76,6 +76,32 @@ public:
 	static constexpr uint16_t BG3 = 1<<11;
 	static constexpr uint16_t OBJ = 1<<12;
 
+	enum class TiledBGSize : uint16_t
+	{
+		e256x256 = 0,
+		e512x256 = 1<<14,
+		e256x512 = 2<<14,
+		e512x512 = 3<<14
+	};
+
+	void setupBackground(
+		uint8_t bgIndex,
+		uint8_t charBaseBlock,
+		uint8_t mapBaseBlock,
+		TiledBGSize mapSize,
+		bool fullPalette = true,
+		uint8_t priority = 0,
+		bool mosaic = false)
+	{
+		bgControl[bgIndex] = 
+			((priority & 0x3)) |
+			((charBaseBlock & 0x3)<<2) |
+			((mosaic ? 1 : 0)<<6) |
+			((fullPalette ? 1 : 0)<<7) |
+			((mapBaseBlock & 0xf)<<8) |
+			(uint16_t)mapSize;
+	}
+
 	template<uint16_t videoMode, uint16_t bgMode>
 	void SetMode()
 	{
