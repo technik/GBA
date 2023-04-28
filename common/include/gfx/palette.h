@@ -43,9 +43,9 @@ namespace gfx
 			return reinterpret_cast<uint32_t*>(StartAddressAddress);
 		}
 
-		static volatile Color& color(uint32_t n)
+		static Color& color(uint32_t n)
 		{
-			return reinterpret_cast<volatile Color*>(StartAddressAddress)[n];
+			return reinterpret_cast<Color*>(StartAddressAddress)[n];
 		}
 	};
 

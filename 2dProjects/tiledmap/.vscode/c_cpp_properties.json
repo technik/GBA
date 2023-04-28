@@ -55,7 +55,7 @@
             "includePath": [
                 "${workspaceFolder}",
                 "${workspaceFolder}/include",
-                "${workspaceFolder}/../../include",
+                "${workspaceFolder}/../../common/include",
                 "${env:DEVKITARM}/arm-none-eabi/include",
                 "${env:DEVKITARM}/lib/gcc/arm-none-eabi/8.1.0/include"
             ],
@@ -64,13 +64,14 @@
                 "UNICODE",
                 "_UNICODE",
                 "ARM7",
-                "WIN32"
+                "GBA"
             ],
             "intelliSenseMode": "msvc-x64",
             "browse": {
                 "path": [
                     "${workspaceFolder}",
                     "${workspaceFolder}/include",
+                    "${workspaceFolder}/../../common/include",
                     "${env:DEVKITARM}/arm-none-eabi/include",
                     "${env:DEVKITARM}/lib/gcc/arm-none-eabi/8.1.0/include"
                 ],

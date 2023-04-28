@@ -132,27 +132,51 @@ void buildMapAffineBackground(const RawImage& srcImage, const std::string& input
     std::cout << "Map Size: " << palettizedMap.width << "x" << palettizedMap.height << "\n";
 }
 
+struct ProgramOptions
+{
+    bool buildMapBg = false;
+    bool breakdownTiles = false;
+    std::string fileName;
+
+    bool processArguments(int _argc, const char** _argv)
+    {
+        if (_argc < 2)
+        {
+            std::cout << "Not enough arguments\n";
+            return false;
+        }
+
+        fileName = _argv[1];
+
+        for (int i = 2; i < _argc; ++i)
+        {
+            auto argi = std::string(_argv[i]);
+            if (argi == "--bgMap")
+            {
+                buildMapBg = true;
+            }
+            else if (argi == "--tileset")
+            {
+                breakdownTiles = true;
+            }
+        }
+
+        return true;
+    }
+};
+
 int main(int _argc, const char** _argv)
 {
     // Parse arguments
-    if (_argc < 2)
+    ProgramOptions programOptions;
+    if (!programOptions.processArguments(_argc, _argv))
     {
-        std::cout << "Not enough arguments\n";
         return -1;
-    }
-
-    std::string fileName = _argv[1];
-
-    bool buildMapBg = false;
-    for (int i = 2; i < _argc; ++i)
-    {
-        if (std::string(_argv[i]) == "--bgMap")
-            buildMapBg = true;
     }
 
     // Read PNG into a buffer
     RawImage srcImage;
-    if(!srcImage.load(fileName.c_str()))
+    if(!srcImage.load(programOptions.fileName.c_str()))
     {
         std::cout << "Image not found\n";
         return -1;
@@ -163,9 +187,14 @@ int main(int _argc, const char** _argv)
         return -1;
     }
 
-    if (buildMapBg)
+    if (programOptions.breakdownTiles)
     {
-        buildMapAffineBackground(srcImage, fileName);
+        //
+    }
+
+    if (programOptions.buildMapBg)
+    {
+        buildMapAffineBackground(srcImage, programOptions.fileName);
         return 0;
     }
 
@@ -179,10 +208,10 @@ int main(int _argc, const char** _argv)
         return -1;
     }
 
-    buildTiles(srcImage, palette, tileData);
+    palettize(srcImage, palette, tileData);
 
     // Write into a header
-    std::ofstream ss(fileName + ".cpp");
+    std::ofstream ss(programOptions.fileName + ".cpp");
     ss << "#include <cstdint>\n\n";
     size_t palette32Size = palette.size() / 2;
     ss << "extern const uint32_t fontPalette[" << palette32Size << "] = {\n";

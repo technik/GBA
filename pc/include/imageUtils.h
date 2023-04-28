@@ -239,7 +239,7 @@ inline void buildPalette(const RawImage& srcImage, std::vector<uint16_t>& palett
     }
 }
 
-inline void buildTiles(const RawImage& srcImage, const std::vector<uint16_t>& palette, std::vector<uint8_t>& outTiles)
+inline void palettize(const RawImage& srcImage, const std::vector<uint16_t>& palette, std::vector<uint8_t>& outTiles)
 {
     for (int j = 0; j < srcImage.height; j += 8)
     {
