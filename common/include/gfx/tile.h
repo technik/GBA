@@ -30,9 +30,13 @@ namespace gfx
 		
 		void fill(uint8_t ndx) volatile
 		{
-			for(int i = 0; i < 32; ++i)
+			uint32_t row = (ndx|(ndx<<4));
+			row |= row<<8;
+			row |= row<<16;
+			auto dst = reinterpret_cast<volatile uint32_t*>(pixelPair);
+			for(int i = 0; i < 8; ++i)
 			{
-				pixelPair[i] = (ndx|(ndx<<4));
+				dst[i] = row;
 			}
 		}
 	};
@@ -53,7 +57,8 @@ namespace gfx
 				pixel[i] = ndx;
 			}
 		}
-
+#pragma GCC push_options
+#pragma GCC optimize ("O0")
 		void fill(uint8_t ndx) volatile
 		{
 			for(int i = 0; i < 64; ++i)
@@ -61,6 +66,7 @@ namespace gfx
 				pixel[i] = ndx;
 			}
 		}
+#pragma GCC pop_options
 
 		void borderTile(uint8_t centerColor, uint8_t borderColor) volatile
 		{
@@ -104,8 +110,8 @@ namespace gfx
 		// Returns the DTile index
 		uint32_t allocDTiles(uint32_t size);
 
-		STile& GetSTile(uint32_t index);
-		DTile& GetDTile(uint32_t index);
+		volatile STile& GetSTile(uint32_t index);
+		volatile DTile& GetDTile(uint32_t index);
 
 		static TileBank& GetBank(uint32_t bankIndex);
 

@@ -24,27 +24,66 @@
 using namespace math;
 using namespace gfx;
 
-void InitGraphics()
+struct Billboard
 {
-	// Init bg palette:
+	Billboard()
+	{
+		// Alloc tiles
+		//auto& tileBank = gfx::TileBank::GetBank(gfx::TileBank::LowSpriteBank);
+		auto& tileBank = gfx::TileBank::GetBank(4);
+		constexpr auto spriteShape = Sprite::Shape::square16x16;
+		constexpr auto numTiles = Sprite::GetNumTiles(spriteShape);
+		m_tileNdx = tileBank.allocSTiles(numTiles);
+
+		// Init sprite
+		m_sprite = Sprite::ObjectAllocator::alloc(1);
+		m_sprite->Configure(Sprite::ObjectMode::Normal, Sprite::GfxMode::Normal, Sprite::ColorMode::Palette16, spriteShape);
+		m_sprite->SetNonAffineTransform(false, false, spriteShape);
+		m_sprite->setTiles(m_tileNdx);
+		m_sprite->setPos(120-8, 80-8);
+
+		// Draw into the tiles
+		for(uint32_t t = 0; t < numTiles; ++t)
+		{
+			tileBank.GetSTile(m_tileNdx + t).fill(4+t);
+			//auto& tile = tileBank.GetDTile(m_tileNdx + t).fill(4+t);
+			//tile.fill(4+t); // Mid gray?
+		}
+	}
+
+	bool m_visible = true;
+	volatile Sprite::Object* m_sprite {};
+	uint32_t m_tileNdx = 0;
+};
+
+template<typename Palette>
+void GenerateBasicPalette()
+{
 	// The first 16 colors store full bright primary colors
-	auto primaries = gfx::BackgroundPalette::Allocator::alloc(15);
+	auto primaries = Palette::Allocator::alloc(15);
 	// Some basic colors
-	gfx::BackgroundPalette::color(primaries + 0) = BasicColor::Red;
-	gfx::BackgroundPalette::color(primaries + 1) = BasicColor::Green;
-	gfx::BackgroundPalette::color(primaries + 2) = BasicColor::Blue;
-	gfx::BackgroundPalette::color(primaries + 3) = BasicColor::Orange;
-	gfx::BackgroundPalette::color(primaries + 4) = BasicColor::Yellow;
-	gfx::BackgroundPalette::color(primaries + 5) = BasicColor::Purple;
-	gfx::BackgroundPalette::color(primaries + 6) = BasicColor::Pink;
-	gfx::BackgroundPalette::color(primaries + 7) = BasicColor::LightGrey;
-	gfx::BackgroundPalette::color(primaries + 8) = BasicColor::SkyBlue;
+	Palette::color(primaries + 0) = BasicColor::Red;
+	Palette::color(primaries + 1) = BasicColor::Green;
+	Palette::color(primaries + 2) = BasicColor::Blue;
+	Palette::color(primaries + 3) = BasicColor::Orange;
+	Palette::color(primaries + 4) = BasicColor::Yellow;
+	Palette::color(primaries + 5) = BasicColor::Purple;
+	Palette::color(primaries + 6) = BasicColor::Pink;
+	Palette::color(primaries + 7) = BasicColor::LightGrey;
+	Palette::color(primaries + 8) = BasicColor::SkyBlue;
 	// Setup a greyscale
-	auto greyScale = gfx::BackgroundPalette::Allocator::alloc(32);
+	auto greyScale = Palette::Allocator::alloc(32);
 	for(auto i = 0; i < 32; ++i)
 	{
-		gfx::BackgroundPalette::color(greyScale + i) = Color(i,i,i); 
+		Palette::color(greyScale + i) = Color(i,i,i); 
 	}
+}
+
+void InitGraphics()
+{
+	// Init palettes
+	GenerateBasicPalette<gfx::BackgroundPalette>();
+	GenerateBasicPalette<gfx::SpritePalette>();
 
 	// Set up mode 0, 256x256 tiles, 256 color palette
 	Display().SetMode<0, DisplayControl::BG0>();
@@ -68,17 +107,42 @@ void loadMapData()
 	}
 }
 
+void cleanSprites()
+{
+	Sprite::Object nullSprite;
+	nullSprite.hide();
+	for(int i = 0; i < 128; ++i)
+	{
+		auto dst = reinterpret_cast<uint32_t*>(&Sprite::OAM_Objects()[i]);
+		memcpy(dst, &nullSprite, sizeof(Sprite::Object));
+	}
+}
+
+void loadPlayerSprite()
+{
+	//
+}
+
 int main()
 {
+	irq_init(NULL);
+	// and vblank int for vsync
+	irq_add(II_VBLANK, NULL);
 	// Full resolution, paletized color mode.
 	Display().StartBlank();
 
 	InitGraphics();
 	loadMapTileSet();
 	loadMapData();
+	cleanSprites();
+	Display().enableSprites();
+	//memcpy((void*)0x6010000, "aabbaabbcc", 8);
+	auto player = Billboard();
 
 	// Unlock the display and start rendering
 	Display().EndBlank();
+
+	VBlankIntrWait();
 
 	// main loop
 	while (1)

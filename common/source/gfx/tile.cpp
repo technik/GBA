@@ -52,14 +52,14 @@ namespace gfx
 		return pos0;
 	}
 
-	STile& TileBank::GetSTile(uint32_t index)
+	volatile STile& TileBank::GetSTile(uint32_t index)
 	{
-		return reinterpret_cast<STile*>(mBaseAddress)[index];
+		return reinterpret_cast<volatile STile*>(mBaseAddress)[index];
 	}
 
-	DTile& TileBank::GetDTile(uint32_t index)
+	volatile DTile& TileBank::GetDTile(uint32_t index)
 	{
-		return reinterpret_cast<DTile*>(mBaseAddress)[index];
+		return reinterpret_cast<volatile DTile*>(mBaseAddress)[index];
 	}
 
 	TileBank& TileBank::GetBank(uint32_t bankIndex)
