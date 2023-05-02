@@ -37,7 +37,7 @@ namespace gfx
 		return pos;
 	}
 
-	// Allocate small tiles where each dot is 8 bits.
+	// Allocate full tiles where each dot is 8 bits.
 	// This type of tile uses a regular palette
 	// Returns the DTile index
 	uint32_t TileBank::allocDTiles(uint32_t size)

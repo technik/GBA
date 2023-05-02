@@ -106,7 +106,7 @@ namespace gfx
 		// Returns the STile index
 		uint32_t allocSTiles(uint32_t size);
 
-		// Allocate small tiles where each dot is only 4 bits.
+		// Allocate full tiles where each dot is 8 bits.
 		// Returns the DTile index
 		uint32_t allocDTiles(uint32_t size);
 
