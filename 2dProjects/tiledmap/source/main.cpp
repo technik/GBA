@@ -60,7 +60,7 @@ private:
 
 struct Billboard
 {
-	Billboard(uint16_t colorNdx, int32_t x, int32_t y)
+	Billboard(uint16_t colorNdx, Vec2i pos)
 	{
 		// Alloc tiles
 		auto& tileBank = gfx::TileBank::GetBank(gfx::TileBank::LowSpriteBank);
@@ -72,7 +72,7 @@ struct Billboard
 		m_sprite.Configure(Sprite::ObjectMode::Normal, Sprite::GfxMode::Normal, Sprite::ColorMode::Palette256, spriteShape);
 		m_sprite.SetNonAffineTransform(false, false, spriteShape);
 		m_sprite.setDTiles(m_tileNdx);
-		m_sprite.setPos(x, y);
+		m_sprite.setPos(pos.x, pos.y);
 
 		// Draw into the tiles
 		for(uint32_t t = 0; t < numTiles; ++t)
@@ -176,8 +176,10 @@ int main()
 	loadMapData();
 	cleanSprites();
 	Display().enableSprites();
-	auto player = Billboard(30, 120-8, 80-8);
-	auto tree = Billboard(25, 180-8, 70-8);
+
+	Vec2i playerPos = {120-8, 80-8};
+	auto player = Billboard(30, playerPos);
+	auto tree = Billboard(25, {180-8, 70-8});
 	SpriteLinearAllocator spriteAlloc(32);
 
 	// Unlock the display and start rendering
@@ -186,6 +188,28 @@ int main()
 	// main loop
 	while (1)
 	{
+		Keypad::Update();
+		if(Keypad::Held(Keypad::LEFT))
+		{
+			playerPos.x -= 1;
+		}
+		if(Keypad::Held(Keypad::RIGHT))
+		{
+			playerPos.x += 1;
+		}
+		playerPos.x = max(0, min(240-16, playerPos.x));
+		
+		if(Keypad::Held(Keypad::UP))
+		{
+			playerPos.y -= 1;
+		}
+		if(Keypad::Held(Keypad::DOWN))
+		{
+			playerPos.y += 1;
+		}
+		playerPos.y = max(0, min(160-16, playerPos.y));
+		player.m_sprite.setPos(playerPos.x, playerPos.y);
+
 		spriteAlloc.reset();
 
 		VBlankIntrWait();
