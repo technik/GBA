@@ -57,16 +57,18 @@ namespace gfx
 				pixel[i] = ndx;
 			}
 		}
-#pragma GCC push_options
-#pragma GCC optimize ("O0")
+		
 		void fill(uint8_t ndx) volatile
 		{
-			for(int i = 0; i < 64; ++i)
+			uint32_t halfRow = ndx;
+			halfRow |= halfRow<<8;
+			halfRow |= halfRow<<16;
+			auto dst = reinterpret_cast<volatile uint32_t*>(pixel);
+			for(int i = 0; i < 16; ++i)
 			{
-				pixel[i] = ndx;
+				dst[i] = halfRow;
 			}
 		}
-#pragma GCC pop_options
 
 		void borderTile(uint8_t centerColor, uint8_t borderColor) volatile
 		{

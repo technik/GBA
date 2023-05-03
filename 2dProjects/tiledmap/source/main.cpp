@@ -32,21 +32,20 @@ struct Billboard
 		auto& tileBank = gfx::TileBank::GetBank(gfx::TileBank::LowSpriteBank);
 		constexpr auto spriteShape = Sprite::Shape::square16x16;
 		constexpr auto numTiles = Sprite::GetNumTiles(spriteShape);
-		m_tileNdx = tileBank.allocSTiles(numTiles);
+		m_tileNdx = tileBank.allocDTiles(numTiles);
 
 		// Init sprite
 		m_sprite = Sprite::ObjectAllocator::alloc(1);
-		m_sprite->Configure(Sprite::ObjectMode::Normal, Sprite::GfxMode::Normal, Sprite::ColorMode::Palette16, spriteShape);
+		m_sprite->Configure(Sprite::ObjectMode::Normal, Sprite::GfxMode::Normal, Sprite::ColorMode::Palette256, spriteShape);
 		m_sprite->SetNonAffineTransform(false, false, spriteShape);
-		m_sprite->setSTiles(m_tileNdx, 1);
+		m_sprite->setDTiles(m_tileNdx);
 		m_sprite->setPos(120-8, 80-8);
 
 		// Draw into the tiles
 		for(uint32_t t = 0; t < numTiles; ++t)
 		{
-			tileBank.GetSTile(m_tileNdx + t).fill(14);
-			//auto& tile = tileBank.GetDTile(m_tileNdx + t).fill(4+t);
-			//tile.fill(4+t); // Mid gray?
+			auto& tile = tileBank.GetDTile(m_tileNdx + t);
+			tile.fill(30); // Mid gray
 		}
 	}
 
