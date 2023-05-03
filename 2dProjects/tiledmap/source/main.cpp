@@ -39,13 +39,13 @@ struct Billboard
 		m_sprite = Sprite::ObjectAllocator::alloc(1);
 		m_sprite->Configure(Sprite::ObjectMode::Normal, Sprite::GfxMode::Normal, Sprite::ColorMode::Palette16, spriteShape);
 		m_sprite->SetNonAffineTransform(false, false, spriteShape);
-		m_sprite->setTiles(m_tileNdx);
+		m_sprite->setTiles(m_tileNdx, 1);
 		m_sprite->setPos(120-8, 80-8);
 
 		// Draw into the tiles
 		for(uint32_t t = 0; t < numTiles; ++t)
 		{
-			tileBank.GetSTile(m_tileNdx + t).fill(4+t);
+			tileBank.GetSTile(m_tileNdx + t).fill(14);
 			//auto& tile = tileBank.GetDTile(m_tileNdx + t).fill(4+t);
 			//tile.fill(4+t); // Mid gray?
 		}
