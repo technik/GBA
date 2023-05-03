@@ -35,10 +35,10 @@ void TextSystem::Init()
 void TextSystem::writeNumbers(const uint8_t* str, Sprite::Object* dst, uint32_t n)
 {
 #ifdef GBA
-    constexpr uint32_t kHighBankDTileOffset = 512;
+    constexpr uint32_t kHighBankDTileOffset = 256;
     for(uint32_t i = 0; i < n; ++i)
     {
-        dst[i].setTiles((2*str[i]+mTileStart) + 32 + kHighBankDTileOffset, 0);
+        dst[i].setDTiles(str[i]+mTileStart + 16 + kHighBankDTileOffset);
     }
 #endif
 }

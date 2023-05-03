@@ -94,12 +94,19 @@ struct Sprite
 				((uint16_t(size)>>2)<<14);
 		}
 
-		inline void setTiles(uint32_t firstTile, uint32_t subPalette = 0, uint32_t priority = 0) volatile
+		inline void setSTiles(uint32_t firstTile, uint32_t subPalette = 0, uint32_t priority = 0) volatile
 		{
 			attribute[2] = 
 				(firstTile&0x3ff) | // Bits 0-9, tile number (0-1023)
 				(priority&3)<<10 | // Priority relative to BG
 				(subPalette&0x0f)<<12; // Palette index
+		}
+
+		inline void setDTiles(uint32_t firstTile, uint32_t priority = 0) volatile
+		{
+			attribute[2] = 
+				((firstTile*2)&0x3ff) | // Bits 0-9, tile number (0-1023)
+				(priority&3)<<10; // Priority relative to BG
 		}
 		
 		inline void setPos(int32_t x, int32_t y) volatile

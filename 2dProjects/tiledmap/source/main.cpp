@@ -29,8 +29,7 @@ struct Billboard
 	Billboard()
 	{
 		// Alloc tiles
-		//auto& tileBank = gfx::TileBank::GetBank(gfx::TileBank::LowSpriteBank);
-		auto& tileBank = gfx::TileBank::GetBank(4);
+		auto& tileBank = gfx::TileBank::GetBank(gfx::TileBank::LowSpriteBank);
 		constexpr auto spriteShape = Sprite::Shape::square16x16;
 		constexpr auto numTiles = Sprite::GetNumTiles(spriteShape);
 		m_tileNdx = tileBank.allocSTiles(numTiles);
@@ -39,7 +38,7 @@ struct Billboard
 		m_sprite = Sprite::ObjectAllocator::alloc(1);
 		m_sprite->Configure(Sprite::ObjectMode::Normal, Sprite::GfxMode::Normal, Sprite::ColorMode::Palette16, spriteShape);
 		m_sprite->SetNonAffineTransform(false, false, spriteShape);
-		m_sprite->setTiles(m_tileNdx, 1);
+		m_sprite->setSTiles(m_tileNdx, 1);
 		m_sprite->setPos(120-8, 80-8);
 
 		// Draw into the tiles
@@ -136,7 +135,6 @@ int main()
 	loadMapData();
 	cleanSprites();
 	Display().enableSprites();
-	//memcpy((void*)0x6010000, "aabbaabbcc", 8);
 	auto player = Billboard();
 
 	// Unlock the display and start rendering
