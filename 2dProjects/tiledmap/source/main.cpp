@@ -24,6 +24,40 @@
 using namespace math;
 using namespace gfx;
 
+class SpriteLinearAllocator
+{
+public:
+	SpriteLinearAllocator(uint8_t capacity)
+		: m_Capacity(capacity)
+	{
+		m_Start = Sprite::ObjectAllocator::alloc(m_Capacity);
+		m_Next = 0;
+	}
+
+	void reset()
+	{
+		m_Next = 0;
+	}
+
+	// Allocate Sprite Objects in OAM memory
+	Sprite::Object* alloc(uint32_t n)
+	{
+		if(m_Next+n > m_Capacity)
+		{
+			return nullptr; // Out of memory.
+		}
+		auto pos = m_Next;
+		m_Next += n;
+		return &m_Start[pos];
+	}
+
+private:
+
+	Sprite::Object* m_Start = 0;
+	uint8_t m_Next = 0;
+	uint8_t m_Capacity;
+};
+
 struct Billboard
 {
 	Billboard()
@@ -34,12 +68,11 @@ struct Billboard
 		constexpr auto numTiles = Sprite::GetNumTiles(spriteShape);
 		m_tileNdx = tileBank.allocDTiles(numTiles);
 
-		// Init sprite
-		m_sprite = Sprite::ObjectAllocator::alloc(1);
-		m_sprite->Configure(Sprite::ObjectMode::Normal, Sprite::GfxMode::Normal, Sprite::ColorMode::Palette256, spriteShape);
-		m_sprite->SetNonAffineTransform(false, false, spriteShape);
-		m_sprite->setDTiles(m_tileNdx);
-		m_sprite->setPos(120-8, 80-8);
+		// Init shadow sprite
+		m_sprite.Configure(Sprite::ObjectMode::Normal, Sprite::GfxMode::Normal, Sprite::ColorMode::Palette256, spriteShape);
+		m_sprite.SetNonAffineTransform(false, false, spriteShape);
+		m_sprite.setDTiles(m_tileNdx);
+		m_sprite.setPos(120-8, 80-8);
 
 		// Draw into the tiles
 		for(uint32_t t = 0; t < numTiles; ++t)
@@ -49,8 +82,17 @@ struct Billboard
 		}
 	}
 
+	void Render(SpriteLinearAllocator& spriteAlloc)
+	{
+		auto* dst = spriteAlloc.alloc(1);
+		if(dst)
+		{
+			memcpy(dst, &m_sprite, sizeof(Sprite::Object));
+		}
+	}
+
 	bool m_visible = true;
-	volatile Sprite::Object* m_sprite {};
+	Sprite::Object m_sprite;
 	uint32_t m_tileNdx = 0;
 };
 
@@ -135,15 +177,19 @@ int main()
 	cleanSprites();
 	Display().enableSprites();
 	auto player = Billboard();
+	SpriteLinearAllocator spriteAlloc(32);
 
 	// Unlock the display and start rendering
 	Display().EndBlank();
 
-	VBlankIntrWait();
-
 	// main loop
 	while (1)
 	{
+		spriteAlloc.reset();
+		
+		VBlankIntrWait();
+
+		player.Render(spriteAlloc);
 	}
 	return 0;
 }
