@@ -60,7 +60,7 @@ private:
 
 struct Billboard
 {
-	Billboard()
+	Billboard(uint16_t colorNdx, int32_t x, int32_t y)
 	{
 		// Alloc tiles
 		auto& tileBank = gfx::TileBank::GetBank(gfx::TileBank::LowSpriteBank);
@@ -72,13 +72,13 @@ struct Billboard
 		m_sprite.Configure(Sprite::ObjectMode::Normal, Sprite::GfxMode::Normal, Sprite::ColorMode::Palette256, spriteShape);
 		m_sprite.SetNonAffineTransform(false, false, spriteShape);
 		m_sprite.setDTiles(m_tileNdx);
-		m_sprite.setPos(120-8, 80-8);
+		m_sprite.setPos(x, y);
 
 		// Draw into the tiles
 		for(uint32_t t = 0; t < numTiles; ++t)
 		{
 			auto& tile = tileBank.GetDTile(m_tileNdx + t);
-			tile.fill(30); // Mid gray
+			tile.fill(colorNdx);
 		}
 	}
 
@@ -176,7 +176,8 @@ int main()
 	loadMapData();
 	cleanSprites();
 	Display().enableSprites();
-	auto player = Billboard();
+	auto player = Billboard(30, 120-8, 80-8);
+	auto tree = Billboard(25, 180-8, 70-8);
 	SpriteLinearAllocator spriteAlloc(32);
 
 	// Unlock the display and start rendering
@@ -186,10 +187,11 @@ int main()
 	while (1)
 	{
 		spriteAlloc.reset();
-		
+
 		VBlankIntrWait();
 
 		player.Render(spriteAlloc);
+		tree.Render(spriteAlloc);
 	}
 	return 0;
 }
