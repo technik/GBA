@@ -132,10 +132,21 @@ void buildMapAffineBackground(const RawImage& srcImage, const std::string& input
     std::cout << "Map Size: " << palettizedMap.width << "x" << palettizedMap.height << "\n";
 }
 
+enum class ColorFormat
+{
+    e15bit,
+    e256,
+    e16
+};
+
 struct ProgramOptions
 {
     bool buildMapBg = false;
     bool breakdownTiles = false;
+    bool palettize = false;
+    ColorFormat targetColor = ColorFormat::e256;
+    std::string output;
+
     std::string fileName;
 
     bool processArguments(int _argc, const char** _argv)
@@ -161,9 +172,70 @@ struct ProgramOptions
             }
         }
 
+        if(output.empty() && !fileName.empty())
+        {
+            output = fileName.substr(0, fileName.find_last_of('.'));
+        }
+
         return true;
     }
 };
+
+template<class T>
+void dumpRawData(std::vector<T>& typedData, std::ostream& dst)
+{
+    std::vector<uint32_t> data;
+    data.resize((typedData.size() * sizeof(T) + sizeof(uint32_t) - 1) / sizeof(uint32_t), 0);
+    memcpy(data.data(), typedData.data(), typedData.size() * sizeof(T));
+
+    // Pad data
+    auto rest = data.size() % 16;
+    if (rest > 0 || data.size() == 0)
+    {
+        auto pad = 16 - rest;
+        data.resize(data.size() + pad, 0);
+    }
+
+    int i = 0;
+    for (int i = 0; i < data.size() - 16; i += 16)
+    {
+        dst << "\t"
+            << (uint32_t)data[i + 0] << ", "
+            << (uint32_t)data[i + 1] << ", "
+            << (uint32_t)data[i + 2] << ", "
+            << (uint32_t)data[i + 3] << ", "
+            << (uint32_t)data[i + 4] << ", "
+            << (uint32_t)data[i + 5] << ", "
+            << (uint32_t)data[i + 6] << ", "
+            << (uint32_t)data[i + 7] << ", "
+            << (uint32_t)data[i + 8] << ", "
+            << (uint32_t)data[i + 9] << ", "
+            << (uint32_t)data[i + 10] << ", "
+            << (uint32_t)data[i + 11] << ", "
+            << (uint32_t)data[i + 12] << ", "
+            << (uint32_t)data[i + 13] << ", "
+            << (uint32_t)data[i + 14] << ", "
+            << (uint32_t)data[i + 15] << ",\n";
+    }
+
+    dst << "\t"
+        << (uint32_t)data[i + 0] << ", "
+        << (uint32_t)data[i + 1] << ", "
+        << (uint32_t)data[i + 2] << ", "
+        << (uint32_t)data[i + 3] << ", "
+        << (uint32_t)data[i + 4] << ", "
+        << (uint32_t)data[i + 5] << ", "
+        << (uint32_t)data[i + 6] << ", "
+        << (uint32_t)data[i + 7] << ", "
+        << (uint32_t)data[i + 8] << ", "
+        << (uint32_t)data[i + 9] << ", "
+        << (uint32_t)data[i + 10] << ", "
+        << (uint32_t)data[i + 11] << ", "
+        << (uint32_t)data[i + 12] << ", "
+        << (uint32_t)data[i + 13] << ", "
+        << (uint32_t)data[i + 14] << ", "
+        << (uint32_t)data[i + 15] << ",\n};\n\n";
+}
 
 int main(int _argc, const char** _argv)
 {
@@ -187,34 +259,35 @@ int main(int _argc, const char** _argv)
         return -1;
     }
 
-    if (programOptions.breakdownTiles)
-    {
-        //
-    }
-
+    // Legacy option for affine backgrounds
     if (programOptions.buildMapBg)
     {
         buildMapAffineBackground(srcImage, programOptions.fileName);
         return 0;
     }
 
+    // Discretize colors
+    Image16bit image16 = Image16bit(srcImage);
+
     // Palettize
-    std::vector<uint16_t> palette;
-    std::vector<uint8_t> tileData;
-    buildPalette(srcImage, palette);
-    if (palette.size() > 255)
+    PaletteImage8 palettizedImage;
+    if (!buildPalette(image16, palettizedImage, programOptions.output + "-palette.png"))
     {
-        std::cout << "Too many unique colors. Image exceeds the 256 color palette\n";
         return -1;
     }
+    std::vector<Color16b>& palette = palettizedImage.palette;
 
-    palettize(srcImage, palette, tileData);
-
+    // Break image into tiles
+    std::vector<gfx::DTile> tiles;
+    std::vector<uint16_t> tileMap;
+    palettizedImage.breakIntoTiles(tiles, tileMap);
+    
     // Write into a header
-    std::ofstream ss(programOptions.fileName + ".cpp");
+    std::string tag = programOptions.output;
+    std::ofstream ss(tag + ".cpp");
     ss << "#include <cstdint>\n\n";
     size_t palette32Size = palette.size() / 2;
-    ss << "extern const uint32_t fontPalette[" << palette32Size << "] = {\n";
+    ss << "extern const uint32_t " << tag << "Palette[" << palette32Size << "] = {\n";
     auto* palette32 = reinterpret_cast<const uint32_t*>(palette.data());
     for (int i = 0; i < palette32Size - 1; ++i)
     {
@@ -223,50 +296,20 @@ int main(int _argc, const char** _argv)
 
     ss << "\t" << palette32[palette32Size-1] << "\n};\n\n";
 
-    size_t tile32Size = tileData.size() / 4;
-    ss << "extern const uint32_t fontTileDataSize = " << tile32Size << ";\n";
 
-    auto tile32 = reinterpret_cast<const uint32_t*>(tileData.data());
-    ss << "extern const uint32_t fontTileData[" << tile32Size << "] = {\n";
-    int i = 0;
-    for (int i = 0; i < tile32Size - 16; i+=16)
-    {
-        ss << "\t"
-            << (int)tile32[i + 0] << ", "
-            << (int)tile32[i + 1] << ", "
-            << (int)tile32[i + 2] << ", "
-            << (int)tile32[i + 3] << ", "
-            << (int)tile32[i + 4] << ", "
-            << (int)tile32[i + 5] << ", "
-            << (int)tile32[i + 6] << ", "
-            << (int)tile32[i + 7] << ", "
-            << (int)tile32[i + 8] << ", "
-            << (int)tile32[i + 9] << ", "
-            << (int)tile32[i +10] << ", "
-            << (int)tile32[i +11] << ", "
-            << (int)tile32[i +12] << ", "
-            << (int)tile32[i +13] << ", "
-            << (int)tile32[i +14] << ", "
-            << (int)tile32[i +15] << ",\n";
-    }
+    size_t tile32Size = tiles.size() * sizeof(gfx::DTile) / 4;
+    ss << "extern const uint32_t " << tag << "TileSize = " << tile32Size << ";\n";
 
-    ss << "\t"
-        << (int)tile32[i + 0] << ", "
-        << (int)tile32[i + 1] << ", "
-        << (int)tile32[i + 2] << ", "
-        << (int)tile32[i + 3] << ", "
-        << (int)tile32[i + 4] << ", "
-        << (int)tile32[i + 5] << ", "
-        << (int)tile32[i + 6] << ", "
-        << (int)tile32[i + 7] << ", "
-        << (int)tile32[i + 8] << ", "
-        << (int)tile32[i + 9] << ", "
-        << (int)tile32[i + 10] << ", "
-        << (int)tile32[i + 11] << ", "
-        << (int)tile32[i + 12] << ", "
-        << (int)tile32[i + 13] << ", "
-        << (int)tile32[i + 14] << ", "
-        << (int)tile32[i + 15] << ",\n};\n\n";
+    ss << "extern const uint32_t " << tag << "TileData[" << tile32Size << "] = {\n";    
+    dumpRawData(tiles, ss);
+
+    tile32Size = tileMap.size() * sizeof(uint16_t) / 4;
+    ss << "extern const uint32_t " << tag << "TileMapSize = " << tile32Size << ";\n";
+
+    ss << "extern const uint32_t " << tag << "TileMapData[" << tile32Size << "] = {\n";
+    dumpRawData(tileMap, ss);
+
+    ss << "}; \n\n";
 
     return 0;
 }

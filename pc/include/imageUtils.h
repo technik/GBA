@@ -38,6 +38,16 @@ struct Color16b
     {
         c = x.a ? ((x.r >> 3) | ((x.g >> 3) << 5) | ((x.b >> 3) << 10) | (1 << 15)) : 0;
     }
+
+    static Color16b transparent()
+    {
+        Color16b result;
+        result.c = 0;
+        return result;
+    }
+
+    bool operator==(const Color16b& x) const { return x.c == c; }
+    bool operator<(const Color16b& x) const { return c < x.c; }
 };
 
 inline auto img_deleter = [](Color4f* ptr)
@@ -169,7 +179,7 @@ struct PaletteImage8
         // Prepare the palette
         std::unordered_map<uint16_t, size_t> paletteMap;
         // The first color is reserved for transparency
-        palette.push_back(Color16b({ 0,0,0,0 }));
+        palette.push_back(Color16b::transparent());
         paletteMap[0] = 0;
 
         // Translate pixels as we build the palette
@@ -217,29 +227,67 @@ struct PaletteImage8
         return result;
     }
 
+    void breakIntoTiles(std::vector<gfx::DTile>& tiles, std::vector<uint16_t>& tileMap)
+    {
+        int xTiles = width / 8;
+        int yTiles = height / 8;
+
+        auto hasher = [](const gfx::DTile& tile)
+        {
+            return XXH64(tile.pixel, 64, 0);
+        };
+        std::unordered_map<gfx::DTile, uint64_t, decltype(hasher)> tileIndex;
+
+        for (int y = 0; y < yTiles; ++y)
+        {
+            for (int x = 0; x < xTiles; ++x)
+            {
+                auto tile = getTile(x * 8, y * 8);
+                auto iter = tileIndex.find(tile);
+
+                if (iter != tileIndex.end())
+                {
+                    tileMap.push_back(iter->second);
+                }
+                else
+                {
+                    auto nextIndex = tiles.size();
+                    tileMap.push_back(nextIndex);
+                    tileIndex[tile] = nextIndex;
+                    tiles.push_back(tile);
+                }
+            }
+        }
+    }
+
     int area() const { return width * height; }
     bool empty() const { return area() == 0; }
 };
 
-inline void buildPalette(const RawImage& srcImage, std::vector<uint16_t>& palette)
+inline bool buildPalette(const Image16bit& srcImage, PaletteImage8& dstImage, const std::string& dstFile)
 {
-    int numPixels = srcImage.area();
+    dstImage = PaletteImage8(srcImage);
+    const auto& palette = dstImage.palette;
 
-    for (int i = 0; i < numPixels; ++i)
+    if (palette.size() > 256)
     {
-        const auto* p = &srcImage.data[4 * i];
-        if (p->a == 0) // Transparent pixel, not used in the palette.
-            continue;
-
-        Color16b c = *p;
-        if (std::find(palette.begin(), palette.end(), c.c) == palette.end())
-        {
-            palette.push_back(c.c);
-        }
+        std::cout << "Too many unique colors. Image exceeds the 256 color palette\n";
+        return false;
     }
+
+    std::cout << "Palette has " << palette.size() << " colors\n";
+
+    // Save palette into an image for debugging
+    Image16bit paletteImage;
+    paletteImage.resize(16, 16);
+    paletteImage.pixels = palette;
+    paletteImage.pixels.resize(256, Color16b::transparent()); // Padd the end of the image with transparent color
+    paletteImage.save(dstFile.c_str());
+
+    return true;
 }
 
-inline void palettize(const RawImage& srcImage, const std::vector<uint16_t>& palette, std::vector<uint8_t>& outTiles)
+inline void palettize(const RawImage& srcImage, const std::vector<Color16b>& palette, std::vector<uint8_t>& outTiles)
 {
     for (int j = 0; j < srcImage.height; j += 8)
     {
@@ -257,8 +305,8 @@ inline void palettize(const RawImage& srcImage, const std::vector<uint16_t>& pal
                     }
 
                     Color16b c = *p;
-                    uint8_t index = std::find(palette.begin(), palette.end(), c.c) - palette.begin();
-                    outTiles.push_back(index + 1); // avoid 0
+                    uint8_t index = std::find(palette.begin(), palette.end(), c) - palette.begin();
+                    outTiles.push_back(index); // avoid 0
                 }
             }
         }
