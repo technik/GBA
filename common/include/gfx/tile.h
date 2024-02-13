@@ -114,6 +114,7 @@ namespace gfx
 
 		volatile STile& GetSTile(uint32_t index);
 		volatile DTile& GetDTile(uint32_t index);
+		void* GetDTileMemory(uint32_t index);
 
 		static TileBank& GetBank(uint32_t bankIndex);
 

@@ -62,6 +62,11 @@ namespace gfx
 		return reinterpret_cast<volatile DTile*>(mBaseAddress)[index];
 	}
 
+	void* TileBank::GetDTileMemory(uint32_t index)
+	{
+		return (void*)&(reinterpret_cast<DTile*>(mBaseAddress)[index]);
+	}
+
 	TileBank& TileBank::GetBank(uint32_t bankIndex)
 	{
 		return gTileBanks[bankIndex];

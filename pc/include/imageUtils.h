@@ -107,7 +107,7 @@ struct Image16bit
     {
         width = x;
         height = y;
-        pixels.resize(area());
+        pixels.resize(area(), Color16b({0,0,0,0}));
     }
 
     int area() const { return width * height; }
@@ -128,6 +128,42 @@ struct Image16bit
             color.b = b << 3 | b >> 2;
         }
         stbi_write_png(fileName, width, height, 3, expandedColor.data(), width * sizeof(Color3f));
+    }
+
+    void setTile(
+        int tileX, int tileY,
+        const gfx::DTile& tile,
+        const std::vector<Color16b>& palette)
+    {
+        for (int j = 0; j < 8; ++j)
+        {
+            int y = j + 8 * tileY;
+            for (int i = 0; i < 8; ++i)
+            {
+                int x = i + 8 * tileX;
+                auto paletteNdx = tile.pixel[i + 8 * j];
+                this->at(x, y) = palette[paletteNdx];
+            }
+        }
+    }
+
+    void InitFromTileSet(
+        const std::vector<gfx::DTile>& tiles,
+        const std::vector<Color16b>& palette)
+    {
+        int numRows = (tiles.size() + 31) / 32;
+        resize(8 * 32, 8 * numRows);
+
+        int tileNdx = 0;
+        for(int i = 0; i < numRows; ++i)
+        {
+            for (int j = 0; j < 32; ++j)
+            {
+                if (tileNdx >= tiles.size())
+                    return;
+                setTile(j, i, tiles[tileNdx++], palette);
+            }
+        }
     }
 };
 

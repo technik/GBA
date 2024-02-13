@@ -144,6 +144,7 @@ struct ProgramOptions
     bool buildMapBg = false;
     bool breakdownTiles = false;
     bool palettize = false;
+    bool saveTilemap = false;
     ColorFormat targetColor = ColorFormat::e256;
     std::string output;
 
@@ -169,6 +170,10 @@ struct ProgramOptions
             else if (argi == "--tileset")
             {
                 breakdownTiles = true;
+            }
+            else if (argi == "--out" && i+1 < _argc)
+            {
+                output = _argv[++i];
             }
         }
 
@@ -281,9 +286,14 @@ int main(int _argc, const char** _argv)
     std::vector<gfx::DTile> tiles;
     std::vector<uint16_t> tileMap;
     palettizedImage.breakIntoTiles(tiles, tileMap);
+
+    // Save tiles
+    std::string tag = programOptions.output;
+    Image16bit tilesetImg;
+    tilesetImg.InitFromTileSet(tiles, palette);
+    tilesetImg.save((tag + "-Tileset.png").c_str());
     
     // Write into a header
-    std::string tag = programOptions.output;
     std::ofstream ss(tag + ".cpp");
     ss << "#include <cstdint>\n\n";
     size_t palette32Size = palette.size() / 2;
@@ -303,13 +313,17 @@ int main(int _argc, const char** _argv)
     ss << "extern const uint32_t " << tag << "TileData[" << tile32Size << "] = {\n";    
     dumpRawData(tiles, ss);
 
-    tile32Size = tileMap.size() * sizeof(uint16_t) / 4;
-    ss << "extern const uint32_t " << tag << "TileMapSize = " << tile32Size << ";\n";
+    ss << "extern const uint32_t " << tag << "TileCount = " << tiles.size() << ";\n";
 
-    ss << "extern const uint32_t " << tag << "TileMapData[" << tile32Size << "] = {\n";
-    dumpRawData(tileMap, ss);
+    if (programOptions.saveTilemap)
+    {
+        tile32Size = tileMap.size() * sizeof(uint16_t) / 4;
+        ss << "extern const uint32_t " << tag << "TileMapSize = " << tile32Size << ";\n";
 
-    ss << "}; \n\n";
+        ss << "extern const uint32_t " << tag << "TileMapData[" << tile32Size << "] = {\n";
+        dumpRawData(tileMap, ss);
+    }
+
 
     return 0;
 }

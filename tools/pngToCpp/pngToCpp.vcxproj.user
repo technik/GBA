@@ -11,7 +11,7 @@
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>tale-bg3.png --tileset</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>combinedTileMap.png --tileset --out tale</LocalDebuggerCommandArguments>
     <LocalDebuggerWorkingDirectory>..\..\2dProjects\tiledmap\tiles</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>

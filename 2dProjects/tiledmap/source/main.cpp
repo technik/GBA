@@ -21,6 +21,46 @@
 #include <gfx/tile.h>
 #include <tools/frameCounter.h>
 
+// Map data
+#include <tale.h>
+
+uint8_t mapHeight[32*32] = {};
+
+const uint16_t kRiverMap[32*32] = {
+35,35,35,35,35,35,35,35,35,35,158,108,12,12,12,12,12,12,12,12,35,35,16,35,35,35,35,35,35,35,35,35,
+35,35,35,35,35,35,35,35,35,35,158,108,12,12,12,12,12,12,12,12,35,35,16,35,35,35,35,35,35,35,35,35,
+35,35,35,35,35,35,35,35,35,17,158,108,12,12,12,12,12,12,12,12,35,35,16,35,35,35,35,35,35,35,35,35,
+35,35,35,35,35,35,35,35,35,35,158,108,12,12,12,12,12,12,12,12,35,35,16,35,35,35,35,35,35,35,35,35,
+35,35,35,35,35,35,35,35,35,35,158,108,12,12,12,12,12,12,12,12,35,35,16,35,35,35,35,35,35,35,35,35,
+35,35,35,35,35,35,35,35,35,35,214,214,214,214,214,214,214,214,214,214,214,214,214,35,35,35,35,35,35,35,35,35,
+35,35,35,35,35,35,35,35,35,35,215,215,215,215,215,215,215,215,215,215,215,215,215,35,35,35,35,35,35,35,35,35,
+35,35,35,35,35,35,35,35,35,35,216,216,216,216,216,216,216,216,216,216,216,216,216,35,35,35,35,35,35,35,35,35,
+35,35,35,35,35,35,35,35,35,35,158,108,12,12,12,12,12,12,12,12,35,35,16,35,35,35,35,35,35,35,35,35,
+35,35,35,35,35,35,35,35,35,35,158,108,12,12,12,12,12,12,12,12,35,35,16,35,35,35,35,35,35,35,35,35,
+35,35,35,35,35,35,17,35,35,35,158,108,12,12,12,12,12,12,12,12,35,35,16,35,35,35,35,35,35,35,35,35,
+35,35,35,35,35,35,35,35,35,35,158,108,12,12,12,12,12,12,12,12,35,35,16,35,17,35,35,35,35,35,35,35,
+35,35,35,35,35,35,35,35,35,35,158,108,12,12,15,12,12,12,12,12,35,35,16,35,35,35,35,35,35,35,35,35,
+35,35,35,35,35,35,35,35,35,35,158,108,12,12,12,12,12,12,12,12,35,35,16,35,35,35,35,35,35,35,35,35,
+35,35,35,35,35,35,35,35,35,35,158,108,12,12,12,12,12,12,12,12,35,35,16,35,35,35,35,35,35,35,35,35,
+35,35,35,35,35,35,35,35,35,35,158,108,12,12,12,12,12,12,12,12,35,35,16,35,35,35,35,35,35,35,35,35,
+35,35,35,35,35,35,35,35,35,35,158,108,12,12,12,12,12,12,12,12,35,35,16,35,17,35,35,35,35,35,35,35,
+35,35,35,35,35,35,35,35,35,35,158,117,12,12,12,12,12,12,12,12,35,35,16,35,35,35,35,35,35,35,35,35,
+35,35,35,35,35,35,35,35,35,19,158,117,12,12,12,12,12,12,12,12,35,35,16,35,35,35,35,35,35,35,35,35,
+35,35,35,35,35,35,35,35,35,35,158,108,12,12,12,12,12,12,12,12,35,35,16,35,35,35,35,35,35,35,35,35,
+35,35,35,35,35,35,35,35,35,35,158,108,12,12,12,12,12,15,12,12,35,35,16,35,35,35,35,35,35,35,35,35,
+35,35,72,35,104,105,104,105,102,103,106,91,12,12,12,12,12,12,12,12,35,35,160,103,104,102,103,104,102,103,104,105,
+160,161,35,11,6,7,8,7,38,38,38,108,12,14,12,12,12,12,12,12,35,35,35,35,35,35,35,35,35,35,35,35,
+169,170,102,171,172,179,42,120,38,39,40,108,12,12,12,12,12,12,12,12,35,35,35,35,35,35,35,35,35,35,35,35,
+0,2,3,0,4,5,6,7,8,9,39,108,12,12,12,12,12,12,12,12,35,35,35,35,35,35,35,35,35,35,35,35,
+23,24,25,26,54,28,29,30,118,50,89,142,12,12,12,12,12,12,12,12,35,35,35,35,35,35,35,35,35,35,35,35,
+54,26,49,21,23,54,4,5,43,44,88,35,12,12,12,12,12,12,12,12,35,35,35,35,35,35,35,35,35,35,35,35,
+32,120,22,32,120,118,27,55,123,35,35,35,12,12,12,12,12,12,12,12,35,35,35,35,35,35,35,35,35,35,35,35,
+63,62,61,62,63,61,63,63,88,35,35,35,12,12,12,12,12,12,12,12,35,35,35,35,35,35,35,35,35,35,35,35,
+35,35,35,35,35,35,35,35,35,35,35,35,12,12,12,12,12,12,12,12,35,35,35,35,35,35,35,35,35,35,35,35,
+35,35,35,35,35,35,35,35,35,35,35,35,12,12,12,12,12,12,12,12,35,35,35,35,35,35,35,35,35,35,35,35,
+35,35,35,35,35,35,35,35,35,35,35,35,12,12,12,12,12,12,12,12,35,35,35,35,35,35,35,35,35,35,35,35
+};
+
 using namespace math;
 using namespace gfx;
 
@@ -64,7 +104,7 @@ struct Billboard
 	{
 		// Alloc tiles
 		auto& tileBank = gfx::TileBank::GetBank(gfx::TileBank::LowSpriteBank);
-		constexpr auto spriteShape = Sprite::Shape::square16x16;
+		constexpr auto spriteShape = Sprite::Shape::tall16x32;
 		constexpr auto numTiles = Sprite::GetNumTiles(spriteShape);
 		m_tileNdx = tileBank.allocDTiles(numTiles);
 
@@ -96,6 +136,46 @@ struct Billboard
 	uint32_t m_tileNdx = 0;
 };
 
+struct Player
+{
+	Player(uint16_t colorNdx, Vec2i pos)
+		: m_Billboard(colorNdx, pos)
+		, m_Pos(pos)
+	{}
+
+	void Update()
+	{
+		if(Keypad::Held(Keypad::LEFT))
+		{
+			m_Pos.x -= 1;
+		}
+		if(Keypad::Held(Keypad::RIGHT))
+		{
+			m_Pos.x += 1;
+		}
+		m_Pos.x = max(0, min(240-16, m_Pos.x));
+		
+		if(Keypad::Held(Keypad::UP))
+		{
+			m_Pos.y -= 1;
+		}
+		if(Keypad::Held(Keypad::DOWN))
+		{
+			m_Pos.y += 1;
+		}
+		m_Pos.y = max(0, min(160-32, m_Pos.y));
+		m_Billboard.m_sprite.setPos(m_Pos.x, m_Pos.y);
+	}
+
+	void Render(SpriteLinearAllocator& spriteAlloc)
+	{
+		m_Billboard.Render(spriteAlloc);
+	}
+
+	Billboard m_Billboard;
+	Vec2i m_Pos;
+};
+
 template<typename Palette>
 void GenerateBasicPalette()
 {
@@ -115,36 +195,35 @@ void GenerateBasicPalette()
 	auto greyScale = Palette::Allocator::alloc(32);
 	for(auto i = 0; i < 32; ++i)
 	{
-		Palette::color(greyScale + i) = Color(i,i,i); 
+		Palette::color(greyScale + i) = Color(i,i,i);
 	}
 }
 
 void InitGraphics()
 {
 	// Init palettes
+	gfx::BackgroundPalette::Allocator::alloc(2*37-1);
+	memcpy(gfx::BackgroundPalette::rawMemory(), talePalette, 37*4);
 	GenerateBasicPalette<gfx::BackgroundPalette>();
 	GenerateBasicPalette<gfx::SpritePalette>();
 
 	// Set up mode 0, 256x256 tiles, 256 color palette
 	Display().SetMode<0, DisplayControl::BG0>();
-	Display().setupBackground(0,0,8,DisplayControl::TiledBGSize::e256x256);
+	Display().setupBackground(0,0,16,DisplayControl::TiledBGSize::e256x256);
 }
 
 void loadMapTileSet()
 {
 	auto& bgTiles = gfx::TileBank::GetBank(0);
-	bgTiles.GetDTile(0).fill(2); // Fill tile 0 with green
-	bgTiles.GetDTile(1).fill(3); // Fill tile 1 with blue
+	auto mapTileStart = bgTiles.allocDTiles(taleTileCount);
+	auto mapMemory = bgTiles.GetDTileMemory(mapTileStart);
+	memcpy(mapMemory, taleTileData, taleTileSize*4);
 }
 
 void loadMapData()
 {
-	auto bgMap = (uint16_t*)gfx::TileBank::GetBank(1).memory();
-	for(int i = 0; i < 8; ++i)
-	{
-		auto x = 2*i + 32*i;
-		bgMap[x] = 1;
-	}
+	auto bgMap = (uint16_t*)gfx::TileBank::GetBank(2).memory();
+	memcpy(bgMap, kRiverMap, 32*32*2);
 }
 
 void cleanSprites()
@@ -156,11 +235,6 @@ void cleanSprites()
 		auto dst = reinterpret_cast<uint32_t*>(&Sprite::OAM_Objects()[i]);
 		memcpy(dst, &nullSprite, sizeof(Sprite::Object));
 	}
-}
-
-void loadPlayerSprite()
-{
-	//
 }
 
 int main()
@@ -178,8 +252,8 @@ int main()
 	Display().enableSprites();
 
 	Vec2i playerPos = {120-8, 80-8};
-	auto player = Billboard(30, playerPos);
-	auto tree = Billboard(25, {180-8, 70-8});
+	auto player = Player(30, playerPos);
+	//auto tree = Billboard(25, {180-8, 70-8});
 	SpriteLinearAllocator spriteAlloc(32);
 
 	// Unlock the display and start rendering
@@ -188,34 +262,18 @@ int main()
 	// main loop
 	while (1)
 	{
+		// Update
 		Keypad::Update();
-		if(Keypad::Held(Keypad::LEFT))
-		{
-			playerPos.x -= 1;
-		}
-		if(Keypad::Held(Keypad::RIGHT))
-		{
-			playerPos.x += 1;
-		}
-		playerPos.x = max(0, min(240-16, playerPos.x));
 		
-		if(Keypad::Held(Keypad::UP))
-		{
-			playerPos.y -= 1;
-		}
-		if(Keypad::Held(Keypad::DOWN))
-		{
-			playerPos.y += 1;
-		}
-		playerPos.y = max(0, min(160-16, playerPos.y));
-		player.m_sprite.setPos(playerPos.x, playerPos.y);
+		player.Update();
 
+		// Render
 		spriteAlloc.reset();
 
 		VBlankIntrWait();
 
 		player.Render(spriteAlloc);
-		tree.Render(spriteAlloc);
+		//tree.Render(spriteAlloc);
 	}
 	return 0;
 }

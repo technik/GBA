@@ -98,7 +98,7 @@ public:
 			((charBaseBlock & 0x3)<<2) |
 			((mosaic ? 1 : 0)<<6) |
 			((fullPalette ? 1 : 0)<<7) |
-			((mapBaseBlock & 0xf)<<8) |
+			((mapBaseBlock & 0x3f)<<8) |
 			(uint16_t)mapSize;
 	}
 
