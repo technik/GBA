@@ -3,12 +3,14 @@
 #include <cstdint>
 #include <memory>
 #include <unordered_map>
+#include <iostream>
 #include <vector>
 
 #include <stb_image.h>
 #include <stb_image_write.h>
 
 #include <gfx/tile.h>
+#include <xxhash/xxhash.h>
 
 struct Color3f
 {

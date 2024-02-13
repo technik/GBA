@@ -75,6 +75,14 @@ void rasterTriangleExp(uint16_t* dst, math::Vec2i scissor, uint16_t color, const
 		v[0] - v[2]
 	};
 
+	int xMin = min(160, min3(v[0].x, v[1].x, v[2].x).floor());
+	int xMax = max(-1, max3(v[0].x, v[1].x, v[2].x).floor() + 1);
+
+	if (xMin < -200 || xMax > 440)
+	{
+		return;
+	}
+
 	if (cross(edge[0], edge[1]) >= 0)
 		return;
 
@@ -84,8 +92,6 @@ void rasterTriangleExp(uint16_t* dst, math::Vec2i scissor, uint16_t color, const
 
 	int yStart = 128;
 	int yEnd = -1;
-	int xMin = min(160, min3(v[0].x, v[1].x, v[2].x).floor());
-	int xMax = max(-1, max3(v[0].x, v[1].x, v[2].x).floor()+1);
 
 	for (int i = 0; i < 3; ++i)
 	{
@@ -109,7 +115,7 @@ void rasterTriangleExp(uint16_t* dst, math::Vec2i scissor, uint16_t color, const
 			{
 				auto crossEdge = ((x0 + 0.5_p8 - v[i].x) * dy - dx * (y0 + 0.5_p8 - v0y));
 				auto rOff = crossEdge.round<8>();
-				for (int row = y0; row < y1; ++row)
+				for (int row = max(0,y0); row < min(y1,scissor.y); ++row)
 				{
 					while (rOff < 0 && x0 < xMax)
 					{
@@ -127,7 +133,7 @@ void rasterTriangleExp(uint16_t* dst, math::Vec2i scissor, uint16_t color, const
 			else if(dx < 0) // Edge leaning left
 			{
 				auto rOff = ((x0 + 0.5_p8 - v[i].x) * dy - dx * (y0 + 0.5_p8 - v0y)).round<8>();
-				for (int row = y0; row < y1; ++row)
+				for (int row = max(0, y0); row < min(y1, scissor.y); ++row)
 				{
 					while (rOff >= 0 && x0 >= xMin)
 					{
@@ -145,7 +151,7 @@ void rasterTriangleExp(uint16_t* dst, math::Vec2i scissor, uint16_t color, const
 			{ 
 				for(int row = y0; row < y1; ++row)
 				{
-					leftEdge[row] = x0;
+					//leftEdge[row] = x0;
 				}
 			}
 		} else if(dy < 0) { // Upward edge, right edge
@@ -166,7 +172,7 @@ void rasterTriangleExp(uint16_t* dst, math::Vec2i scissor, uint16_t color, const
 			{
 				auto crossEdge = ((x1 + 0.5_p8 - v1x) * dy - dx * (y1 + 0.5_p8 - v1y));
 				auto rOff = crossEdge.round<8>();
-				for (int row = y1; row < y0; ++row)
+				for (int row = max(0, y1); row < min(y0, scissor.y); ++row)
 				{
 					// Find the 
 					while (rOff <= 0 && x1 >= xMin)
@@ -186,7 +192,7 @@ void rasterTriangleExp(uint16_t* dst, math::Vec2i scissor, uint16_t color, const
 			{
 				auto crossEdge = ((x1 + 0.5_p8 - v1x) * dy - dx * (y1 + 0.5_p8 - v1y));
 				auto rOff = crossEdge.round<8>();
-				for (int row = y1; row < y0; ++row)
+				for (int row = max(0, y1); row < min(y0, scissor.y); ++row)
 				{
 					// Find the 
 					while (rOff >= 0 && x1 < xMax)
