@@ -76,6 +76,29 @@ namespace IO
     using BG2P      = AffineTxRegister<0x4000020>;
     using BG3P      = AffineTxRegister<0x4000030>;
 
+	// SOUND
+	using SOUND1CNT_L = IORegister<uint16_t, 0x4000060>;
+	using SOUND1CNT_H = IORegister<uint16_t, 0x4000062>;
+	using SOUND1CNT_X = IORegister<uint16_t, 0x4000064>;
+	// 0x4000066 unused
+	using SOUND2CNT_L = IORegister<uint16_t, 0x4000068>;
+	// 0x400006A unused
+	using SOUND2CNT_H = IORegister<uint16_t, 0x400006C>;
+	// 0x400006E unused
+	using SOUND3CNT_L = IORegister<uint16_t, 0x4000070>;
+	using SOUND3CNT_H = IORegister<uint16_t, 0x4000072>;
+	using SOUND3CNT_X = IORegister<uint16_t, 0x4000074>;
+	// 0x4000076 unused
+	using SOUND4CNT_L = IORegister<uint16_t, 0x4000078>;
+	// 0x400007A unused
+	using SOUND4CNT_H = IORegister<uint16_t, 0x400007C>;
+	// 0x400007E unused
+	using SOUNDCNT_L  = IORegister<uint16_t, 0x4000080>;
+	using SOUNDCNT_H  = IORegister<uint16_t, 0x4000082>;
+	using SOUNDCNT_X  = IORegister<uint16_t, 0x4000084>;
+	// 0x4000086 unused
+	using SOUNDBIAS   = IORegister<uint16_t, 0x4000088>;
+
 	// DMA
 	using DMA0SAD = IORegister<uint32_t, 0x40000B0>; // Source address
 	using DMA0DAD = IORegister<uint32_t, 0x40000B4>; // Destination address

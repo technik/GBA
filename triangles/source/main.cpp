@@ -210,6 +210,51 @@ void RenderWorld(const YawPitchCamera& cam)
 	DrawPyramid(cam);
 }
 
+class SoundControlIO final
+{
+public:
+	// Singleton access
+    inline static SoundControlIO& Get() { return *IO::GlobalMemory<SoundControlIO,IO::SOUND1CNT_L::address>(); }
+	SoundControlIO() = delete; // Prevent instantiation
+
+	volatile uint16_t SOUND1CNT_L;
+	volatile uint16_t SOUND1CNT_H;
+	volatile uint16_t SOUND1CNT_X;
+	volatile uint16_t pad0; // 0x4000066 unused
+	volatile uint16_t SOUND2CNT_L;
+	uint16_t pad1; // 0x400006A unused
+	volatile uint16_t SOUND2CNT_H;
+	uint16_t pad2; // 0x400006E unused
+	volatile uint16_t SOUND3CNT_L;
+	volatile uint16_t SOUND3CNT_H;
+	volatile uint16_t SOUND3CNT_X;
+	uint16_t pad3; // 0x4000076 unused
+	volatile uint16_t SOUND4CNT_L;
+	uint16_t pad4; // 0x400007A unused
+	volatile uint16_t SOUND4CNT_H;
+	uint16_t pad5; // 0x400007E unused
+	volatile uint16_t SOUNDCNT_L;
+	volatile uint16_t SOUNDCNT_H;
+	volatile uint16_t SOUNDCNT_X;
+	uint16_t pad6; // 0x4000086 unused
+	volatile uint16_t SOUNDBIAS;
+};
+
+void soundPlay()
+{
+	auto& snd = SoundControlIO::Get();
+	snd.SOUNDCNT_X = 1<<7;
+	snd.SOUND1CNT_L = 1<<3;
+	snd.SOUND1CNT_H = (1<<7) | (1<<0xb);
+	snd.SOUND1CNT_X = 194;
+
+	//if (Keypad::Held(Keypad::A))
+		snd.SOUNDCNT_L = 7 | (7<<4) | (1<<8)| (1<<12);
+		snd.SOUNDCNT_H = 2;
+	//else
+	//	snd.SOUNDCNT_L = 0;
+}
+
 int main()
 {
 	// Full resolution, paletized color mode.
@@ -248,6 +293,9 @@ int main()
 		{
 			return 0; // Exit the app
 		}
+
+		// Sound
+		soundPlay();
 
 		// -- Render --
 		clearBg(Display().backBuffer(), Rasterizer::skyClr.raw, Rasterizer::groundClr.raw, Mode5Display::Area);
