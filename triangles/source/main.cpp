@@ -244,13 +244,14 @@ void soundPlay()
 {
 	auto& snd = SoundControlIO::Get();
 	snd.SOUNDCNT_X = 1<<7;
-	snd.SOUND1CNT_L = 1<<3;
-	snd.SOUND1CNT_H = (1<<7) | (1<<0xb);
-	snd.SOUND1CNT_X = 194;
+	snd.SOUNDCNT_L = 7 | (7<<4) | (1<<8)| (1<<12);
+	snd.SOUNDCNT_H = 2;
+
+	snd.SOUND1CNT_L = 1<<3; //Sweep
+	snd.SOUND1CNT_H = (1<<7) | (1<<0xb) | (15<<0xc); // cnt
+	snd.SOUND1CNT_X = 194 | (1<<15); // freq
 
 	//if (Keypad::Held(Keypad::A))
-		snd.SOUNDCNT_L = 7 | (7<<4) | (1<<8)| (1<<12);
-		snd.SOUNDCNT_H = 2;
 	//else
 	//	snd.SOUNDCNT_L = 0;
 }
