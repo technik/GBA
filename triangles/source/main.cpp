@@ -240,7 +240,7 @@ public:
 	volatile uint16_t SOUNDBIAS;
 };
 
-void soundPlay()
+void soundPlay(int offTone)
 {
 	auto& snd = SoundControlIO::Get();
 	snd.SOUNDCNT_X = 1<<7;
@@ -248,8 +248,10 @@ void soundPlay()
 	snd.SOUNDCNT_H = 2;
 
 	snd.SOUND1CNT_L = 1<<3; //Sweep
-	snd.SOUND1CNT_H = (1<<7) | (1<<0xb) | (15<<0xc); // cnt
-	snd.SOUND1CNT_X = 194 | (1<<15); // freq
+	//snd.SOUND1CNT_H = (1<<7) | (1<<0xb) | (15<<0xc); // cnt
+	snd.SOUND1CNT_H = (1<<6) | (1<<0xb) | (5<<0xc); // cnt
+	//snd.SOUND1CNT_X = 194 | (1<<15); // freq
+	snd.SOUND1CNT_X = ((offTone) & 0x3f) | (1<<15); // freq
 
 	//if (Keypad::Held(Keypad::A))
 	//else
@@ -281,6 +283,34 @@ int main()
 
 	// main loop
 	int tx = 0;
+	int freq = 0;
+
+	/*const int scale[] = {
+		44,   // C2  65.41
+		263,  // D2  73.42
+		458,  // E2  82.41
+		547,  // F2  87.31
+		711,  // G2  98.00
+		856,  // A2 110.00
+		986,  // B2 123.47
+		1046, // C3 130.81
+	};*/
+	
+	const int scale[] = {
+		1046,   // C2  65.41
+		1102,  // D2  73.42
+		1155,  // E2  82.41
+		1205,  // F2  87.31
+		1253,  // G2  98.00
+		1297,  // A2 110.00
+		1339,  // B2 123.47
+		1379, // C3 130.81
+		1417,
+		1452,
+		1486,
+		1517
+	};
+
 	while (1)
 	{
 		Timer1().reset<Timer::e64>(); // Set high precision profiler
@@ -296,8 +326,13 @@ int main()
 		}
 
 		// Sound
-		soundPlay();
-
+		if(tx == 0)
+		{
+			++freq;
+			freq = freq == 12? 0 : freq;
+			soundPlay(scale[freq]);
+		}
+		tx = (tx+1) % 30;
 		// -- Render --
 		clearBg(Display().backBuffer(), Rasterizer::skyClr.raw, Rasterizer::groundClr.raw, Mode5Display::Area);
 
